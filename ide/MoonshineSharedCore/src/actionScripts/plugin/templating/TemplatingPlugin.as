@@ -32,6 +32,7 @@ package actionScripts.plugin.templating
 	
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.EditorPluginEvent;
+	import actionScripts.events.GeneralEvent;
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.NewFileEvent;
 	import actionScripts.events.NewProjectEvent;
@@ -337,6 +338,7 @@ package actionScripts.plugin.templating
 			setting.renderer.addEventListener(TemplateRenderer.EVENT_MODIFY, handleTemplateModify, false, 0, true);
 			setting.renderer.addEventListener(TemplateRenderer.EVENT_RESET, handleTemplateReset, false, 0, true);
 			setting.renderer.addEventListener(TemplateRenderer.EVENT_REMOVE, handleTemplateReset, false, 0, true);
+			setting.renderer.addEventListener(GeneralEvent.DONE, onRenameDone, false, 0, true);
 			
 			return setting;
 		}
@@ -345,7 +347,7 @@ package actionScripts.plugin.templating
 		protected function handleFileTemplateCreate(event:Event):void
 		{
 			// Create new file
-			var newTemplate:FileLocation = this.customTemplatesDir.resolvePath("files/New file template.txt");
+			var newTemplate:FileLocation = this.customTemplatesDir.resolvePath("files/New file template.txt.template");
 			newTemplate.fileBridge.save("");
 			
 			// Add setting for it so we can remove it
@@ -353,6 +355,7 @@ package actionScripts.plugin.templating
 			t.renderer.addEventListener(TemplateRenderer.EVENT_MODIFY, handleTemplateModify, false, 0, true);
 			t.renderer.addEventListener(TemplateRenderer.EVENT_REMOVE, handleTemplateReset, false, 0, true);
 			t.renderer.addEventListener(TemplateRenderer.EVENT_RESET, handleTemplateReset, false, 0, true);
+			t.renderer.addEventListener(GeneralEvent.DONE, onRenameDone, false, 0, true);
 			var newPos:int = this.settingsList.indexOf(newFileTemplateSetting);
 			settingsList.splice(newPos, 0, t);
 			
@@ -473,10 +476,25 @@ package actionScripts.plugin.templating
 				settingsList.splice(idx, 1);
 				rdr.dispatchEvent(new Event('refresh'));
 				
-				readTemplates();	
+				readTemplates();
 			}
 		}
 		
+		protected function onRenameDone(event:GeneralEvent):void
+		{
+			// Resetting a template just removes it from app-storage
+			var rdr:TemplateRenderer = TemplateRenderer(event.target);
+			var original:FileLocation = rdr.setting.originalTemplate;
+			var custom:FileLocation = rdr.setting.customTemplate;
+			var newFileName:String = event.value as String;
+			
+			if (custom.fileBridge.exists)
+			{
+				custom.fileBridge.moveTo(custom.fileBridge.parent.resolvePath(newFileName +".template"), true);
+				rdr.setting.customTemplate = custom.fileBridge.parent.resolvePath(newFileName +".template");
+				
+			}
+		}
 		
 		protected function handleCreateFileTemplate(event:TemplateEvent):void
 		{
