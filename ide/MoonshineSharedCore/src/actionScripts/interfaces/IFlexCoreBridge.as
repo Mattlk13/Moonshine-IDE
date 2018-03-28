@@ -21,6 +21,7 @@ package actionScripts.interfaces
 {
     import flash.display.DisplayObject;
     
+    import mx.controls.Tree;
     import mx.core.IFlexDisplayObject;
     import mx.core.IVisualElement;
     
@@ -74,6 +75,7 @@ package actionScripts.interfaces
 		function startTypeAheadWithJavaPath(path:String):void;
 		function reAdjustApplicationSize(width:Number, height:Number):void;
         function createProject(event:NewProjectEvent):void;
+		function getFileSystemTree():Tree;
 
         /**
          *

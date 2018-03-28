@@ -23,6 +23,7 @@ package actionScripts.impls
 	import flash.events.Event;
 	import flash.ui.Keyboard;
 	
+	import mx.controls.Tree;
 	import mx.core.FlexGlobals;
 	import mx.core.IFlexDisplayObject;
 	import mx.core.IVisualElement;
@@ -295,6 +296,11 @@ package actionScripts.impls
 		}
 		
 		public function getQuitMenuItem():MenuItem
+		{
+			return null;
+		}
+		
+		public function getFileSystemTree():Tree
 		{
 			return null;
 		}

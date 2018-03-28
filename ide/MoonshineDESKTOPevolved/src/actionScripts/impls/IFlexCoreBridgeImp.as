@@ -26,7 +26,9 @@ package actionScripts.impls
 	import flash.filesystem.File;
 	import flash.ui.Keyboard;
 	
+	import mx.controls.FileSystemTree;
 	import mx.controls.HTML;
+	import mx.controls.Tree;
 	import mx.core.FlexGlobals;
 	import mx.core.IFlexDisplayObject;
 	import mx.core.IVisualElement;
@@ -383,6 +385,11 @@ package actionScripts.impls
 		public function getSoftwareInformationView():IVisualElement
 		{
 			return (new SoftwareInformation());
+		}
+		
+		public function getFileSystemTree():Tree
+		{
+			return (new FileSystemTree());
 		}
 		
 		public function getJavaPath(completionHandler:Function):void
