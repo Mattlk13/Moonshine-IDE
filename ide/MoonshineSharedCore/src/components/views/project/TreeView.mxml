@@ -24,10 +24,12 @@
 		 height="100%"
 		 backgroundColor="0x444444"
 		 verticalGap="0" xmlns:project="actionScripts.ui.project.*"
-		 preinitialize="onPreInitialize()" remove="onRemoval()" xmlns:utils="actionScripts.utils.*">
+		 preinitialize="onPreInitialize()" initialize="onInitialize()" remove="onRemoval()" xmlns:utils="actionScripts.utils.*">
 
 	<mx:Script>
 		<![CDATA[
+			import mx.binding.utils.BindingUtils;
+			import mx.binding.utils.ChangeWatcher;
 			import mx.collections.ArrayCollection;
 			import mx.collections.Sort;
 			import mx.collections.SortField;
@@ -37,6 +39,7 @@
 			import mx.events.CloseEvent;
 			import mx.events.CollectionEvent;
 			import mx.events.CollectionEventKind;
+			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.events.TreeEvent;
 			import mx.managers.PopUpManager;
@@ -369,7 +372,7 @@
 				header.addEventListener(TabViewTab.EVENT_TAB_CLOSE, handleClose);
 			}
 	
-			private function initTree():void
+			private function initTree(event:FlexEvent):void
 			{
 				tree.addEventListener(TreeMenuItemEvent.RIGHT_CLICK_ITEM_SELECTED, handleNativeMenuItemClick);
 			}
@@ -817,7 +820,7 @@
 	
 			private function cleanupAfterRename():void
 			{
-				tree.keyNav = true;
+				//tree.keyNav = true;
 				currentEditedItem.removeEventListener(TreeMenuItemEvent.EDIT_END, handleItemRenameEnd);
 				currentEditedItem.removeEventListener(TreeMenuItemEvent.EDIT_CANCEL, handleItemRenameCancel);
 				currentEditedItem = null;
@@ -839,7 +842,7 @@
 					// re-do edit
 					if (currentEditedItem)
 					{
-						tree.keyNav = false;
+						//tree.keyNav = false;
 						tree.callLater(currentEditedItem.startEdit, [newName]);
 						currentEditedItem.setErrorInEdit("Same package name is not allowed");
 						return;
@@ -915,12 +918,12 @@
 	
 			private function onTreeItemOpen(event:TreeEvent):void
 			{
-				tree.saveItemForOpen(event.item);
+				//tree.saveItemForOpen(event.item);
 			}
 	
 			private function onTreeItemClose(event:TreeEvent):void
 			{
-				tree.removeFromOpenedItems(event.item);
+				//tree.removeFromOpenedItems(event.item);
 			}
 	
 			private function onScrollFromSource(event:Event):void
@@ -929,6 +932,7 @@
 			}
 			
 			public var tree:Tree;
+			private var binding:ChangeWatcher;
 			
 			private function onInitialize():void
 			{
@@ -936,12 +940,34 @@
 				// using simple Tree instead of CustomTree as it
 				// has many data manipulation cases
 				tree = ConstantsCoreVO.IS_AIR ? model.flexCore.getFileSystemTree() : new Tree();
+				tree.percentHeight = tree.percentWidth = 100;
+				
+				tree.showDataTips = true;
+				tree.dataTipFunction = getTreeTooltip;
+				tree.rowHeight = 18;
+				tree.doubleClickEnabled = true;
+				tree.labelField = "name";
+				tree.iconFunction = getIconForFile;
+				tree.itemRenderer = new ClassFactory(FTETreeItemRenderer);
 				
 				tree.setStyle("color", 0xEEEEEE);
 				tree.setStyle("contentBackgroundColor", 0x0);
 				tree.setStyle("rollOverColor", 0x393939);
 				tree.setStyle("selectionColor", 0xc165b8);
 				tree.setStyle("alternatingItemColors", [0x444444, 0x4d4c4c]);
+				tree.setStyle("verticalScrollBarStyleName", "black");
+				tree.setStyle("borderVisible", false);
+				tree.setStyle("useRollOver", true);
+				
+				tree.addEventListener(TreeEvent.ITEM_OPEN, onTreeItemOpen, false, 0, true);
+				tree.addEventListener(TreeEvent.ITEM_CLOSE, onTreeItemClose, false, 0, true);
+				tree.addEventListener(ListEvent.ITEM_DOUBLE_CLICK, fileDoubleClickedInTree, false, 0, true);
+				tree.addEventListener(ListEvent.ITEM_CLICK, onFileSingleClickedInTree, false, 0, true);
+				tree.addEventListener(FlexEvent.CREATION_COMPLETE, initTree, false, 0, true);
+				
+				this.binding = BindingUtils.bindProperty(tree, "dataProvider", this, "projectFolders");
+				
+				addElement(tree);
 			}
 			
 		]]>
@@ -954,7 +980,7 @@
 							   scrollFromSource="onScrollFromSource(event)"
 							   creationComplete="initHeader()" />
 
-	<utils:CustomTree
+	<!--<utils:CustomTree
 			id="tree"
 			width="100%" height="100%"
 			dataProvider="{projectFolders}"
@@ -980,6 +1006,6 @@
 			itemRenderer="{new ClassFactory(FTETreeItemRenderer)}"
 			itemDoubleClick="fileDoubleClickedInTree(event)"
 			itemClick="onFileSingleClickedInTree(event)"
-			creationComplete="initTree()"/>
+			creationComplete="initTree(event)"/>-->
 
 </mx:VBox>

@@ -94,7 +94,7 @@ package actionScripts.plugin.project
                 var activeEditorFile:FileLocation = basicTextEditor.currentFile;
                 var activeFilePath:String = activeEditorFile.fileBridge.nativePath;
                 var childrenForOpen:Array = activeFilePath.split(activeEditorFile.fileBridge.separator);
-                treeView.tree.expandChildrenByName("name", childrenForOpen);
+                //treeView.tree.expandChildrenByName("name", childrenForOpen);
             }
         }
 

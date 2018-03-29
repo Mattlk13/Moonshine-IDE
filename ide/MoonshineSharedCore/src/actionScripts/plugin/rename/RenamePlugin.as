@@ -24,6 +24,7 @@ package actionScripts.plugin.rename
 	import flash.utils.setTimeout;
 	
 	import mx.controls.Alert;
+	import mx.controls.Tree;
 	import mx.core.FlexGlobals;
 	import mx.events.CloseEvent;
 	import mx.managers.PopUpManager;
@@ -171,7 +172,7 @@ package actionScripts.plugin.rename
 			}
 			
 			// updating the tree view
-			var tree:CustomTree = model.mainView.getTreeViewPanel().tree;
+			var tree:Tree = model.mainView.getTreeViewPanel().tree;
 			var tmpParent:FileWrapper = tree.getParentItem(event.insideLocation);
 			
 			var timeoutValue:uint = setTimeout(function():void 
