@@ -80,12 +80,15 @@ package actionScripts.valueObjects
 		public static var TEMPLATE_VISUAL_EDITOR_PRIMEFACES:FileLocation;
 		public static var TEMPLATE_JAVACLASS: FileLocation;
 		public static var TEMPLATE_GROOVYCLASS: FileLocation;
+		public static var TEMPLATE_HAXECLASS: FileLocation;
+		public static var TEMPLATE_HAXEINTERFACE: FileLocation;
 		public static var TEMPLATES_FILES: ArrayCollection;
 		public static var TEMPLATES_PROJECTS: ArrayCollection;
 		public static var TEMPLATES_PROJECTS_SPECIALS:ArrayCollection;
 		public static var TEMPLATES_PROJECTS_ROYALE:ArrayCollection;
 		public static var TEMPLATES_PROJECTS_JAVA:ArrayCollection;
 		public static var TEMPLATES_PROJECTS_GRAILS:ArrayCollection;
+		public static var TEMPLATES_PROJECTS_HAXE:ArrayCollection;
 		public static var TEMPLATES_MXML_COMPONENTS:ArrayCollection = new ArrayCollection();
         public static var TEMPLATES_MXML_FLEXJS_COMPONENTS:ArrayCollection = new ArrayCollection();
         public static var TEMPLATES_MXML_ROYALE_COMPONENTS:ArrayCollection = new ArrayCollection();

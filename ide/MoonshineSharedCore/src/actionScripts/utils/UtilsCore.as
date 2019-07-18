@@ -40,6 +40,7 @@ package actionScripts.utils
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.actionscript.as3project.vo.SWFOutputVO;
 	import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.plugin.settings.SettingsView;
 	import actionScripts.ui.IContentWindow;
@@ -61,6 +62,7 @@ package actionScripts.utils
 	import components.popup.SDKSelectorPopup;
 	import components.renderers.CustomToolTipGBA;
 	import components.views.splashscreen.SplashScreen;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 
 	public class UtilsCore 
 	{
@@ -205,6 +207,14 @@ package actionScripts.utils
 			}
 			
 			return false;
+		}
+		
+		/**
+		 * Determines if a project is Lime type
+		 */
+		public static function isLime(project:HaxeProjectVO):Boolean
+		{
+			return project.haxeOutput.platform == HaxeOutputVO.PLATFORM_LIME;
 		}
 		
 		/**
@@ -945,6 +955,10 @@ package actionScripts.utils
 			{
 				currentMenuType = ProjectMenuTypes.JAVA;
 			}
+			else if (value is HaxeProjectVO)
+			{
+				currentMenuType = ProjectMenuTypes.HAXE;
+			}
 
 			if (!value.menuType)
 			{
@@ -1165,6 +1179,126 @@ package actionScripts.utils
             else
             {
                 return UtilsCore.convertString(grailsLocation.resolvePath(grailsBin + "grails").fileBridge.nativePath);
+            }
+			
+			return null;
+        }
+
+        public static function getNodeBinPath():String
+        {
+			if (!model.nodePath || model.nodePath == "")
+			{
+				return null;
+			}
+
+            var nodeLocation:FileLocation = new FileLocation(model.nodePath);			
+			if (!nodeLocation.fileBridge.exists)
+			{
+				return null;
+			}
+			else if (!ConstantsCoreVO.IS_MACOS)
+            {
+                return nodeLocation.resolvePath("node.exe").fileBridge.nativePath;
+            }
+            else
+            {
+                return UtilsCore.convertString(nodeLocation.resolvePath("node").fileBridge.nativePath);
+            }
+			
+			return null;
+        }
+
+        public static function getNpmBinPath():String
+        {
+			if (!model.nodePath || model.nodePath == "")
+			{
+				return null;
+			}
+
+            var nodeLocation:FileLocation = new FileLocation(model.nodePath);
+			if (!nodeLocation.fileBridge.exists)
+			{
+				return null;
+			}
+			else if (!ConstantsCoreVO.IS_MACOS)
+            {
+                return nodeLocation.resolvePath("npm.cmd").fileBridge.nativePath;
+            }
+            else
+            {
+                return UtilsCore.convertString(nodeLocation.resolvePath("npm").fileBridge.nativePath);
+            }
+			
+			return null;
+        }
+
+        public static function getNpxBinPath():String
+        {
+			if (!model.nodePath || model.nodePath == "")
+			{
+				return null;
+			}
+
+            var nodeLocation:FileLocation = new FileLocation(model.nodePath);			
+			if (!nodeLocation.fileBridge.exists)
+			{
+				return null;
+			}
+			else if (!ConstantsCoreVO.IS_MACOS)
+            {
+                return nodeLocation.resolvePath("npx.cmd").fileBridge.nativePath;
+            }
+            else
+            {
+                return UtilsCore.convertString(nodeLocation.resolvePath("npx").fileBridge.nativePath);
+            }
+			
+			return null;
+        }
+
+        public static function getHaxeBinPath():String
+        {
+			if (!model.haxePath || model.haxePath == "")
+			{
+				return null;
+			}
+
+            var haxeLocation:FileLocation = new FileLocation(model.haxePath);			
+			if (!haxeLocation.fileBridge.exists)
+			{
+				return null;
+			}
+			else if (!ConstantsCoreVO.IS_MACOS)
+            {
+                return haxeLocation.resolvePath("haxe.exe").fileBridge.nativePath;
+            }
+            else
+            {
+                return UtilsCore.convertString(haxeLocation.resolvePath("haxe").fileBridge.nativePath);
+            }
+			
+			return null;
+        }
+
+        public static function getHaxelibBinPath():String
+        {
+			if (!model.haxePath || model.haxePath == "")
+			{
+				return null;
+			}
+
+            var haxeLocation:FileLocation = new FileLocation(model.haxePath);			
+			if (!haxeLocation.fileBridge.exists)
+			{
+				return null;
+			}
+			else if (!ConstantsCoreVO.IS_MACOS)
+            {
+                return haxeLocation.resolvePath("haxelib.exe").fileBridge.nativePath;
+            }
+            else
+            {
+                return UtilsCore.convertString(haxeLocation.resolvePath("haxelib").fileBridge.nativePath);
             }
 			
 			return null;

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <template displayHome="true">
+        <title>Haxe OpenFL Project</title>
+        <homeTitle>Haxe OpenFL Project</homeTitle>
+        <name>Haxe OpenFL Project</name>
+        <icon>Haxe OpenFL Project.png</icon>
+        <description>Create a Haxe OpenFL project.</description>
+    </template>
+</templates>

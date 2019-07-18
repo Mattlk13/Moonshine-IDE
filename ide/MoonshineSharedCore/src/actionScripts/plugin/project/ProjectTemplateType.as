@@ -31,5 +31,6 @@ package actionScripts.plugin.project
         public static const JAVA:String = "Java";
         public static const GRAILS:String = "Grails";
         public static const ROYALE_PROJECT:String = "Royale Browser Project";
+        public static const HAXE:String = "Haxe";
     }
 }
