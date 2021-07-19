@@ -92,7 +92,6 @@ package actionScripts.ui
 			_mainContent.percentWidth = 100;
 			_mainContent.percentHeight = 100;
 			_mainContent.addEventListener(TabEvent.EVENT_TAB_CLOSE, handleTabClose);
-			_mainContent.addEventListener(TabEvent.EVENT_TAB_SELECT, focusNewEditor);
 
 			mainPanel.addChild(_mainContent);
 			
@@ -130,20 +129,6 @@ package actionScripts.ui
 			} 
 		}
 		
-		protected function focusNewEditor(event:TabEvent):void
-		{
-			if (event.child is IContentWindow)
-			{
-				model.activeEditor = event.child as IContentWindow;
-			}
-
-			if (event.type == TabEvent.EVENT_TAB_SELECT)
-			{
-                var e:TabEvent = new TabEvent(TabEvent.EVENT_TAB_SELECT, event.child);
-                GlobalEventDispatcher.getInstance().dispatchEvent(e);
-			}
-		}
-		
 		protected function activeEditorChanged(newActiveEditor:IContentWindow):void
 		{
 			if (!mainContent) return;
@@ -157,12 +142,13 @@ package actionScripts.ui
 			event.preventDefault(); 
 			
 			var e:CloseTabEvent = new CloseTabEvent(CloseTabEvent.EVENT_CLOSE_TAB, event.child);
+			e.isUserTriggered = true;
 			GlobalEventDispatcher.getInstance().dispatchEvent(e);
 		}
 		
 		public function addPanel(panel:IPanelWindow):void
 		{
-			if(panel.document.className == "TreeView")
+			if(panel.document && panel.document.className == "TreeView")
 				childIndex = 0;
 			else
 				childIndex = mainPanel.numChildren-1;

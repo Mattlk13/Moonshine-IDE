@@ -223,6 +223,12 @@ package actionScripts.plugin.project
 				new CloseTabEvent(CloseTabEvent.EVENT_CLOSE_TAB, settings)
 			);
 			
+			// notify project
+			if (!settings.isSaved && (settings.associatedData is ProjectVO))
+			{
+				(settings.associatedData as ProjectVO).cancelledSettings();
+			}
+			
 			settings.removeEventListener(SettingsView.EVENT_CLOSE, settingsClose);
 			settings.removeEventListener(SettingsView.EVENT_SAVE, settingsSave);
 		}
@@ -257,6 +263,10 @@ package actionScripts.plugin.project
 				{
 					// Save
 					pvo.saveSettings();
+					if (pvo is ProjectVO) 
+					{
+						(pvo as ProjectVO).closedSettings();
+					}
 				}
 				dispatcher.dispatchEvent(new ProjectEvent(ProjectEvent.SAVE_PROJECT_SETTINGS, pvo));
 			}
@@ -331,7 +341,7 @@ package actionScripts.plugin.project
 			// If it's not showing, spin it into view
 			if (!openResourceView.stage)
 			{
-				openResourceView.setFileList(treeView.projectFolders);
+				openResourceView.setFileList(model.selectedprojectFolders);
 				openResourceView.setFocus();
 			}
 		}
@@ -375,6 +385,7 @@ package actionScripts.plugin.project
                                     (model.defaultSDK ? model.defaultSDK.fileBridge.nativePath : null);
 
                             projectReferenceVO.path = project.folderLocation.fileBridge.nativePath;
+							projectReferenceVO.sourceFolder = project.sourceFolder;
 
                             var fileWrapper:FileWrapper = new FileWrapper(fileLocation, false, projectReferenceVO);
 							dispatcher.dispatchEvent(new OpenFileEvent(OpenFileEvent.OPEN_FILE, [fileLocation], -1, [fileWrapper]));
@@ -458,6 +469,15 @@ package actionScripts.plugin.project
 	                    {
 	                        project = model.haxeCore.parseHaxe(projectLocation);
 	                    }
+					}
+					
+					if (!project)
+					{
+						projectFileLocation = model.ondiskCore.testOnDisk(projectFile);
+						if (projectFileLocation)
+						{
+							project = model.ondiskCore.parseOnDisk(projectLocation);
+						}
 					}
 
                     if (project)

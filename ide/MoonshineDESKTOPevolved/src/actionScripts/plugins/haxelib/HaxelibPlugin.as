@@ -39,6 +39,7 @@ package actionScripts.plugins.haxelib
 	import actionScripts.utils.EnvironmentSetupUtils;
 	import actionScripts.valueObjects.Settings;
 	import actionScripts.valueObjects.EnvironmentExecPaths;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 	import actionScripts.utils.CommandLineUtil;
 
 	public class HaxelibPlugin extends PluginBase
@@ -73,9 +74,14 @@ package actionScripts.plugins.haxelib
 			if(status.currentIndex >= status.items.length)
 			{
 				status.currentIndex = 0;
+				
 				dispatcher.dispatchEvent(new StatusBarEvent(
 					StatusBarEvent.LANGUAGE_SERVER_STATUS,
-					"Haxe", "Installing Haxe dependencies...", false
+					status.project.name
+				));
+				dispatcher.dispatchEvent(new StatusBarEvent(
+					StatusBarEvent.LANGUAGE_SERVER_STATUS,
+					status.project.name, "Installing Haxe dependencies...", false
 				));
 				installNextDependency(status);
 				return;
@@ -124,7 +130,8 @@ package actionScripts.plugins.haxelib
 			if(status.currentIndex >= status.items.length)
 			{
 				dispatcher.dispatchEvent(new StatusBarEvent(
-					StatusBarEvent.LANGUAGE_SERVER_STATUS
+					StatusBarEvent.LANGUAGE_SERVER_STATUS,
+					status.project.name
 				));
 				dispatcher.dispatchEvent(new HaxelibEvent(HaxelibEvent.HAXELIB_INSTALL_COMPLETE, status.project));
 				return;
@@ -185,6 +192,77 @@ package actionScripts.plugins.haxelib
 			}
 
 			var project:HaxeProjectVO = event.project;
+			dispatcher.dispatchEvent(new StatusBarEvent(
+				StatusBarEvent.LANGUAGE_SERVER_STATUS,
+				project.name, "Checking Haxe dependencies...", false
+			));
+			if(project.isLime)
+			{
+				//for lime projects, haxelibs need to be read from project.xml
+				installLimeDependencies(project);
+			}
+			else
+			{
+				installHaxeDependencies(project);
+			}
+		}
+
+		private function installHaxeDependencies(project:HaxeProjectVO):void
+		{
+			var items:Vector.<ComponentVO> = new <ComponentVO>[];
+
+			var requiredPlatformHaxelib:String = null;
+			//some platforms require certain haxelib dependencies to be
+			//installed, and they may not necessarily be specified
+			switch(project.haxeOutput.platform)
+			{
+				case HaxeOutputVO.PLATFORM_CPP:
+				{
+					requiredPlatformHaxelib = "hxcpp";
+					break;
+				}
+				case HaxeOutputVO.PLATFORM_CSHARP:
+				{
+					requiredPlatformHaxelib = "hxcs";
+					break;
+				}
+				case HaxeOutputVO.PLATFORM_JAVA:
+				{
+					requiredPlatformHaxelib = "hxjava";
+					break;
+				}
+			}
+
+			var haxelibs:Vector.<String> = project.haxelibs;
+			var haxelibCount:int = project.haxelibs.length;
+			for(var i:int = 0; i < haxelibCount; i++)
+			{
+				var name:String = haxelibs[i];
+				var item:ComponentVO = new ComponentVO();
+				item.title = name;
+				item.isDownloaded = false;
+				items.push(item);
+				if(name == requiredPlatformHaxelib)
+				{
+					//no need to add this one manually because it's already a
+					//dependency
+					requiredPlatformHaxelib = null;
+				}
+			}
+			if(requiredPlatformHaxelib != null)
+			{
+				item = new ComponentVO();
+				item.title = requiredPlatformHaxelib;
+				item.isDownloaded = false;
+				items.push(item);
+			}
+
+			var status:ProjectInstallStatus = new ProjectInstallStatus(project, items);
+			checkStatusOfNextDependency(status);
+		}
+
+		private function installLimeDependencies(project:HaxeProjectVO):void
+		{
 			var projectFile:File = project.folderLocation.resolvePath(FILE_NAME_PROJECT_XML).fileBridge.getFile as File;
 			if(!projectFile.exists)
 			{
@@ -298,7 +376,8 @@ package actionScripts.plugins.haxelib
 			else
 			{
 				dispatcher.dispatchEvent(new StatusBarEvent(
-					StatusBarEvent.LANGUAGE_SERVER_STATUS
+					StatusBarEvent.LANGUAGE_SERVER_STATUS,
+					status.project.name
 				));
 
 				currentItem.isDownloaded = false;

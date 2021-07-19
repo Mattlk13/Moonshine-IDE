@@ -19,10 +19,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.languageServer
 {
-    import flash.desktop.NativeProcess;
+	import actionScripts.interfaces.IJavaProject;
+	import actionScripts.plugin.java.javaproject.vo.JavaTypes;
+	import actionScripts.plugins.build.ConsoleBuildPluginBase;
+
+	import flash.desktop.NativeProcess;
     import flash.desktop.NativeProcessStartupInfo;
     import flash.events.Event;
-    import flash.events.EventDispatcher;
     import flash.events.NativeProcessExitEvent;
     import flash.events.ProgressEvent;
     import flash.filesystem.File;
@@ -34,27 +37,25 @@ package actionScripts.languageServer
     import actionScripts.events.StatusBarEvent;
     import actionScripts.languageServer.LanguageClient;
     import actionScripts.locator.IDEModel;
-    import actionScripts.plugin.console.ConsoleOutputEvent;
     import actionScripts.plugin.console.ConsoleOutputter;
     import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
     import actionScripts.ui.editor.BasicTextEditor;
     import actionScripts.ui.editor.GroovyTextEditor;
     import actionScripts.utils.EnvironmentSetupUtils;
     import actionScripts.utils.GradleBuildUtil;
-    import actionScripts.utils.HtmlFormatter;
     import actionScripts.utils.getProjectSDKPath;
+	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
     import actionScripts.valueObjects.EnvironmentExecPaths;
     import actionScripts.valueObjects.ProjectVO;
     import actionScripts.valueObjects.Settings;
     
-    import no.doomsday.console.ConsoleUtil;
     import actionScripts.events.SettingsEvent;
     import actionScripts.utils.CommandLineUtil;
 
 	[Event(name="init",type="flash.events.Event")]
 	[Event(name="close",type="flash.events.Event")]
 
-	public class GroovyLanguageServerManager extends EventDispatcher implements ILanguageServerManager
+	public class GroovyLanguageServerManager extends ConsoleOutputter implements ILanguageServerManager
 	{
 		private static const LANGUAGE_SERVER_CLASS_PATH:String = "elements/groovy-language-server";
 		
@@ -78,10 +79,10 @@ package actionScripts.languageServer
 		{
 			_project = project;
 
+			_dispatcher.addEventListener(FilePluginEvent.EVENT_JAVA_TYPEAHEAD_PATH_SAVE, jdkPathSaveHandler, false, 0, true);
+			_dispatcher.addEventListener(GradleBuildEvent.REFRESH_GRADLE_CLASSPATH, onGradleClassPathRefresh, false, 0, true);
 			//when adding new listeners, don't forget to also remove them in
 			//dispose()
-			_dispatcher.addEventListener(FilePluginEvent.EVENT_JAVA_TYPEAHEAD_PATH_SAVE, jdkPathSaveHandler);
-			_dispatcher.addEventListener(GradleBuildEvent.REFRESH_GRADLE_CLASSPATH, onGradleClassPathRefresh, false, 0, true);
 
 			preTaskLanguageServer();
 		}
@@ -134,6 +135,7 @@ package actionScripts.languageServer
 		protected function dispose():void
 		{
 			_dispatcher.removeEventListener(FilePluginEvent.EVENT_JAVA_TYPEAHEAD_PATH_SAVE, jdkPathSaveHandler);
+			_dispatcher.removeEventListener(GradleBuildEvent.REFRESH_GRADLE_CLASSPATH, onGradleClassPathRefresh);
 			cleanupLanguageClient();
 		}
 
@@ -180,10 +182,7 @@ package actionScripts.languageServer
 			}
 			if(!cmdFile.exists)
 			{
-				GlobalEventDispatcher.getInstance().dispatchEvent(new ConsoleOutputEvent(
-					ConsoleOutputEvent.CONSOLE_OUTPUT, 
-					HtmlFormatter.sprintfa("Invalid path to Java Development Kit: " + cmdFile.nativePath, null), false, false, 
-					ConsoleOutputEvent.TYPE_ERROR));
+				error("Invalid path to Java Development Kit: " + cmdFile.nativePath);
                 _dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_OPEN_SETTINGS, "actionScripts.plugins.as3project.mxmlc::MXMLCPlugin"));
 				return;
 			}
@@ -220,6 +219,13 @@ package actionScripts.languageServer
 			// update its eclipse plugin
 			if (IDEModel.getInstance().gradlePath)
 			{
+				if (!ConsoleBuildPluginBase.checkRequireJava(project))
+				{
+					clearOutput();
+					error("Error: Updating Gradle classpath for "+ project.name +" with JDK version is not present.");
+					return false;
+				}
+
 				if(_languageServerProcess)
 				{
 					trace("Error: Groovy language server process already exists!");
@@ -230,10 +236,19 @@ package actionScripts.languageServer
 					EnvironmentExecPaths.GRADLE_ENVIRON_EXEC_PATH,
 					"eclipse"
 				];
-				EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, null, [CommandLineUtil.joinOptions(eclipseCommand)]);
+
+				var envCustomJava:EnvironmentUtilsCusomSDKsVO;
+				if (project is IJavaProject)
+				{
+					envCustomJava = new EnvironmentUtilsCusomSDKsVO();
+					envCustomJava.jdkPath = ((project as IJavaProject).jdkType == JavaTypes.JAVA_8) ?
+							IDEModel.getInstance().java8Path.fileBridge.nativePath : IDEModel.getInstance().javaPathForTypeAhead.fileBridge.nativePath;
+				}
+
+				EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, envCustomJava, [CommandLineUtil.joinOptions(eclipseCommand)]);
 				GlobalEventDispatcher.getInstance().dispatchEvent(new StatusBarEvent(
 					StatusBarEvent.LANGUAGE_SERVER_STATUS,
-					null, "Updating Gradle classpath", false
+					project.name, "Updating Gradle classpath...", false
 				));
 				return true;
 			}
@@ -322,8 +337,7 @@ package actionScripts.languageServer
 		{
 			var output:IDataInput = _languageServerProcess.standardError;
 			var data:String = output.readUTFBytes(output.bytesAvailable);
-			ConsoleUtil.print("shellError " + data + ".");
-			ConsoleOutputter.formatOutput(HtmlFormatter.sprintfa(data, null), 'weak');
+			error(data);
 			trace(data);
 		}
 
@@ -335,9 +349,7 @@ package actionScripts.languageServer
 				//abnormally, it might not have
 				_languageClient.stop();
 				
-				ConsoleOutputter.formatOutput(
-					"Groovy language server exited unexpectedly. Close the " + project.name + " project and re-open it to enable code intelligence.",
-					"warning");
+				warning("Groovy language server exited unexpectedly. Close the " + project.name + " project and re-open it to enable code intelligence.");
 			}
 			_languageServerProcess.removeEventListener(ProgressEvent.STANDARD_ERROR_DATA, languageServerProcess_standardErrorDataHandler);
 			_languageServerProcess.removeEventListener(NativeProcessExitEvent.EXIT, languageServerProcess_exitHandler);
@@ -356,7 +368,7 @@ package actionScripts.languageServer
 			{
 				var output:IDataInput = _gradleProcess.standardOutput;
 				var data:String = output.readUTFBytes(output.bytesAvailable);
-				ConsoleOutputter.formatOutput(HtmlFormatter.sprintfa(data, null), 'weak');
+				print(data);
 			}
 		}
 		
@@ -367,20 +379,11 @@ package actionScripts.languageServer
 			
 			if (data.match(/'eclipse' not found in root project/))
 			{
-				data = _project.name +": Unable to regenerate classpath for Gradle project. Please check that you have included the 'eclipse' plugin, and verify that your dependencies are correct."; 
-				GlobalEventDispatcher.getInstance().dispatchEvent(new ConsoleOutputEvent(
-					ConsoleOutputEvent.CONSOLE_OUTPUT, 
-					data, 
-					false, false, 
-					ConsoleOutputEvent.TYPE_ERROR));
+				error(_project.name + ": Unable to regenerate classpath for Gradle project. Please check that you have included the 'eclipse' plugin, and verify that your dependencies are correct."); 
 			}
 			else
 			{
-				data = "shellError while updating Gradle classpath" + data + ".";
-				GlobalEventDispatcher.getInstance().dispatchEvent(new ConsoleOutputEvent(
-					ConsoleOutputEvent.CONSOLE_OUTPUT, 
-					HtmlFormatter.sprintfa(data, null), false, false, 
-					ConsoleOutputEvent.TYPE_ERROR));
+				error("shellError while updating Gradle classpath: " + data);
 			}
 		}
 		
@@ -393,7 +396,8 @@ package actionScripts.languageServer
 			_gradleProcess = null;
 			
 			GlobalEventDispatcher.getInstance().dispatchEvent(new StatusBarEvent(
-				StatusBarEvent.LANGUAGE_SERVER_STATUS
+				StatusBarEvent.LANGUAGE_SERVER_STATUS,
+				project.name
 			));
 			
 			if (event.exitCode == 0)

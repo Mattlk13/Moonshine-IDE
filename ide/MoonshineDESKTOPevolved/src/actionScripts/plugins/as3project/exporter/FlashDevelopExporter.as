@@ -26,6 +26,7 @@ package actionScripts.plugins.as3project.exporter
 	import actionScripts.plugin.actionscript.as3project.AS3ProjectPlugin;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.core.exporter.FlashDevelopExporterBase;
+	import actionScripts.plugin.actionscript.as3project.vo.BuildOptions;
 	
 	public class FlashDevelopExporter extends FlashDevelopExporterBase
 	{
@@ -92,6 +93,7 @@ package actionScripts.plugins.as3project.exporter
 				project.appendChild(tmpBlankXML);
 			}
 			
+			project.appendChild(p.flashModuleOptions.toXML());
 			project.appendChild(exportPaths(p.targets, <compileTargets />, <compile />, p));
 			project.appendChild(exportPaths(p.hiddenPaths, <hiddenPaths />, <hidden />, p));
 			
@@ -114,10 +116,12 @@ package actionScripts.plugins.as3project.exporter
 				testMovie			:	SerializeUtil.serializeString(p.testMovie),
 				defaultBuildTargets	:	SerializeUtil.serializeString(p.defaultBuildTargets),
 				testMovieCommand	:	SerializeUtil.serializeString(p.testMovieCommand),
+				isDominoVisualEditor: SerializeUtil.serializeBoolean(p.isDominoVisualEditorProject),
                 isPrimeFacesVisualEditor: SerializeUtil.serializeBoolean(p.isPrimeFacesVisualEditorProject),
                 isExportedToExistingSource: SerializeUtil.serializeBoolean(p.isExportedToExistingSource),
                 visualEditorExportPath: SerializeUtil.serializeString(p.visualEditorExportPath),
-				isRoyale: SerializeUtil.serializeBoolean(p.isRoyale)
+				isRoyale: SerializeUtil.serializeBoolean(p.isRoyale),
+				jdkType: SerializeUtil.serializeString(p.jdkType)
 			}
 			if (p.testMovieCommand && p.testMovieCommand != "") 
 			{
@@ -130,16 +134,19 @@ package actionScripts.plugins.as3project.exporter
 			if (p.isMobile) projType = AS3ProjectPlugin.AS3PROJ_AS_ANDROID;
 			
 			var platform:int = !p.air ? AS3ProjectPlugin.AS3PROJ_AS_WEB : AS3ProjectPlugin.AS3PROJ_AS_AIR;
-			if (p.isMobile) platform = (p.buildOptions.targetPlatform == "Android") ? AS3ProjectPlugin.AS3PROJ_AS_ANDROID : AS3ProjectPlugin.AS3PROJ_AS_IOS;
+			if (p.isRoyale) platform = (p.buildOptions.targetPlatform == "SWF") ? AS3ProjectPlugin.AS3PROJ_AS_WEB : AS3ProjectPlugin.AS3PROJ_JS_WEB;
+			else if (p.isMobile) platform = (p.buildOptions.targetPlatform == "Android") ? AS3ProjectPlugin.AS3PROJ_AS_ANDROID : AS3ProjectPlugin.AS3PROJ_AS_IOS;
 			
 			options = <moonshineRunCustomization />;
 			optionPairs = {
-				projectType		:	projType,
-				targetPlatform	:	platform,
-				urlToLaunch		:	p.urlToLaunch ? p.urlToLaunch : "",
-				customUrlToLaunch:	p.customHTMLPath ? p.customHTMLPath : "",
-				launchMethod	:	p.buildOptions.isMobileRunOnSimulator ? "Simulator" : "Device",
-				deviceSimulator	:	p.isMobileHasSimulatedDevice ? p.isMobileHasSimulatedDevice.name : null
+				projectType			:	projType,
+				targetPlatform		:	platform,
+				urlToLaunch			:	p.urlToLaunch ? p.urlToLaunch : "",
+				customUrlToLaunch	:	p.customHTMLPath ? p.customHTMLPath : "",
+				launchMethod		:	p.buildOptions.isMobileRunOnSimulator ? "Simulator" : "Device",
+				deviceConnectType	:   p.buildOptions.isMobileConnectType ? p.buildOptions.isMobileConnectType : BuildOptions.CONNECT_TYPE_USB,
+				deviceSimulator		:	p.isMobileHasSimulatedDevice ? p.isMobileHasSimulatedDevice.name : null,
+				webBrowser			:   p.runWebBrowser
 			}
 			options.appendChild(SerializeUtil.serializePairs(optionPairs, <option />));
 			

@@ -19,13 +19,19 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.impls
 {
+	import actionScripts.managers.StartupHelper;
+	import actionScripts.plugins.build.ConsoleBuildPluginBase;
+	import actionScripts.valueObjects.HelperConstants;
+	import actionScripts.valueObjects.ProjectVO;
+
 	import flash.desktop.NativeApplication;
 	import flash.display.DisplayObject;
 	import flash.display.Screen;
 	import flash.display.Stage;
 	import flash.filesystem.File;
 	import flash.ui.Keyboard;
-	
+
+	import mx.collections.ArrayCollection;
 	import mx.controls.HTML;
 	import mx.core.FlexGlobals;
 	import mx.core.IFlexDisplayObject;
@@ -33,6 +39,7 @@ package actionScripts.impls
 	import mx.resources.ResourceManager;
 	
 	import actionScripts.events.ChangeLineEncodingEvent;
+	import actionScripts.events.DebugActionEvent;
 	import actionScripts.events.LanguageServerMenuEvent;
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
@@ -41,12 +48,13 @@ package actionScripts.impls
 	import actionScripts.events.StartupHelperEvent;
 	import actionScripts.factory.FileLocation;
 	import actionScripts.interfaces.IFlexCoreBridge;
+	import actionScripts.interfaces.IModulesFinder;
 	import actionScripts.plugin.actionscript.as3project.AS3ProjectPlugin;
 	import actionScripts.plugin.actionscript.as3project.files.HiddenFilesPlugin;
 	import actionScripts.plugin.actionscript.as3project.files.SaveFilesPlugin;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.console.ConsolePlugin;
-	import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;
+	import actionScripts.plugin.core.compiler.ProjectActionEvent;
 	import actionScripts.plugin.core.mouse.MouseManagerPlugin;
 	import actionScripts.plugin.errors.UncaughtErrorsPlugin;
 	import actionScripts.plugin.findResources.FindResourcesPlugin;
@@ -55,6 +63,7 @@ package actionScripts.impls
 	import actionScripts.plugin.help.HelpPlugin;
 	import actionScripts.plugin.locations.LocationsPlugin;
 	import actionScripts.plugin.organizeImports.OrganizeImportsPlugin;
+	import actionScripts.plugin.outline.OutlinePlugin;
 	import actionScripts.plugin.problems.ProblemsPlugin;
 	import actionScripts.plugin.project.ProjectPlugin;
 	import actionScripts.plugin.projectPanel.ProjectPanelPlugin;
@@ -73,24 +82,33 @@ package actionScripts.impls
 	import actionScripts.plugin.syntax.MXMLSyntaxPlugin;
 	import actionScripts.plugin.syntax.XMLSyntaxPlugin;
 	import actionScripts.plugin.templating.TemplatingPlugin;
+	import actionScripts.plugin.workspace.WorkspacePlugin;
 	import actionScripts.plugins.ant.AntBuildPlugin;
 	import actionScripts.plugins.ant.AntBuildScreen;
 	import actionScripts.plugins.as3project.exporter.FlashBuilderExporter;
 	import actionScripts.plugins.as3project.exporter.FlashDevelopExporter;
 	import actionScripts.plugins.as3project.importer.FlashBuilderImporter;
 	import actionScripts.plugins.as3project.importer.FlashDevelopImporter;
+	import actionScripts.plugins.as3project.mxmlc.MXMLCFlashModulePlugin;
 	import actionScripts.plugins.as3project.mxmlc.MXMLCJavaScriptPlugin;
 	import actionScripts.plugins.as3project.mxmlc.MXMLCPlugin;
 	import actionScripts.plugins.away3d.Away3DPlugin;
 	import actionScripts.plugins.clean.CleanProject;
 	import actionScripts.plugins.core.ProjectBridgeImplBase;
+	import actionScripts.plugins.debugAdapter.DebugAdapterPlugin;
+	import actionScripts.plugins.domino.DominoPlugin;
+	import actionScripts.plugins.externalEditors.ExternalEditorsPlugin;
 	import actionScripts.plugins.git.GitHubPlugin;
 	import actionScripts.plugins.gradle.GradleBuildPlugin;
-	import actionScripts.plugins.help.view.TourDeFlexContentsView;
 	import actionScripts.plugins.help.view.events.VisualEditorEvent;
+	import actionScripts.plugins.httpServer.HttpServerPlugin;
+	import actionScripts.plugins.js.JavaScriptPlugin;
 	import actionScripts.plugins.maven.MavenBuildPlugin;
+	import actionScripts.plugins.menu.MultiMenuEventsNotifierPlugin;
 	import actionScripts.plugins.nativeFiles.FileAssociationPlugin;
 	import actionScripts.plugins.nativeFiles.FilesCopyPlugin;
+	import actionScripts.plugins.royale.RoyaleApiReportConfiguratorPlugin;
+	import actionScripts.plugins.royale.RoyaleApiReportPlugin;
 	import actionScripts.plugins.run.RunJavaProject;
 	import actionScripts.plugins.startup.StartupHelperPlugin;
 	import actionScripts.plugins.svn.SVNPlugin;
@@ -99,21 +117,24 @@ package actionScripts.impls
 	import actionScripts.plugins.versionControl.VersionControlPlugin;
 	import actionScripts.plugins.versionControl.event.VersionControlEvent;
 	import actionScripts.plugins.visualEditor.PreviewPrimeFacesProjectPlugin;
-	import actionScripts.plugins.vscodeDebug.VSCodeDebugProtocolPlugin;
 	import actionScripts.ui.IPanelWindow;
 	import actionScripts.ui.editor.BasicTextEditor;
 	import actionScripts.ui.menu.MenuPlugin;
 	import actionScripts.ui.menu.vo.MenuItem;
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
 	import actionScripts.ui.tabview.CloseTabEvent;
+	import actionScripts.ui.tabview.TabEvent;
 	import actionScripts.utils.EnvironmentSetupUtils;
 	import actionScripts.utils.HelperUtils;
+	import actionScripts.utils.JavaVersionReader;
+	import actionScripts.utils.ModulesFinder;
 	import actionScripts.utils.SHClassTest;
 	import actionScripts.utils.SWFTrustPolicyModifier;
 	import actionScripts.utils.SoftwareVersionChecker;
 	import actionScripts.utils.Untar;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
+	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
 	
 	import components.containers.DownloadNewFlexSDK;
 	import components.popup.DefineFolderAccessPopup;
@@ -121,7 +142,6 @@ package actionScripts.impls
 	import visualEditor.plugin.ExportToFlexPlugin;
 	import visualEditor.plugin.ExportToPrimeFacesPlugin;
 	import visualEditor.plugin.VisualEditorRefreshFilesPlugin;
-	import actionScripts.plugin.outline.OutlinePlugin;
 
     public class IFlexCoreBridgeImp extends ProjectBridgeImplBase implements IFlexCoreBridge
 	{
@@ -172,11 +192,6 @@ package actionScripts.impls
 		{
 			FlashBuilderExporter.export(project, file.fileBridge.getFile as File);
 		}
-		
-		public function getTourDeView():IPanelWindow
-		{
-			return (new TourDeFlexContentsView);
-		}
 
 		public function getTourDeEditor(swfSource:String):BasicTextEditor
 		{
@@ -187,6 +202,7 @@ package actionScripts.impls
 		{
 			return [
 				SettingsPlugin, 
+				WorkspacePlugin,
 				ProjectPlugin,
 				ProjectPanelPlugin,
 				TemplatingPlugin,
@@ -215,8 +231,10 @@ package actionScripts.impls
 		public function getDefaultPlugins():Array
 		{
 			return [
+				MultiMenuEventsNotifierPlugin,
 				MXMLCPlugin,
 				MXMLCJavaScriptPlugin,
+				MXMLCFlashModulePlugin,
 				SWFLauncherPlugin,
 				AS3ProjectPlugin,
 				AS3SyntaxPlugin,
@@ -231,7 +249,7 @@ package actionScripts.impls
 				CleanProject,
 				VersionControlPlugin,
 				SVNPlugin,
-				VSCodeDebugProtocolPlugin,
+				DebugAdapterPlugin,
 				SaveFilesPlugin,
 				OutlinePlugin,
 				ProblemsPlugin,
@@ -242,15 +260,22 @@ package actionScripts.impls
 				RenamePlugin,
 				Away3DPlugin,
 				GitHubPlugin,
-				HiddenFilesPlugin
+				HiddenFilesPlugin,
+                JavaScriptPlugin,
+				DominoPlugin,
+				HttpServerPlugin,
+				RoyaleApiReportConfiguratorPlugin,
+				RoyaleApiReportPlugin,
+				ExternalEditorsPlugin
 			];
 		}
 		
 		public function getPluginsNotToShowInSettings():Array
 		{
-			return [FileAssociationPlugin, FilesCopyPlugin, ProjectPanelPlugin, ProjectPlugin, HelpPlugin, FindReplacePlugin, FindResourcesPlugin, RecentlyOpenedPlugin, SWFLauncherPlugin, AS3ProjectPlugin, CleanProject, VSCodeDebugProtocolPlugin,
+			return [FileAssociationPlugin, FilesCopyPlugin, ProjectPanelPlugin, ProjectPlugin, HelpPlugin, FindReplacePlugin, FindResourcesPlugin, RecentlyOpenedPlugin, SWFLauncherPlugin, AS3ProjectPlugin, CleanProject, DebugAdapterPlugin,
 					MXMLCJavaScriptPlugin, OutlinePlugin, ProblemsPlugin, SymbolsPlugin, ReferencesPlugin, LocationsPlugin, StartupHelperPlugin, RenamePlugin, SearchPlugin, OrganizeImportsPlugin, Away3DPlugin, MouseManagerPlugin, ExportToFlexPlugin, ExportToPrimeFacesPlugin,
-					UncaughtErrorsPlugin, HiddenFilesPlugin, RunJavaProject, VisualEditorRefreshFilesPlugin, PreviewPrimeFacesProjectPlugin, VersionControlPlugin];
+					UncaughtErrorsPlugin, HiddenFilesPlugin, RunJavaProject, VisualEditorRefreshFilesPlugin, PreviewPrimeFacesProjectPlugin, VersionControlPlugin, HttpServerPlugin, RoyaleApiReportConfiguratorPlugin, RoyaleApiReportPlugin,
+					MultiMenuEventsNotifierPlugin, MXMLCFlashModulePlugin, WorkspacePlugin];
 		}
 		
 		public function getQuitMenuItem():MenuItem
@@ -297,6 +322,12 @@ package actionScripts.impls
 					new MenuItem("Close All", null, null, CloseTabEvent.EVENT_CLOSE_ALL_TABS),
 					/*new MenuItem("Define Workspace", null, ProjectEvent.SET_WORKSPACE),*/
 					new MenuItem(null),
+					new MenuItem(resourceManager.getString('resources','WORKSPACE'),[
+						new MenuItem(resourceManager.getString('resources','WORKSPACE_SAVE_AS'), null, null, WorkspacePlugin.EVENT_SAVE_AS),
+						new MenuItem(resourceManager.getString('resources','WORKSPACE_NEW'), null, null, WorkspacePlugin.EVENT_NEW),
+						new MenuItem(resourceManager.getString('resources','WORKSPACE_LOAD'), null, null, WorkspacePlugin.EVENT_LOAD)
+					]),
+					new MenuItem(null),
 					new MenuItem(resourceManager.getString('resources','LINE_ENDINGS'), [
 						new MenuItem(resourceManager.getString('resources','WINDOWS_LINE_ENDINGS'), null, null, ChangeLineEncodingEvent.EVENT_CHANGE_TO_WIN),
 						new MenuItem(resourceManager.getString('resources','UNIX_LINE_ENDINGS'), null, null, ChangeLineEncodingEvent.EVENT_CHANGE_TO_UNIX),
@@ -305,7 +336,7 @@ package actionScripts.impls
 				]),
 				new MenuItem(resourceManager.getString('resources','EDIT'), [
 					new MenuItem(resourceManager.getString('resources','FIND'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS,
-								ProjectMenuTypes.JAVA, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.VISUAL_EDITOR_FLEX, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], FindReplacePlugin.EVENT_FIND_NEXT,
+								ProjectMenuTypes.JAVA, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES,ProjectMenuTypes.VISUAL_EDITOR_DOMINO, ProjectMenuTypes.VISUAL_EDITOR_FLEX, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], FindReplacePlugin.EVENT_FIND_NEXT,
 						'f', [Keyboard.COMMAND],
 						'f', [Keyboard.CONTROL]),
 					/*new MenuItem(resourceManager.getString('resources','FINDE_PREV'), null, null, FindReplacePlugin.EVENT_FIND_PREV,
@@ -314,6 +345,8 @@ package actionScripts.impls
 					new MenuItem(resourceManager.getString('resources','FIND_RESOURCES'), null, null, FindResourcesPlugin.EVENT_FIND_RESOURCES,
 						'r', [Keyboard.COMMAND, Keyboard.SHIFT],
 						'r', [Keyboard.CONTROL, Keyboard.SHIFT]),
+					new MenuItem(resourceManager.getString('resources','DOCUMENT_SYMBOLS'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], SymbolsPlugin.EVENT_OPEN_DOCUMENT_SYMBOLS_VIEW),
+					new MenuItem(resourceManager.getString('resources','WORKSPACE_SYMBOLS'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], SymbolsPlugin.EVENT_OPEN_WORKSPACE_SYMBOLS_VIEW),
 					new MenuItem(null),
 					new MenuItem(resourceManager.getString('resources','GO_TO_LINE'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], FindReplacePlugin.EVENT_GO_TO_LINE,
 						'l', [Keyboard.COMMAND],
@@ -321,13 +354,16 @@ package actionScripts.impls
 					new MenuItem(resourceManager.getString('resources','GO_TO_DEFINITION'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], LanguageServerMenuEvent.EVENT_MENU_GO_TO_DEFINITION),
 					new MenuItem(resourceManager.getString('resources','GO_TO_TYPE_DEFINITION'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], LanguageServerMenuEvent.EVENT_MENU_GO_TO_TYPE_DEFINITION),
 					new MenuItem(resourceManager.getString('resources','GO_TO_IMPLEMENTATION'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], LanguageServerMenuEvent.EVENT_MENU_GO_TO_IMPLEMENTATION),
+					new MenuItem(resourceManager.getString('resources','GO_TO_REFERENCES'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], ReferencesPlugin.EVENT_OPEN_GO_TO_REFERENCES_VIEW, 
+						"f",[Keyboard.CONTROL, Keyboard.SHIFT], 
+						Keyboard.F7, [Keyboard.ALTERNATE]),
 					new MenuItem(null),
 					new MenuItem(resourceManager.getString('resources','RENAME_SYMBOL'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS], RenameEvent.EVENT_OPEN_RENAME_SYMBOL_VIEW),
 					new MenuItem(resourceManager.getString('resources', 'ORGANIZE_IMPORTS'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], LanguageServerMenuEvent.EVENT_MENU_ORGANIZE_IMPORTS,
 						'i', [Keyboard.COMMAND, Keyboard.SHIFT],
 						'i', [Keyboard.CONTROL, Keyboard.SHIFT]),
 					new MenuItem(null),
-					new MenuItem(resourceManager.getString('resources', 'DUPLICATE'), null, [ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.VISUAL_EDITOR_FLEX], VisualEditorEvent.DUPLICATE_ELEMENT,
+					new MenuItem(resourceManager.getString('resources', 'DUPLICATE'), null, [ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.VISUAL_EDITOR_FLEX,ProjectMenuTypes.VISUAL_EDITOR_DOMINO], VisualEditorEvent.DUPLICATE_ELEMENT,
 						'u', [Keyboard.COMMAND], 'u', [Keyboard.CONTROL])
 				]),
 				new MenuItem(resourceManager.getString('resources','VIEW'), [
@@ -335,12 +371,15 @@ package actionScripts.impls
 					new MenuItem(resourceManager.getString('resources','FULLSCREEN'), null, null, FullscreenPlugin.EVENT_FULLSCREEN),
 					new MenuItem(resourceManager.getString('resources','OUTLINE_VIEW'), null, null, OutlinePlugin.EVENT_OUTLINE),
 					new MenuItem(resourceManager.getString('resources','PROBLEMS_VIEW'), null, null, ProblemsPlugin.EVENT_PROBLEMS),
-					new MenuItem(resourceManager.getString('resources','DEBUG_VIEW'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], VSCodeDebugProtocolPlugin.EVENT_SHOW_HIDE_DEBUG_VIEW),
+					new MenuItem(resourceManager.getString('resources','DEBUG_VIEW'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], DebugAdapterPlugin.EVENT_SHOW_HIDE_DEBUG_VIEW),
 					new MenuItem(resourceManager.getString('resources','HOME'), null, null, SplashScreenPlugin.EVENT_SHOW_SPLASH),
 					new MenuItem(null), //separator
-					new MenuItem(resourceManager.getString('resources','DOCUMENT_SYMBOLS'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], SymbolsPlugin.EVENT_OPEN_DOCUMENT_SYMBOLS_VIEW),
-					new MenuItem(resourceManager.getString('resources','WORKSPACE_SYMBOLS'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], SymbolsPlugin.EVENT_OPEN_WORKSPACE_SYMBOLS_VIEW),
-					new MenuItem(resourceManager.getString('resources','FIND_REFERENCES'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JAVA, ProjectMenuTypes.GRAILS, ProjectMenuTypes.HAXE], ReferencesPlugin.EVENT_OPEN_FIND_REFERENCES_VIEW, "f7",[Keyboard.COMMAND], "f7", [Keyboard.ALTERNATE])
+					new MenuItem(resourceManager.getString('resources','NAVIGATE_NEXT_PREVIOUS'), null, null, TabEvent.EVENT_TAB_NAVIGATE_NEXT_PREVIOUS_HOTKEYS,
+						"\t", [Keyboard.CONTROL],
+						"tab", [Keyboard.CONTROL]),
+					new MenuItem(resourceManager.getString('resources','NAVIGATE_EDITORS_LIST'), null, null, TabEvent.EVENT_TAB_NAVIGATE_EDITORS_LIST_HOTKEYS,
+						"\t", [Keyboard.CONTROL, Keyboard.SHIFT],
+						"tab", [Keyboard.CONTROL, Keyboard.SHIFT])
 				]),
 				new MenuItem(resourceManager.getString('resources','PROJECT'),[
 					new MenuItem(resourceManager.getString('resources','OPEN_IMPORT_PROJECT'), null, null, ProjectEvent.EVENT_IMPORT_FLASHBUILDER_PROJECT, 
@@ -349,22 +388,24 @@ package actionScripts.impls
 					new MenuItem(resourceManager.getString('resources','IMPORT_ARCHIVE_PROJECT'), null, null, ProjectEvent.EVENT_IMPORT_PROJECT_ARCHIVE)
 				]),
 				new MenuItem(resourceManager.getString('resources','DEBUG'),[
-					new MenuItem(resourceManager.getString('resources','BUILD_AND_DEBUG'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.BUILD_AND_DEBUG,
+					new MenuItem(resourceManager.getString('resources','BUILD_AND_DEBUG'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.HAXE], ProjectActionEvent.BUILD_AND_DEBUG,
 						"d", [Keyboard.COMMAND],
 						"d", [Keyboard.CONTROL]),
-					new MenuItem(null),
-					new MenuItem(resourceManager.getString('resources','STEP_OVER'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.DEBUG_STEPOVER,
+					new MenuItem(null),					
+					new MenuItem(resourceManager.getString('resources','STEP_OVER'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.HAXE], DebugActionEvent.DEBUG_STEP_OVER,
 						"e",[Keyboard.COMMAND],
 						"f6", []),
-					new MenuItem(resourceManager.getString('resources','RESUME'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.CONTINUE_EXECUTION,
+					new MenuItem(resourceManager.getString('resources','STEP_INTO'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.HAXE], DebugActionEvent.DEBUG_STEP_INTO),
+					new MenuItem(resourceManager.getString('resources','STEP_OUT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.HAXE], DebugActionEvent.DEBUG_STEP_OUT),
+					new MenuItem(resourceManager.getString('resources','RESUME'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.HAXE], DebugActionEvent.DEBUG_RESUME,
 						"r",[Keyboard.COMMAND],
 						"f8", []),
-					new MenuItem(resourceManager.getString('resources','STOP'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.TERMINATE_EXECUTION,
+					new MenuItem(resourceManager.getString('resources','STOP'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.HAXE], DebugActionEvent.DEBUG_STOP,
 						"t",[Keyboard.COMMAND],
 						"t", [Keyboard.CONTROL])
 				]),
 				new MenuItem(resourceManager.getString('resources','SUBVERSION'), [
-					new MenuItem((ConstantsCoreVO.IS_MACOS && !UtilsCore.isSVNPresent()) ? "Grant Permission" : resourceManager.getString('resources','MANAGE_REPOSITORIES'), null, null, VersionControlEvent.OPEN_MANAGE_REPOSITORIES_SVN),
+					new MenuItem(resourceManager.getString('resources','MANAGE_REPOSITORIES'), null, null, VersionControlEvent.OPEN_MANAGE_REPOSITORIES_SVN),
 					new MenuItem(null),
 					new MenuItem(resourceManager.getString('resources','COMMIT'), null, [ProjectMenuTypes.SVN_PROJECT], SVNPlugin.COMMIT_REQUEST),
 					new MenuItem(resourceManager.getString('resources','UPDATE'), null, [ProjectMenuTypes.SVN_PROJECT], SVNPlugin.UPDATE_REQUEST)
@@ -417,8 +458,22 @@ package actionScripts.impls
 						{
 							firstMenuItems.splice(i+1, 0, (new MenuItem(null)));
 							if (ConstantsCoreVO.IS_APP_STORE_VERSION) firstMenuItems.splice(i+2, 0, (new MenuItem("Access Manager", null, null, ProjectEvent.ACCESS_MANAGER)));
-							firstMenuItems.splice(i+3, 0, (new MenuItem(ConstantsCoreVO.IS_BUNDLED_SDK_PRESENT ? "Extract Bundled SDK" : "Moonshine Helper Application", null, null, ConstantsCoreVO.IS_BUNDLED_SDK_PRESENT ? StartupHelperEvent.EVENT_SDK_UNZIP_REQUEST : StartupHelperEvent.EVENT_MOONSHINE_HELPER_DOWNLOAD_REQUEST)));
+							firstMenuItems.splice(i+3, 0, (new MenuItem(ConstantsCoreVO.IS_BUNDLED_SDK_PRESENT ? resourceManager.getString('resources','EXTRACT_BUNDLED_SDK') : resourceManager.getString('resources','MOONSHINE_HELPER_APP'), null, null, ConstantsCoreVO.IS_BUNDLED_SDK_PRESENT ? StartupHelperEvent.EVENT_SDK_UNZIP_REQUEST : StartupHelperEvent.EVENT_MOONSHINE_HELPER_DOWNLOAD_REQUEST)));
 							break;
+						}
+					}
+				}
+				
+				// let's not avail 'Debug' menu in the App Store version
+				// due to the problem we seen as #701
+				if (!ConstantsCoreVO.IS_APP_STORE_VERSION)
+				{
+					var debugMenuItems:Vector.<MenuItem> = wmn[4].items;
+					for (var j:int; j < debugMenuItems.length; j++)
+					{
+						if (debugMenuItems[j].enableTypes)
+						{
+							debugMenuItems[j].enableTypes.push(ProjectMenuTypes.JS_ROYALE);
 						}
 					}
 				}
@@ -449,14 +504,24 @@ package actionScripts.impls
 			//versionChecker.getJavaPath(completionHandler);
 		}
 		
-		public function reAdjustApplicationSize(width:Number, height:Number):void
+		public function reAdjustApplicationSize(width:Number=NaN, height:Number=NaN):void
 		{
 			var tmpStage:Stage = FlexGlobals.topLevelApplication.stage as Stage;
-			tmpStage.nativeWindow.width = width;
-			tmpStage.nativeWindow.height = height;
-			
-			tmpStage.nativeWindow.x = (Screen.mainScreen.visibleBounds.width - width)/2;
-			tmpStage.nativeWindow.y = (Screen.mainScreen.visibleBounds.height - height)/2;
+			if (!isNaN(width))
+			{
+				tmpStage.nativeWindow.width = width;
+				tmpStage.nativeWindow.height = height;
+				tmpStage.nativeWindow.x = (Screen.mainScreen.visibleBounds.width - width)/2;
+				tmpStage.nativeWindow.y = (Screen.mainScreen.visibleBounds.height - height)/2;
+			}
+			else
+			{
+				FlexGlobals.topLevelApplication.callLater(function():void
+				{
+					tmpStage.nativeWindow.x = (Screen.mainScreen.visibleBounds.width - tmpStage.nativeWindow.width)/2;
+					tmpStage.nativeWindow.y = (Screen.mainScreen.visibleBounds.height - tmpStage.nativeWindow.height)/2;
+				});
+			}
 		}
 		
 		public function getNewAntBuild():IFlexDisplayObject
@@ -498,15 +563,46 @@ package actionScripts.impls
 			
 			return appVersion;
 		}
+
+		public function get defaultInstallationPathSDKs():String
+		{
+			return HelperConstants.DEFAULT_INSTALLATION_PATH.nativePath;
+		}
+
+		public function setMSDKILocalPathConfig():void
+		{
+			StartupHelper.setLocalPathConfig();
+		}
 		
 		public function updateToCurrentEnvironmentVariable():void
 		{
 			EnvironmentSetupUtils.getInstance().updateToCurrentEnvironmentVariable();
 		}
 		
-		public function initCommandGenerationToSetLocalEnvironment(completion:Function, customSDK:String=null, withCommands:Array=null):void
+		public function initCommandGenerationToSetLocalEnvironment(completion:Function, customSDKs:EnvironmentUtilsCusomSDKsVO=null, withCommands:Array=null):void
 		{
-			EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(completion, customSDK, withCommands);
+			EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(completion, customSDKs, withCommands);
+		}
+		
+		public function getExternalEditors():ArrayCollection
+		{
+			return ExternalEditorsPlugin.editors;
+		}
+		
+		public function getModulesFinder():IModulesFinder
+		{
+			return (new ModulesFinder());
+		}
+		
+		public function getJavaVersion(javaPath:String=null, onComplete:Function=null):void
+		{
+			var javaVersionReader:JavaVersionReader = new JavaVersionReader();
+			javaVersionReader.readVersion(javaPath, onComplete);
+		}
+
+		public function checkRequireJava(project:ProjectVO=null):Boolean
+		{
+			return ConsoleBuildPluginBase.checkRequireJava(project);
 		}
 	}
 }

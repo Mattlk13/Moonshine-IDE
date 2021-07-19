@@ -18,19 +18,15 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.haxe.hxproject.vo
 {
-    import mx.utils.StringUtil;
-    
-    import actionScripts.factory.FileLocation;
     import actionScripts.utils.SerializeUtil;
-    import actionScripts.utils.UtilsCore;
-    import actionScripts.valueObjects.MobileDeviceVO;
-    import actionScripts.valueObjects.SDKReferenceVO;
+
+    import mx.utils.StringUtil;
 
 	public class HaxeBuildOptions 
 	{
 		public static var defaultOptions:HaxeBuildOptions = new HaxeBuildOptions();
 		
-		public var directives:String;
+		public var directives:Vector.<String>;
 		public var flashStrict:Boolean = false;
 		public var noInlineOnDebug:Boolean = false;
 		public var mainClass:String;
@@ -38,7 +34,7 @@ package actionScripts.plugin.haxe.hxproject.vo
 		public var additional:String;
 		
 		/**
-		 * @return mxmlc arguments with defaults removed
+		 * @return haxe arguments with defaults removed
 		 */
 		public function getArguments():String 
 		{
@@ -55,7 +51,17 @@ package actionScripts.plugin.haxe.hxproject.vo
 					args += " -"+p+"="+pairs[p];
 				}
 			}
-			if (additional && (StringUtil.trim(additional).length > 0)) args += " "+additional.replace("\n", " ");
+			if(directives)
+			{
+				for each(var directive:String in directives)
+				{
+					args += " -D " + directive;
+				}
+			}
+			if (additional && (StringUtil.trim(additional).length > 0))
+			{
+				args += " " + additional.replace("\n", " ");
+			}
 			return args;
 		}
 
@@ -67,7 +73,7 @@ package actionScripts.plugin.haxe.hxproject.vo
 			enabledebug							= SerializeUtil.deserializeBoolean(options.@enabledebug);
 			noInlineOnDebug						= SerializeUtil.deserializeBoolean(options.@noInlineOnDebug);
 			flashStrict							= SerializeUtil.deserializeBoolean(options.@flashStrict);
-			directives							= SerializeUtil.deserializeString(options.@directives);
+			directives							= SerializeUtil.deserializeDelimitedString(options.@directives);
 			additional							= SerializeUtil.deserializeString(options.@additional);
 		}
 		
@@ -80,7 +86,7 @@ package actionScripts.plugin.haxe.hxproject.vo
 				enabledebug							:	SerializeUtil.serializeBoolean(enabledebug),
 				noInlineOnDebug						:	SerializeUtil.serializeBoolean(noInlineOnDebug),
 				flashStrict							:	SerializeUtil.serializeBoolean(flashStrict),
-				directives							:	SerializeUtil.serializeString(directives),
+				directives							:	SerializeUtil.serializeDelimitedString(directives),
 				additional							:	SerializeUtil.serializeString(additional)
 			}
 			

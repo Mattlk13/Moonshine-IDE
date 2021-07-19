@@ -37,6 +37,9 @@ package actionScripts.plugin.actionscript.as3project.vo
 		public static const IOS_PACKAGING_STANDARD:String = "IOS_PACKAGING_STANDARD";
 		//fast bypasses bytecode translation interprets the SWF
 		public static const IOS_PACKAGING_FAST:String = "IOS_PACKAGING_FAST";
+
+		public static const CONNECT_TYPE_WIFI:String = "WiFi";
+		public static const CONNECT_TYPE_USB:String = "USB";
 		
 		public var accessible:Boolean = false;
 		public var allowSourcePathOverlap:Boolean = false;
@@ -58,6 +61,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 		public var staticLinkRSL:Boolean = false;
 		public var additional:String;
 		public var compilerConstants:String;
+		public var sourceMap:Boolean;
 		public var customSDKPath:String;
 		public var certAndroid:String;
 		public var certAndroidPassword:String;
@@ -98,6 +102,16 @@ package actionScripts.plugin.actionscript.as3project.vo
 		public function get isMobileHasSimulatedDevice():MobileDeviceVO
 		{
 			return _isMobileHasSimulatedDevice;
+		}
+		
+		private var _isMobileConnectType:String = CONNECT_TYPE_USB;
+		public function set isMobileConnectType(value:String):void
+		{
+			_isMobileConnectType = value;
+		}
+		public function get isMobileConnectType():String
+		{
+			return _isMobileConnectType;
 		}
 		
 		public function get customSDK():FileLocation
@@ -180,6 +194,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 				linkReport							= SerializeUtil.deserializeString(options.@linkReport);
 				additional							= SerializeUtil.deserializeString(options.@additional);
 				compilerConstants					= SerializeUtil.deserializeString(options.@compilerConstants);
+				sourceMap 							= SerializeUtil.deserializeBoolean(options.@sourceMap);
 				customSDKPath						= SerializeUtil.deserializeString(options.@customSDK);
 				antBuildPath						= SerializeUtil.deserializeString(options.@antBuildPath);
 			}
@@ -221,6 +236,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 				linkReport							:	SerializeUtil.serializeString(linkReport),
 				additional							:	SerializeUtil.serializeString(additional),
 				compilerConstants					:	SerializeUtil.serializeString(compilerConstants),
+				sourceMap							: 	SerializeUtil.serializeBoolean(sourceMap),
 				customSDK							:	SerializeUtil.serializeString(customSDKPath),
 				antBuildPath						:	SerializeUtil.serializeString(antBuildPath)
 			}
@@ -262,7 +278,8 @@ package actionScripts.plugin.actionscript.as3project.vo
                 "warnings"								:	warnings,
                 "verbose-stacktraces"					:	verboseStackTraces,
                 "link-report"							:	linkReport,
-                "static-link-runtime-shared-libraries"	:	staticLinkRSL
+                "static-link-runtime-shared-libraries"	:	staticLinkRSL,
+				"source-map"							:   sourceMap
             }
         }
     }

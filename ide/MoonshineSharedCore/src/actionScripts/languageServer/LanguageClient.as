@@ -107,7 +107,8 @@ package actionScripts.languageServer
 		private static const METHOD_INITIALIZED:String = "initialized";
 		private static const METHOD_SHUTDOWN:String = "shutdown";
 		private static const METHOD_EXIT:String = "exit";
-		private static const METHOD_CANCEL_REQUEST:String = "$/cancelRequest";
+		private static const METHOD_DOLLAR__CANCEL_REQUEST:String = "$/cancelRequest";
+		private static const METHOD_DOLLAR__PROGRESS:String = "$/progress";
 		private static const METHOD_TEXT_DOCUMENT__DID_CHANGE:String = "textDocument/didChange";
 		private static const METHOD_TEXT_DOCUMENT__DID_OPEN:String = "textDocument/didOpen";
 		private static const METHOD_TEXT_DOCUMENT__DID_CLOSE:String = "textDocument/didClose";
@@ -131,6 +132,8 @@ package actionScripts.languageServer
 		private static const METHOD_WORKSPACE__DID_CHANGE_CONFIGURATION:String = "workspace/didChangeConfiguration";
 		private static const METHOD_WINDOW__LOG_MESSAGE:String = "window/logMessage";
 		private static const METHOD_WINDOW__SHOW_MESSAGE:String = "window/showMessage";
+		private static const METHOD_WINDOW__WORK_DONE_PROGRESS__CREATE:String = "window/workDoneProgress/create";
+		private static const METHOD_WINDOW__WORK_DONE_PROGRESS__CANCEL:String = "window/workDoneProgress/cancel";
 		private static const METHOD_CLIENT__REGISTER_CAPABILITY:String = "client/registerCapability";
 		private static const METHOD_CLIENT__UNREGISTER_CAPABILITY:String = "client/unregisterCapability";
 		private static const METHOD_TELEMETRY__EVENT:String = "telemetry/event";
@@ -167,7 +170,7 @@ package actionScripts.languageServer
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_DEFINITION_LINK, definitionLinkHandler);
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_WORKSPACE_SYMBOLS, workspaceSymbolsHandler);
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_DOCUMENT_SYMBOLS, documentSymbolsHandler);
-			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_FIND_REFERENCES, findReferencesHandler);
+			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_GO_TO_REFERENCES, findReferencesHandler);
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_CODE_ACTION, codeActionHandler);
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_GO_TO_DEFINITION, gotoDefinitionHandler);
 			_globalDispatcher.addEventListener(LanguageServerEvent.EVENT_GO_TO_TYPE_DEFINITION, gotoTypeDefinitionHandler);
@@ -225,21 +228,32 @@ package actionScripts.languageServer
 		private var _socketBuffer:String = "";
 		private var _socketBytes:ByteArray = new ByteArray();
 		private var _gotoDefinitionLookup:Dictionary = new Dictionary();
+		private var _previousDefinitionLinkID:int = -1;
 		private var _definitionLinkLookup:Dictionary = new Dictionary();
+		private var _previousFindReferencesID:int = -1;
 		private var _findReferencesLookup:Dictionary = new Dictionary();
 		private var _gotoTypeDefinitionLookup:Dictionary = new Dictionary();
 		private var _gotoImplementationLookup:Dictionary = new Dictionary();
+		private var _previousCodeActionID:int = -1;
 		private var _codeActionLookup:Dictionary = new Dictionary();
+		private var _previousResolveCompletionID:int = -1;
 		private var _resolveCompletionLookup:Dictionary = new Dictionary();
+		private var _previousCompletionID:int = -1;
 		private var _completionLookup:Dictionary = new Dictionary();
+		private var _previousHoverID:int = -1;
 		private var _hoverLookup:Dictionary = new Dictionary();
+		private var _previousSignatureHelpID:int = -1;
 		private var _signatureHelpLookup:Dictionary = new Dictionary();
+		private var _previousDocumentSymbolsURI:String = null;
+		private var _previousDocumentSymbolsID:int = -1;
 		private var _documentSymbolsLookup:Dictionary = new Dictionary();
+		private var _previousWorkspaceSymbolsID:int = -1;
 		private var _workspaceSymbolsLookup:Dictionary = new Dictionary();
 		private var _schemes:Vector.<String> = new <String>[]
 		private var _savedDiagnostics:Object = {};
 		private var _idToRequest:Object = {};
 
+		protected var _commandListeners:Object = {};
 		protected var _notificationListeners:Object = {};
 
 		private var _capabilities:Object = null;
@@ -368,7 +382,7 @@ package actionScripts.languageServer
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_DEFINITION_LINK, definitionLinkHandler);
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_WORKSPACE_SYMBOLS, workspaceSymbolsHandler);
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_DOCUMENT_SYMBOLS, documentSymbolsHandler);
-			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_FIND_REFERENCES, findReferencesHandler);
+			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_GO_TO_REFERENCES, findReferencesHandler);
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_CODE_ACTION, codeActionHandler);
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_GO_TO_DEFINITION, gotoDefinitionHandler);
 			_globalDispatcher.removeEventListener(LanguageServerEvent.EVENT_GO_TO_TYPE_DEFINITION, gotoTypeDefinitionHandler);
@@ -442,6 +456,39 @@ package actionScripts.languageServer
 			}
 
 			return id;
+		}
+
+		public function addCommandListener(command:String, listener:Function):void
+		{
+			if(!(command in this._commandListeners))
+			{
+				this._commandListeners[command] = new <Function>[];
+			}
+			var listeners:Vector.<Function> = this._commandListeners[command] as Vector.<Function>;
+			var index:int = listeners.indexOf(listener);
+			if(index != -1)
+			{
+				//already added
+				return;
+			}
+			listeners.push(listener);
+		}
+
+		public function removeCommandListener(command:String, listener:Function):void
+		{
+			if(!(command in this._commandListeners))
+			{
+				//nothing to remove
+				return;
+			}
+			var listeners:Vector.<Function> = this._commandListeners[command] as Vector.<Function>;
+			var index:int = listeners.indexOf(listener);
+			if(index == -1)
+			{
+				//nothing to remove
+				return;
+			}
+			listeners.removeAt(index);
 		}
 
 		public function addNotificationListener(method:String, listener:Function):void
@@ -880,25 +927,49 @@ package actionScripts.languageServer
 				{
 					var uriAndCompletionItem:UriAndCompletionItem = UriAndCompletionItem(_resolveCompletionLookup[requestID]);
 					delete _resolveCompletionLookup[requestID];
+					if(_previousResolveCompletionID > requestID)
+					{
+						//we already handled a newer resolve completion response
+						return;
+					}
+					_previousResolveCompletionID = requestID;
 					handleCompletionResolveResponse(result, uriAndCompletionItem.uri, uriAndCompletionItem.item);
 				}
 				else if(result && FIELD_ITEMS in result) //completion (CompletionList)
 				{
 					var uri:String = _completionLookup[requestID] as String;
 					delete _completionLookup[requestID];
+					if(_previousCompletionID > requestID)
+					{
+						//we already handled a newer completion response
+						return;
+					}
+					_previousCompletionID = requestID;
 					handleCompletionResponse(result, uri);
 				}
 				else if(result && FIELD_SIGNATURES in result) //signature help
 				{
 					uri = _signatureHelpLookup[requestID] as String;
 					delete _signatureHelpLookup[requestID];
+					if(_previousSignatureHelpID > requestID)
+					{
+						//we already handled a newer signature help response
+						return;
+					}
+					_previousSignatureHelpID = requestID;
 					handleSignatureHelpResponse(result, uri);
 				}
 				else if(result && FIELD_CONTENTS in result) //hover
 				{
-					uri = _hoverLookup[requestID] as String;
+					var uriAndPosition:UriAndPosition = _hoverLookup[requestID] as UriAndPosition;
 					delete _hoverLookup[requestID];
-					handleHoverResponse(result, uri);
+					if(_previousHoverID > requestID)
+					{
+						//we already handled a newer hover response
+						return;
+					}
+					_previousHoverID = requestID;
+					handleHoverResponse(result, uriAndPosition.uri, uriAndPosition.position);
 				}
 				else if(result && FIELD_DOCUMENT_CHANGES in result) //rename
 				{
@@ -914,12 +985,24 @@ package actionScripts.languageServer
 					{
 						uri = _completionLookup[requestID] as String;
 						delete _completionLookup[requestID];
+						if(_previousCompletionID > requestID)
+						{
+							//we already handled a newer completion response
+							return;
+						}
+						_previousCompletionID = requestID;
 						handleCompletionResponse(result, uri);
 					}
 					else if(requestID in _definitionLinkLookup)
 					{
-						var uriAndPosition:UriAndPosition = _definitionLinkLookup[requestID] as UriAndPosition;
+						uriAndPosition = _definitionLinkLookup[requestID] as UriAndPosition;
 						delete _definitionLinkLookup[requestID];
+						if(_previousDefinitionLinkID > requestID)
+						{
+							//we already handled a newer definition link response
+							return;
+						}
+						_previousDefinitionLinkID = requestID;
 						handleDefinitionLinkResponse(result, uriAndPosition.uri, uriAndPosition.position);
 					}
 					else if(requestID in _gotoDefinitionLookup)
@@ -943,23 +1026,48 @@ package actionScripts.languageServer
 					else if(requestID in _findReferencesLookup)
 					{
 						delete _findReferencesLookup[requestID];
+						if(_previousFindReferencesID > requestID)
+						{
+							//we already handled a newer find references response
+							return;
+						}
+						_previousFindReferencesID = requestID;
 						handleReferencesResponse(result);
 					}
 					else if(requestID in _codeActionLookup)
 					{
 						uri = _codeActionLookup[requestID] as String;
 						delete _codeActionLookup[requestID];
+						if(_previousCodeActionID > requestID)
+						{
+							//we already handled a newer code action response
+							return;
+						}
+						_previousCodeActionID = requestID;
 						handleCodeActionResponse(result, uri);
 					}
 					else if(requestID in _documentSymbolsLookup)
 					{
 						uri = _documentSymbolsLookup[requestID] as String;
 						delete _documentSymbolsLookup[requestID];
+						if(_previousDocumentSymbolsID > requestID && _previousDocumentSymbolsURI == uri)
+						{
+							//we already handled a newer document symbol response
+							return;
+						}
+						_previousDocumentSymbolsID = requestID;
+						_previousDocumentSymbolsURI = uri;
 						handleDocumentSymbolsResponse(result, uri);
 					}
 					else if(requestID in _workspaceSymbolsLookup)
 					{
 						delete _workspaceSymbolsLookup[requestID];
+						if(_previousWorkspaceSymbolsID > requestID)
+						{
+							//we already handled a newer workspace symbol response
+							return;
+						}
+						_previousWorkspaceSymbolsID = requestID;
 						handleWorkspaceSymbolsResponse(result);
 					}
 					else
@@ -977,12 +1085,55 @@ package actionScripts.languageServer
 				return;
 			}
 			var found:Boolean = true;
+			var canHandleNotification:Boolean = false;
 			var method:String = object.method;
 			switch(method)
 			{
+				case METHOD_DOLLAR__PROGRESS:
+				{
+					dollar__progress(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
+				case METHOD_DOLLAR__CANCEL_REQUEST:
+				{
+					dollar__cancelRequest(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
 				case METHOD_TEXT_DOCUMENT__PUBLISH_DIAGNOSTICS:
 				{
 					textDocument__publishDiagnostics(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
+				case METHOD_WINDOW__LOG_MESSAGE:
+				{
+					window__logMessage(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
+				case METHOD_WINDOW__SHOW_MESSAGE:
+				{
+					window__showMessage(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
+				case METHOD_WINDOW__WORK_DONE_PROGRESS__CREATE:
+				{
+					window__workDoneProgress__create(object);
+					canHandleNotification = true;
+					//this is a notification and does not require a response
+					break;
+				}
+				case METHOD_TELEMETRY__EVENT:
+				{
+					canHandleNotification = true;
 					//this is a notification and does not require a response
 					break;
 				}
@@ -990,16 +1141,6 @@ package actionScripts.languageServer
 				{
 					workspace__applyEdit(object);
 					sendResponse(object.id, { applied: true });
-					break;
-				}
-				case METHOD_WINDOW__LOG_MESSAGE:
-				{
-					window__logMessage(object);
-					break;
-				}
-				case METHOD_WINDOW__SHOW_MESSAGE:
-				{
-					window__showMessage(object);
 					break;
 				}
 				case METHOD_CLIENT__REGISTER_CAPABILITY:
@@ -1014,20 +1155,15 @@ package actionScripts.languageServer
 					sendResponse(object.id, {});
 					break;
 				}
-				case METHOD_TELEMETRY__EVENT:
-				{
-					//just ignore this one
-					break;
-				}
 				default:
 				{
 					found = false;
 					break;
 				}
 			}
-			if(!found)
+			if(!found || canHandleNotification)
 			{
-				found = this.handleNotification(object);
+				found = this.handleNotification(object) || found;
 			}
 			if(!found)
 			{
@@ -1114,7 +1250,7 @@ package actionScripts.languageServer
 			}
 		}
 
-		private function handleHoverResponse(result:Object, uri:String):void
+		private function handleHoverResponse(result:Object, uri:String, position:Position):void
 		{
 			var resultContents:Object = result.contents;
 			var eventContents:Vector.<String> = new <String>[];
@@ -1132,7 +1268,7 @@ package actionScripts.languageServer
 			{
 				eventContents[0] = parseHover(resultContents);
 			}
-			_globalDispatcher.dispatchEvent(new HoverEvent(HoverEvent.EVENT_SHOW_HOVER, eventContents, uri));
+			_globalDispatcher.dispatchEvent(new HoverEvent(HoverEvent.EVENT_SHOW_HOVER, eventContents, uri, position));
 		}
 
 		private function handleRenameResponse(result:Object):void
@@ -1322,6 +1458,16 @@ package actionScripts.languageServer
 			}
 			return original.value;
 		}
+
+		private function dollar__cancelRequest(jsonObject:Object):void
+		{
+			// notifications that start with $/ may be safely ignored
+		}
+
+		private function dollar__progress(jsonObject:Object):void
+		{
+			// notifications that start with $/ may be safely ignored
+		}
 		
 		private function textDocument__publishDiagnostics(jsonObject:Object):void
 		{
@@ -1391,6 +1537,10 @@ package actionScripts.languageServer
 			}
 			
 			Alert.show(message);
+		}
+
+		private function window__workDoneProgress__create(jsonObject:Object):void
+		{
 		}
 
 		private function updateRegisteredCapability(jsonObject:Object, enable:Boolean):void
@@ -1476,6 +1626,15 @@ package actionScripts.languageServer
 					trace("Error: Failed to update language server capability. Unknown method: " + method);
 				}
 			}
+			
+			if(enable)
+			{
+				_globalDispatcher.dispatchEvent(new ProjectEvent(ProjectEvent.LANGUAGE_SERVER_REGISTER_CAPABILITY, _project, method));
+			}
+			else
+			{
+				_globalDispatcher.dispatchEvent(new ProjectEvent(ProjectEvent.LANGUAGE_SERVER_UNREGISTER_CAPABILITY, _project, method));
+			}
 		}
 
 		private function client__registerCapability(jsonObject:Object):void
@@ -1523,7 +1682,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1539,7 +1698,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1555,7 +1714,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1566,22 +1725,9 @@ package actionScripts.languageServer
 			textDocument.uri = uri;
 			_documentVersion++;
 
-			var range:Object = new Object();
-			var startposition:Object = new Object();
-			startposition.line = event.startLineNumber;
-			startposition.character = event.startLinePos;
-			range.start = startposition;
-
-			var endposition:Object = new Object();
-			endposition.line = event.endLineNumber;
-			endposition.character = event.endLinePos;
-			range.end = endposition;
-
-			var contentChangesArr:Array = new Array();
-			var contentChanges:Object = new Object();
-			contentChanges.range = null;//range;
-			contentChanges.rangeLength = 0;
-			contentChanges.text = event.newText;
+			var change:Object = new Object();
+			change.text = event.newText;
+			var contentChanges:Array = [change];
 
 			var params:Object = new Object();
 			params.textDocument = textDocument;
@@ -1597,7 +1743,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1620,7 +1766,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1649,7 +1795,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1703,7 +1849,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1738,14 +1884,15 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
 			event.preventDefault();
+			var positionVO:Position = new Position(event.endLineNumber, event.endLinePos);
 			if(!supportsHover)
 			{
-				_globalDispatcher.dispatchEvent(new HoverEvent(HoverEvent.EVENT_SHOW_HOVER, new <String>[], uri));
+				_globalDispatcher.dispatchEvent(new HoverEvent(HoverEvent.EVENT_SHOW_HOVER, new <String>[], uri, positionVO));
 				return;
 			}
 
@@ -1753,15 +1900,15 @@ package actionScripts.languageServer
 			textDocument.uri = uri;
 
 			var position:Object = new Object();
-			position.line = event.endLineNumber;
-			position.character = event.endLinePos;
+			position.line = positionVO.line;
+			position.character = positionVO.character;
 
 			var params:Object = new Object();
 			params.textDocument = textDocument;
 			params.position = position;
 			
 			var id:int = this.sendRequest(METHOD_TEXT_DOCUMENT__HOVER, params);
-			_hoverLookup[id] = uri;
+			_hoverLookup[id] = new UriAndPosition(uri, positionVO);
 		}
 
 		private function definitionLinkHandler(event:LanguageServerEvent):void
@@ -1771,7 +1918,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1806,7 +1953,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1840,7 +1987,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1867,6 +2014,15 @@ package actionScripts.languageServer
 			_gotoTypeDefinitionLookup[id] = new UriAndPosition(uri, positionVO);
 		}
 
+		private function isInProject(uri:String, requestedProject:ProjectVO = null):Boolean
+		{
+			if(requestedProject != null)
+			{
+				return requestedProject == _project;
+			}
+			return isUriInProject(uri, _project);
+		}
+
 		private function gotoImplementationHandler(event:LanguageServerEvent):void
 		{
 			if(!_initialized || _stopped || _shutdownID != -1)
@@ -1874,7 +2030,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1911,13 +2067,20 @@ package actionScripts.languageServer
 			{
 				return;
 			}
-			//TODO: fix this to properly merge symbols from all projects
-			var activeEditor:LanguageServerTextEditor = _model.activeEditor as LanguageServerTextEditor;
-			if(!activeEditor)
+			var project:ProjectVO = event.project;
+			if(project == null)
 			{
-				return;
+				var activeEditor:LanguageServerTextEditor = _model.activeEditor as LanguageServerTextEditor;
+				if(!activeEditor)
+				{
+					project = _model.activeProject;
+				}
+				else if(isUriInProject(activeEditor.currentFile.fileBridge.url, _project))
+				{
+					project = _project;
+				}
 			}
-			if(!isUriInProject(activeEditor.currentFile.fileBridge.url, _project) && _model.projects.length != 1)
+			if(project != _project)
 			{
 				return;
 			}
@@ -1944,7 +2107,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -1972,7 +2135,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -2009,7 +2172,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -2072,7 +2235,7 @@ package actionScripts.languageServer
 				return;
 			}
 			var uri:String = event.uri;
-			if(event.isDefaultPrevented() || !isUriInProject(uri, _project))
+			if(event.isDefaultPrevented() || !isInProject(uri, event.project))
 			{
 				return;
 			}
@@ -2103,16 +2266,21 @@ package actionScripts.languageServer
 			{
 				return;
 			}
-			var activeEditor:LanguageServerTextEditor = _model.activeEditor as LanguageServerTextEditor;
-			if(!activeEditor)
-			{
-				return;
-			}
-			if(event.isDefaultPrevented() || !isUriInProject(activeEditor.currentFile.fileBridge.url, _project))
+			if(event.isDefaultPrevented() || _project != event.project)
 			{
 				return;
 			}
 			var command:String = event.command;
+			if(command in this._commandListeners)
+			{
+				var listeners:Vector.<Function> = this._commandListeners[command] as Vector.<Function>;
+				var listenerCount:int = listeners.length;
+				for(var i:int = 0; i < listenerCount; i++)
+				{
+					var listener:Function = listeners[i];
+					listener.apply(null, event.arguments);
+				}
+			}
 			if(supportedCommands.indexOf(command) == -1)
 			{
 				return;

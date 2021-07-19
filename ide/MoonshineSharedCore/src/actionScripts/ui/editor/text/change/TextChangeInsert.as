@@ -18,6 +18,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.ui.editor.text.change
 {
+	import actionScripts.ui.editor.text.TextLineModel;
+
 	public class TextChangeInsert extends TextChangeBase
 	{
 		private var _textLines:Vector.<String>;
@@ -40,6 +42,45 @@ package actionScripts.ui.editor.text.change
 			
 			return new TextChangeRemove(startLine, startChar, endLine, endChar);
 		}
+
+		override public function apply(targetLines:Vector.<TextLineModel>):void
+		{
+			if (textLines && textLines.length > 0)
+			{
+				var targetStartLine:TextLineModel = targetLines[startLine];
+				var trailText:String = targetStartLine.text.slice(startChar);
+				
+				// Break line at change position, and append first text line
+				targetStartLine.text = targetStartLine.text.slice(0, startChar) + textLines[0];
+				
+				// Append any additional lines to the model
+				if (textLines.length > 1)
+				{
+					// Add indentation to last line if it's empty
+					if ((textLines[textLines.length - 1] == "") && 
+						(targetStartLine.text.search(/^(\s+).*$/) != -1))
+					{
+						// Add required amount of indent to get the trailing text aligned with the last line
+						// support both combination of tab and space-key press
+						textLines[textLines.length - 1] += targetStartLine.text.replace(/^(\s+).*$/, "$1");
+					}
+					
+					// Create line models from strings
+					var newLines:Array = new Array(textLines.length - 1);
+					
+					for (var i:int = 0; i < textLines.length; i++)
+					{
+						newLines[i-1] = new TextLineModel(textLines[i]);
+					}
+					
+					targetLines.splice.apply(targetLines, [startLine + 1, 0].concat(newLines));
+				}
+				
+				// Append trailing text to the last changed line
+				targetLines[startLine + textLines.length - 1].text += trailText;
+			}
+		}
+		
 		
 	}
 

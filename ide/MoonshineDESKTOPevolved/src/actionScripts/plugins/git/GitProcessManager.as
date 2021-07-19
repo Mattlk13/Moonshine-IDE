@@ -32,17 +32,16 @@ package actionScripts.plugins.git
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.StatusBarEvent;
 	import actionScripts.events.WorkerEvent;
-	import actionScripts.factory.FileLocation;
 	import actionScripts.interfaces.IWorkerSubscriber;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.locator.IDEWorker;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugins.git.model.GitProjectVO;
-	import actionScripts.plugins.git.model.MethodDescriptor;
 	import actionScripts.plugins.versionControl.VersionControlUtils;
 	import actionScripts.plugins.versionControl.event.VersionControlEvent;
 	import actionScripts.ui.menu.MenuPlugin;
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
+	import actionScripts.utils.MethodDescriptor;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.GenericSelectableObject;
@@ -50,7 +49,7 @@ package actionScripts.plugins.git
 	import actionScripts.valueObjects.RepositoryItemVO;
 	import actionScripts.valueObjects.VersionControlTypes;
 	import actionScripts.valueObjects.WorkerNativeProcessResult;
-	import actionScripts.vo.NativeProcessQueueVO;
+	import actionScripts.valueObjects.NativeProcessQueueVO;
 	
 	public class GitProcessManager extends ConsoleOutputter implements IWorkerSubscriber
 	{
@@ -92,6 +91,7 @@ package actionScripts.plugins.git
 		private var subscribeIdToWorker:String = UIDUtil.createUID();
 		private var lastCloneURL:String;
 		private var lastCloneTarget:String;
+		private var diffResults:String = "";
 		private var isGitUserName:Boolean;
 		private var isGitUserEmail:Boolean;
 		
@@ -178,9 +178,7 @@ package actionScripts.plugins.git
 			if (!model.activeProject) return;
 			queue = new Vector.<Object>();
 			
-			addToQueue(new NativeProcessQueueVO(getPlatformMessage(' status --porcelain > ') +
-				(ConstantsCoreVO.IS_MACOS ? "$'"+ File.applicationStorageDirectory.resolvePath("commitDiff.txt").nativePath +"'" : 
-					File.applicationStorageDirectory.resolvePath("commitDiff.txt").nativePath),
+			addToQueue(new NativeProcessQueueVO(getPlatformMessage(' status --porcelain'),
 				false, 
 				GIT_DIFF_CHECK));
 			worker.sendToWorker(WorkerEvent.RUN_LIST_OF_NATIVEPROCESS, {queue:queue, workingDirectory:model.activeProject.folderLocation.fileBridge.nativePath}, subscribeIdToWorker);
@@ -396,12 +394,24 @@ package actionScripts.plugins.git
 			switch (value.event)
 			{
 				case WorkerEvent.RUN_NATIVEPROCESS_OUTPUT:
-					if (tmpValue.type == WorkerNativeProcessResult.OUTPUT_TYPE_DATA) shellData(tmpValue);
-					else if (tmpValue.type == WorkerNativeProcessResult.OUTPUT_TYPE_CLOSE) shellExit(tmpValue);
-					else shellError(tmpValue);
+					if (tmpValue.type == WorkerNativeProcessResult.OUTPUT_TYPE_DATA)
+					{
+						shellData(tmpValue);
+					}
+					else if (tmpValue.type == WorkerNativeProcessResult.OUTPUT_TYPE_CLOSE)
+					{
+						shellExit(tmpValue);
+					}
+					else
+					{
+						shellError(tmpValue);
+					}
 					break;
 				case WorkerEvent.RUN_LIST_OF_NATIVEPROCESS_PROCESS_TICK:
-					if (queue.length != 0) queue.shift();
+					if (queue.length != 0)
+					{
+						queue.shift();
+					}
 					processType = tmpValue.processType;
 					shellTick(tmpValue);
 					break;
@@ -686,6 +696,11 @@ package actionScripts.plugins.git
 					isGitUserEmail = true;
 					return;
 				}
+				case GIT_DIFF_CHECK:
+				{
+					diffResults += value.output;
+					return;
+				}
 			}
 			
 			if (isFatal)
@@ -716,18 +731,10 @@ package actionScripts.plugins.git
 		
 		private function checkDiffFileExistence():void
 		{
-			var tmpFile:File = File.applicationStorageDirectory.resolvePath('commitDiff.txt');
-			if (tmpFile.exists)
+			if (StringUtil.trim(diffResults) != "")
 			{
-				var value:String = new FileLocation(tmpFile.nativePath).fileBridge.read() as String;
-				
-				// @note
-				// for some unknown reason, searchRegExp.exec(tmpString) always
-				// failed after 4 records; initial investigation didn't shown
-				// any possible reason of breaking; Thus forEach treatment for now
-				// (but I don't like this)
 				var tmpPositions:ArrayCollection = new ArrayCollection();
-				var contentInLineBreaks:Array = value.split("\n");
+				var contentInLineBreaks:Array = diffResults.split("\n");
 				var firstPart:String;
 				var secondPart:String;
 				contentInLineBreaks.forEach(function(element:String, index:int, arr:Array):void
@@ -747,12 +754,8 @@ package actionScripts.plugins.git
 					}
 				});
 				
+				diffResults = "";
 				dispatchEvent(new GeneralEvent(GIT_DIFF_CHECKED, tmpPositions));
-				try {
-					tmpFile.deleteFile();
-				} catch (e:Error) {
-					tmpFile.deleteFileAsync();
-				}
 			}
 			
 			/*

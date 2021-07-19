@@ -19,13 +19,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugins.as3project.mxmlc
 {
-	import actionScripts.locator.HelperModel;
-	import actionScripts.plugin.console.ConsoleOutputEvent;
-	import actionScripts.utils.SDKUtils;
-	import actionScripts.valueObjects.SDKReferenceVO;
-
 	import com.adobe.utils.StringUtil;
-
+	
 	import flash.desktop.NativeProcess;
 	import flash.desktop.NativeProcessStartupInfo;
 	import flash.display.DisplayObject;
@@ -39,13 +34,7 @@ package actionScripts.plugins.as3project.mxmlc
 	import flash.utils.IDataInput;
 	import flash.utils.IDataOutput;
 	import flash.utils.setTimeout;
-
-	import flashx.textLayout.elements.LinkElement;
-
-	import flashx.textLayout.elements.ParagraphElement;
-	import flashx.textLayout.elements.SpanElement;
-	import flashx.textLayout.formats.TextDecoration;
-
+	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
 	import mx.core.FlexGlobals;
@@ -55,29 +44,44 @@ package actionScripts.plugins.as3project.mxmlc
 	import actionScripts.events.RefreshTreeEvent;
 	import actionScripts.events.StatusBarEvent;
 	import actionScripts.factory.FileLocation;
+	import actionScripts.locator.HelperModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.actionscript.mxmlc.MXMLCPluginEvent;
+	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;
-	import actionScripts.plugin.project.ProjectType;
+	import actionScripts.plugin.core.compiler.JavaScriptBuildEvent;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.vo.BooleanSetting;
 	import actionScripts.plugin.settings.vo.ISetting;
 	import actionScripts.plugin.settings.vo.PathSetting;
 	import actionScripts.plugins.build.CompilerPluginBase;
+	import actionScripts.plugins.debugAdapter.events.DebugAdapterEvent;
+	import actionScripts.plugins.httpServer.events.HttpServerEvent;
 	import actionScripts.plugins.swflauncher.event.SWFLaunchEvent;
 	import actionScripts.utils.EnvironmentSetupUtils;
 	import actionScripts.utils.NoSDKNotifier;
 	import actionScripts.utils.OSXBookmarkerNotifiers;
+	import actionScripts.utils.SDKUtils;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
+	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
 	import actionScripts.valueObjects.ProjectVO;
+	import actionScripts.valueObjects.SDKReferenceVO;
 	import actionScripts.valueObjects.Settings;
+	import actionScripts.valueObjects.WebBrowserVO;
 	
-	import components.popup.SelectOpenedFlexProject;
+	import components.popup.SelectOpenedProject;
 	import components.views.project.TreeView;
+	
+	import flashx.textLayout.elements.LinkElement;
+	import flashx.textLayout.elements.ParagraphElement;
+	import flashx.textLayout.elements.SpanElement;
+	import flashx.textLayout.formats.TextDecoration;
 
     public class MXMLCJavaScriptPlugin extends CompilerPluginBase implements ISettingsProvider
 	{
+		private static const DEBUG_SERVER_PORT:int = 3000;
+
 		override public function get name():String			{ return "MXMLC Java Script Compiler Plugin"; }
 		override public function get author():String		{ return "Miha Lunar & Moonshine Project Team"; }
 		override public function get description():String	{ return ResourceManager.getInstance().getString('resources','plugin.desc.mxmlcjs'); }
@@ -111,8 +115,10 @@ package actionScripts.plugins.as3project.mxmlc
 
 		private var fschstr:String;
 		private var SDKstr:String;
-		private var selectProjectPopup:SelectOpenedFlexProject;
+		private var selectProjectPopup:SelectOpenedProject;
 		protected var runAfterBuild:Boolean;
+		protected var debugAfterBuild:Boolean;
+		protected var release:Boolean;
 
 		private var successMessage:String;
 		private var isProjectHasInvalidPaths:Boolean;
@@ -147,14 +153,22 @@ package actionScripts.plugins.as3project.mxmlc
 			registerCommand('buildjs',tempObj);
 			
 			
-			dispatcher.addEventListener(ActionScriptBuildEvent.BUILD_AND_RUN_JAVASCRIPT, buildAndRun);
-			dispatcher.addEventListener(ActionScriptBuildEvent.BUILD_AS_JAVASCRIPT, build);
+			dispatcher.addEventListener(JavaScriptBuildEvent.BUILD_AND_RUN, buildAndRun);
+			dispatcher.addEventListener(JavaScriptBuildEvent.BUILD_AND_DEBUG, buildAndDebug);
+			dispatcher.addEventListener(JavaScriptBuildEvent.BUILD, buildDebug);
+			dispatcher.addEventListener(JavaScriptBuildEvent.BUILD_RELEASE, buildRelease);
 			reset();
 		}
 		
 		override public function deactivate():void 
 		{
 			super.deactivate();
+
+			dispatcher.removeEventListener(JavaScriptBuildEvent.BUILD_AND_RUN, buildAndRun);
+			dispatcher.removeEventListener(JavaScriptBuildEvent.BUILD_AND_DEBUG, buildAndDebug);
+			dispatcher.removeEventListener(JavaScriptBuildEvent.BUILD, buildDebug);
+			dispatcher.removeEventListener(JavaScriptBuildEvent.BUILD_RELEASE, buildRelease);
+
 			reset();
 			shellInfo = null;
 		}
@@ -190,18 +204,35 @@ package actionScripts.plugins.as3project.mxmlc
 		{
 			stopShell();
 			successMessage = null;
-			resourceCopiedIndex = 0;
 		}
 		
 		private function buildAndRun(e:Event):void
 		{
-			build(e,true);	
+			release = false;
+			build(e, false, true);
+		}
+
+		private function buildAndDebug(e:Event):void
+		{
+			build(e, false, true, true)
 		}
 		
-		private function build(e:Event, runAfterBuild:Boolean=false):void
+		private function buildDebug(e:Event):void
+		{
+			build(e);
+		}
+		
+		private function buildRelease(e:Event):void
+		{
+			build(e, true);
+		}
+		
+		private function build(e:Event, release:Boolean=false, runAfterBuild:Boolean=false, debugAfterBuild:Boolean=false):void
 		{
 			this.isProjectHasInvalidPaths = false;
+			this.release = release;
 			this.runAfterBuild = runAfterBuild;
+			this.debugAfterBuild = debugAfterBuild;
 			checkProjectCount();
 		}
 		
@@ -219,31 +250,43 @@ package actionScripts.plugins.as3project.mxmlc
 		
 		private function checkProjectCount():void
 		{
-			if (model.projects.length > 1)
+			var filteredProjects:Array = model.projects.source.filter(function(project:ProjectVO, index:int, source:Array):Boolean
+			{
+				if(!(project is AS3ProjectVO))
+				{
+					return false;
+				}
+				var as3Project:AS3ProjectVO = AS3ProjectVO(project);
+				return as3Project.isRoyale && as3Project.buildOptions.targetPlatform == "JS";
+			});
+			if (filteredProjects.length > 1)
 			{
 				// check if user has selection/select any particular project or not
 				if (model.mainView.isProjectViewAdded)
 				{
 					var tmpTreeView:TreeView = model.mainView.getTreeViewPanel();
-					var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
-					if (projectReference)
+					if(tmpTreeView) //might be null if closed by user
 					{
-						checkForUnsavedEdior(projectReference);
-						return;
+						var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
+						if (projectReference && filteredProjects.indexOf(projectReference) != -1)
+						{
+							checkForUnsavedEdior(projectReference);
+							return;
+						}
 					}
 				}
 				
 				// if above is false
-				selectProjectPopup = new SelectOpenedFlexProject();
-				selectProjectPopup.projectType = ProjectType.AS3PROJ_AS_AIR;
+				selectProjectPopup = new SelectOpenedProject();
+				selectProjectPopup.projects = new ArrayCollection(filteredProjects);
 				PopUpManager.addPopUp(selectProjectPopup, FlexGlobals.topLevelApplication as DisplayObject, false);
 				PopUpManager.centerPopUp(selectProjectPopup);
-				selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-				selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);				
+				selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+				selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);				
 			}
-			else
+			else if(filteredProjects.length != 0)
 			{
-				checkForUnsavedEdior(model.projects[0] as ProjectVO);	
+				checkForUnsavedEdior(filteredProjects[0] as ProjectVO);	
 			}
 			
 			/*
@@ -257,8 +300,8 @@ package actionScripts.plugins.as3project.mxmlc
 			
 			function onProjectSelectionCancelled(event:Event):void
 			{
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
 				selectProjectPopup = null;
 			}
 		}
@@ -359,7 +402,10 @@ package actionScripts.plugins.as3project.mxmlc
 					as3Pvo.updateConfig();
 
 					compileStr = getBuildArgs(as3Pvo);
-					EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, SDKstr, [compileStr]);
+					
+					var envCustomSDK:EnvironmentUtilsCusomSDKsVO = new EnvironmentUtilsCusomSDKsVO();
+					envCustomSDK.sdkPath = SDKstr;
+					EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, envCustomSDK, [compileStr]);
 				}
 				else
 				{
@@ -417,6 +463,20 @@ package actionScripts.plugins.as3project.mxmlc
 			var configArg:String = " -load-config+=" + project.folderLocation.fileBridge.getRelativePath(project.config.file);
 			var additionalBuildArgs:String = project.buildOptions.getArguments();
 			additionalBuildArgs = " " + additionalBuildArgs.replace("-optimize=false", "");
+				
+			var dbg:String;
+			if (release)
+			{
+				dbg = " -debug=false";
+			}
+			else
+			{
+				dbg = " -debug=true";
+			}
+			if (additionalBuildArgs.indexOf(" -debug=") > -1)
+			{
+				dbg = "";
+			}
 
 			var jsCompilationArg:String = "";
 			if (isFlexJSAfter7)
@@ -427,7 +487,7 @@ package actionScripts.plugins.as3project.mxmlc
                 {
                     jsCompilationArg = " -compiler.targets=JSRoyale";
 					sdkPathHomeArg = "ROYALE_HOME=\"" + SDKstr +"\"";
-					compilerPathHomeArg = "ROYALE_COMPILER_HOME=\"" + SDKstr +"\"";
+					compilerPathHomeArg = "";
                 }
 
 				jsCompilationArg += " -js-output=\"".concat(project.jsOutputPath) +"\"";
@@ -436,14 +496,14 @@ package actionScripts.plugins.as3project.mxmlc
             if(Settings.os == "win")
             {
 				compileStr = compileStr.concat(
-					sdkPathHomeArg ? ("set "+ sdkPathHomeArg)+"&& " : '', "set ", compilerPathHomeArg, compilerArg, configArg, additionalBuildArgs, jsCompilationArg
+					sdkPathHomeArg ? ("set "+ sdkPathHomeArg)+"&& " : '', "set ", compilerPathHomeArg, compilerArg, configArg, dbg, additionalBuildArgs, jsCompilationArg
 				);
             }
             else
             {
 				var royaleLibPath:String = "royalelib=".concat('"', SDKstr, File.separator, "frameworks", '"');
 				compileStr = compileStr.concat(
-						sdkPathHomeArg ? ("export " + " " + royaleLibPath + " "  + sdkPathHomeArg)+" && " : '', "export ", royaleLibPath, " ", enLanguageArg, " && export ", compilerPathHomeArg, compilerArg, configArg, additionalBuildArgs, jsCompilationArg
+						sdkPathHomeArg ? ("export " + " " + royaleLibPath + " "  + sdkPathHomeArg)+" && " : '', "export ", royaleLibPath, " ", enLanguageArg, " && export ", compilerPathHomeArg, compilerArg, configArg, dbg, additionalBuildArgs, jsCompilationArg
 				);
             }
 
@@ -488,7 +548,6 @@ package actionScripts.plugins.as3project.mxmlc
 				shellInfo.arguments = arg;
 				
 				initShell();
-				//setTimeout(proceedWithBuild, 2000, holdProject);
 			}
 		}
 		
@@ -606,18 +665,21 @@ package actionScripts.plugins.as3project.mxmlc
             if (!fcsh) return;
             if (fcsh.running)
 			{
-				fcsh.exit(true);
+				fcsh.exit();
             }
-            fcsh.removeEventListener(ProgressEvent.STANDARD_OUTPUT_DATA, shellData);
-            fcsh.removeEventListener(ProgressEvent.STANDARD_ERROR_DATA, shellError);
-            fcsh.removeEventListener(IOErrorEvent.STANDARD_ERROR_IO_ERROR,shellError);
-            fcsh.removeEventListener(IOErrorEvent.STANDARD_OUTPUT_IO_ERROR,shellError);
-            fcsh.removeEventListener(NativeProcessExitEvent.EXIT, shellExit);
-            fcsh = null;
-
-            dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_ENDED));
-            dispatcher.removeEventListener(StatusBarEvent.PROJECT_BUILD_TERMINATE, onTerminateBuildRequest);
         }
+
+		private function cleanUpShell():void
+		{
+			if (!fcsh) return;
+
+			fcsh.removeEventListener(ProgressEvent.STANDARD_OUTPUT_DATA, shellData);
+			fcsh.removeEventListener(ProgressEvent.STANDARD_ERROR_DATA, shellError);
+			fcsh.removeEventListener(IOErrorEvent.STANDARD_ERROR_IO_ERROR,shellError);
+			fcsh.removeEventListener(IOErrorEvent.STANDARD_OUTPUT_IO_ERROR,shellError);
+			fcsh.removeEventListener(NativeProcessExitEvent.EXIT, shellExit);
+			fcsh = null;
+		}
 
 		private function onTerminateBuildRequest(event:StatusBarEvent):void
 		{
@@ -645,31 +707,84 @@ package actionScripts.plugins.as3project.mxmlc
 				event.target.removeEventListener(Event.COMPLETE, onSuccesfullBuildCompleted);
             }
 
-            dispatcher.dispatchEvent(new RefreshTreeEvent((currentProject as AS3ProjectVO).folderLocation.resolvePath("bin")));
-            if(runAfterBuild)
+			var as3Project:AS3ProjectVO = AS3ProjectVO(currentProject);
+            dispatcher.dispatchEvent(new RefreshTreeEvent(new FileLocation(as3Project.jsOutputPath).resolvePath("bin")));
+			copyingResources();
+        }
+
+		private function getWebRoot(project:AS3ProjectVO):FileLocation
+		{
+            return new FileLocation(project.jsOutputPath).resolvePath("bin" + File.separator + "js-debug");
+		}
+
+        private function startDebugAdapter(project:AS3ProjectVO, debug:Boolean):void
+        {
+			var url:String = getUrlToLaunch(project);
+			notice("Opening to URL: "+ url); 
+
+			var debugAdapterType:String = null;
+			for(var i:int = 0; i < ConstantsCoreVO.TEMPLATES_WEB_BROWSERS.length; i++)
+			{
+				var webBrowser:WebBrowserVO = WebBrowserVO(ConstantsCoreVO.TEMPLATES_WEB_BROWSERS.getItemAt(i));
+				if(webBrowser.name == project.runWebBrowser)
+				{
+					debugAdapterType = webBrowser.debugAdapterType;
+				}
+			}
+			if(debugAdapterType == null)
+			{
+				debugAdapterType = "chrome";
+			}
+
+            var debugCommand:String = "launch";
+            var launchArgs:Object = {};
+            if(!debug)
             {
-                launchApplication();
+                launchArgs["noDebug"] = true;
             }
-            else
-            {
-                copyingResources();
-            }
+			launchArgs["name"] = "Moonshine Royale JS Launch";
+			launchArgs["url"] = url;
+			launchArgs["webRoot"] = getWebRoot(project).fileBridge.nativePath;
+            dispatcher.dispatchEvent(new DebugAdapterEvent(DebugAdapterEvent.START_DEBUG_ADAPTER,
+                project, debugAdapterType, debugCommand, launchArgs));
         }
 
 		private function launchApplication():void
 		{
-			var pvo:AS3ProjectVO = currentProject as AS3ProjectVO;
-			var swfFile:File = currentProject.folderLocation.resolvePath(pvo.swfOutput.path.fileBridge.nativePath).fileBridge.getFile as File;
-			
-			// before test movie lets copy the resource folder(s)
-			// to debug folder if any
-			if (pvo.resourcePaths.length != 0 && resourceCopiedIndex == 0)
+			var as3Project:AS3ProjectVO = currentProject as AS3ProjectVO;
+
+			if(!debugAfterBuild && (!UtilsCore.isNodeAvailable() || ConstantsCoreVO.IS_APP_STORE_VERSION))
 			{
-				copyingResources();
+				//the HTTP server and the debug adapter both require Node.js.
+				//it's not ideal, but if Node.js is not available and the user
+				//did not request debugging, we can launch the local HTML file
+				//in their browser.
+				launchApplicationWithoutDebugAdapter();
 				return;
 			}
 
-            success("Project Build Successfully.");
+			var canStart:Boolean = true;
+			if(needsLocalServer(as3Project))
+			{
+				var httpWorkingDir:FileLocation = getWebRoot(as3Project);
+				var httpServerEvent:HttpServerEvent = new HttpServerEvent(HttpServerEvent.START_HTTP_SERVER, httpWorkingDir, DEBUG_SERVER_PORT);
+					dispatcher.dispatchEvent(httpServerEvent);
+				canStart = !httpServerEvent.isDefaultPrevented();
+			}
+
+			if(canStart)
+			{
+				//debug adapter can launch/run without debugging
+				startDebugAdapter(as3Project, debugAfterBuild);
+			}
+			currentProject = null;
+		}
+		
+
+		private function launchApplicationWithoutDebugAdapter():void
+		{
+			var pvo:AS3ProjectVO = currentProject as AS3ProjectVO;
+			var swfFile:File = currentProject.folderLocation.resolvePath(pvo.swfOutput.path.fileBridge.nativePath).fileBridge.getFile as File;
 
 			if (pvo.testMovie == AS3ProjectVO.TEST_MOVIE_CUSTOM) 
 			{
@@ -694,10 +809,12 @@ package actionScripts.plugins.as3project.mxmlc
 				var launchEvent:SWFLaunchEvent = new SWFLaunchEvent(SWFLaunchEvent.EVENT_LAUNCH_SWF, null, pvo);
 				if (pvo.customHTMLPath && StringUtil.trim(pvo.customHTMLPath).length != 0)
 				{
+					//this is a fallback, and should not use getUrlToLaunch()
 					launchEvent.url = pvo.customHTMLPath;
 				}
 				else
 				{
+					//this is a fallback, and should not use getUrlToLaunch()
 					launchEvent.file = new FileLocation(pvo.urlToLaunch).fileBridge.getFile as File;
 				}
 
@@ -707,26 +824,59 @@ package actionScripts.plugins.as3project.mxmlc
 		}
 		
 		private var resourceCopiedIndex:int;
+		private var resourceDestinationCopiedIndex:int;
+		private var maxResourceForCopy:int;
+
 		private function copyingResources():void
 		{
             var pvo:AS3ProjectVO = currentProject as AS3ProjectVO;
-
-            if (pvo.resourcePaths.length == 0)
+			if (pvo.resourcePaths.length == 0)
 			{
-                success("Project Build Successfully.");
+				notifySuccessfullBuildAfterResourceCopy();
 				return;
 			}
 
+			if (resourceCopiedIndex == pvo.resourcePaths.length)
+			{
+				resourceCopiedIndex = 0;
+				notifySuccessfullBuildAfterResourceCopy();
+				return;
+			}
+
+			var resources:FileLocation = pvo.resourcePaths[resourceCopiedIndex];
+
+			warning("Start copying resource: %s", resources.name);
+
             var buildResultFile:File = currentProject.folderLocation.resolvePath(pvo.getRoyaleDebugPath()).fileBridge.getFile as File;
 			var debugDestination:File = buildResultFile.parent;
-			var fl:FileLocation = pvo.resourcePaths[resourceCopiedIndex];
+			var releaseDestination:File = currentProject.folderLocation.resolvePath(
+					pvo.jsOutputPath.concat(currentProject.folderLocation.fileBridge.separator.concat("bin",
+											currentProject.folderLocation.fileBridge.separator, "js-release"))).fileBridge.getFile as File;
 
-            warning("Copying resource: %s", fl.name);
+			maxResourceForCopy = !releaseDestination.exists ? 1 : 2;
+			resourceDestinationCopiedIndex = 0;
 
-			(fl.fileBridge.getFile as File).addEventListener(Event.COMPLETE, onResourcesCopyingComplete);
-            (fl.fileBridge.getFile as File).addEventListener(IOErrorEvent.IO_ERROR, onResourcesCopyingFailed);
-			// copying to bin/bin-debug
-			(fl.fileBridge.getFile as File).copyToAsync(debugDestination.resolvePath(fl.fileBridge.name), true);
+			if (debugDestination.exists)
+			{
+				copyResourcesTo(new File(resources.fileBridge.nativePath), debugDestination);
+			}
+
+			if (releaseDestination.exists)
+			{
+				copyResourcesTo(new File(resources.fileBridge.nativePath), releaseDestination);
+			}
+
+			resourceCopiedIndex++;
+		}
+
+		private function copyResourcesTo(resources:File, destination:File):void
+		{
+			print("Copying resources to %s", destination.nativePath);
+
+			resources.addEventListener(Event.COMPLETE, onResourcesCopyingComplete);
+			resources.addEventListener(IOErrorEvent.IO_ERROR, onResourcesCopyingFailed);
+
+			resources.copyToAsync(destination.resolvePath(resources.name), true);
 		}
 
         private function onResourcesCopyingComplete(event:Event):void
@@ -734,24 +884,11 @@ package actionScripts.plugins.as3project.mxmlc
             event.currentTarget.removeEventListener(Event.COMPLETE, onResourcesCopyingComplete);
             event.currentTarget.removeEventListener(IOErrorEvent.IO_ERROR, onResourcesCopyingFailed);
 
-            var pvo:AS3ProjectVO = currentProject as AS3ProjectVO;
-            print("Copying %s complete", event.currentTarget.nativePath);
-
-            resourceCopiedIndex++;
-            if (resourceCopiedIndex < pvo.resourcePaths.length)
+			resourceDestinationCopiedIndex++;
+			if (resourceDestinationCopiedIndex == maxResourceForCopy)
 			{
 				copyingResources();
-            }
-            else if (runAfterBuild)
-            {
-                dispatcher.dispatchEvent(new RefreshTreeEvent(new FileLocation(pvo.jsOutputPath).resolvePath("bin")));
-                launchApplication();
-            }
-            else
-            {
-                success("Project Build Successfully.");
-                dispatcher.dispatchEvent(new RefreshTreeEvent(new FileLocation(pvo.jsOutputPath).resolvePath("bin")));
-            }
+			}
 		}
 
         private function onResourcesCopyingFailed(event:IOErrorEvent):void
@@ -761,7 +898,62 @@ package actionScripts.plugins.as3project.mxmlc
 
             error("Copying resources failed %s\n", event.text);
             error("Project Build failed.");
+
+			resourceDestinationCopiedIndex = 0;
+			resourceCopiedIndex = 0;
         }
+
+		private function needsLocalServer(pvo:AS3ProjectVO):Boolean
+		{
+			if(ConstantsCoreVO.IS_APP_STORE_VERSION)
+			{
+				//starting the http server doesn't work
+				return false;
+			}
+			return !(pvo.customHTMLPath && StringUtil.trim(pvo.customHTMLPath).length != 0);
+		}
+
+		private function getUrlToLaunch(pvo:AS3ProjectVO):String
+		{
+			var url:String = "http://localhost:" + DEBUG_SERVER_PORT;
+			if(pvo.customHTMLPath && StringUtil.trim(pvo.customHTMLPath).length != 0)
+			{
+				url = pvo.customHTMLPath;
+			}
+			else if(pvo.urlToLaunch)
+			{
+				if(needsLocalServer(pvo))
+				{
+					var relativeURL:String = getWebRoot(pvo).fileBridge.getRelativePath(new FileLocation(pvo.urlToLaunch));
+					if(relativeURL)
+					{
+						url += "/" + relativeURL;
+					}
+				}
+				else
+				{
+					url = new FileLocation(pvo.urlToLaunch).fileBridge.url;
+				}
+			}
+
+			return url;
+		}
+
+		private function notifySuccessfullBuildAfterResourceCopy():void
+		{
+			var pvo:AS3ProjectVO = currentProject as AS3ProjectVO;
+			if(runAfterBuild || debugAfterBuild)
+			{
+				dispatcher.dispatchEvent(new RefreshTreeEvent(new FileLocation(pvo.jsOutputPath).resolvePath("bin")));
+				success("Project Build Successfully.");
+				launchApplication();
+			}
+			else
+			{
+				success("Project Build Successfully.");
+				dispatcher.dispatchEvent(new RefreshTreeEvent(new FileLocation(pvo.jsOutputPath).resolvePath("bin")));
+			}
+		}
 
 		private function shellError(e:ProgressEvent):void 
 		{
@@ -778,11 +970,16 @@ package actionScripts.plugins.as3project.mxmlc
 		private function shellExit(e:NativeProcessExitEvent):void 
 		{
 			reset();
+			cleanUpShell();
+
 			if (exiting)
 			{
 				exiting = false;
 				startShell();
 			}
+
+			dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_ENDED));
+			dispatcher.removeEventListener(StatusBarEvent.PROJECT_BUILD_TERMINATE, onTerminateBuildRequest);
 		}
 
 		private function printBuildProgress(data:String):void

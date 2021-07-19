@@ -1,4 +1,3 @@
-
 ide/MoonshineDESKTOPevolved/bin/
 ide/MoonshineDESKTOPevolved/bin-debug/
 ide/MoonshineDESKTOPevolved/MoonshineDESKTOPevolved.iml
@@ -9,7 +8,9 @@ ide/MoonshineWorker/MoonshineWorker.iml
 ide/MoonshineDESKTOPevolved/obj/MoonshineDESKTOPevolvedConfig.xml
 ide/MoonshineSharedCore/obj/MoonshineSharedCoreConfig.xml
 ide/MoonshineWEBevolved/obj/
+ide/MoonshineWEBevolved/bin-debug/
 ide/MoonshineWorker/obj/
+ide/MoonshineWorker/bin/
 library/ApacheFlexSDKInstallerLib/obj/
 .idea/
 language-server-wrappers/moonshine-as3mxml/moonshine-as3mxml.iml
@@ -18,6 +19,16 @@ language-server-wrappers/moonshine-as3mxml/build/
 .DS_Store
 *.code-workspace
 .vscode/
-ide/MoonshineDESKTOPevolved/build/DEPLOY/MoonshineDevelopment.exe
-ide/MoonshineDESKTOPevolved/build/DEPLOY/Moonshine.exe
+ide/MoonshineDESKTOPevolved/build/DEPLOY/
+ide/MoonshineDESKTOPevolved/bin-release/
+ide/MoonshineDESKTOPevolved/build/bin-debug/
+ide/MoonshineDESKTOPevolved/build/elements/
+ide/MoonshineDESKTOPevolved/build/helperResources/
+ide/MoonshineDESKTOPevolved/build/tourDeFlex/
+ide/MoonshineDESKTOPevolved/build/installer/sdk-installer-config-4.0.xml
 **/*.swp
+ide/MoonshineSharedCore/src/elements/templates/projects/Domino Project/nsfs/.gitignore
+
+
+ide/MoonshineGUICore/bin/**/haxe
+ide/MoonshineGUICore/bin/**/obj

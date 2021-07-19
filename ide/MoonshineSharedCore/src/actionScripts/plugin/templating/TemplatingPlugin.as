@@ -18,8 +18,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.templating
 {
+	import actionScripts.events.SettingsEvent;
+	import actionScripts.plugin.settings.vo.MultiOptionSetting;
+	import actionScripts.plugin.settings.vo.NameValuePair;
+
 	import flash.display.DisplayObject;
 	import flash.events.Event;
+	import flash.utils.setTimeout;
 	
 	import mx.collections.ArrayCollection;
 	import mx.controls.Alert;
@@ -31,6 +36,7 @@ package actionScripts.plugin.templating
 	
 	import __AS3__.vec.Vector;
 	
+	import actionScripts.events.ASModulesEvent;
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.EditorPluginEvent;
 	import actionScripts.events.ExportVisualEditorProjectEvent;
@@ -47,6 +53,7 @@ package actionScripts.plugin.templating
 	import actionScripts.plugin.IMenuPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+	import actionScripts.plugin.ondiskproj.OnDiskProjectPlugin;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.vo.ISetting;
 	import actionScripts.plugin.settings.vo.StaticLabelSetting;
@@ -74,11 +81,15 @@ package actionScripts.plugin.templating
 	import components.popup.newFile.NewCSSFilePopup;
 	import components.popup.newFile.NewFilePopup;
 	import components.popup.newFile.NewGroovyFilePopup;
+	import components.popup.newFile.NewHaxeFilePopup;
 	import components.popup.newFile.NewJavaFilePopup;
 	import components.popup.newFile.NewMXMLFilePopup;
+	import components.popup.newFile.NewMXMLGenericFilePopup;
 	import components.popup.newFile.NewVisualEditorFilePopup;
-	import components.popup.newFile.NewHaxeFilePopup;
+	import components.popup.newFile.NewOnDiskFilePopup;
 
+	import actionScripts.interfaces.IVisualEditorProjectVO;
+	import actionScripts.plugin.ondiskproj.OnDiskProjectPlugin;
     /*
     Templating plugin
 
@@ -90,12 +101,17 @@ package actionScripts.plugin.templating
 	
 	public class TemplatingPlugin extends PluginBase implements ISettingsProvider,IMenuPlugin
 	{
+		protected static const CATEGORY_PROJECTS:String = "categoryProjects";
+		protected static const CATEGORY_FILES:String = "categoryFiles";
+
 		override public function get name():String 			{return "Templating";}
 		override public function get author():String 		{return ConstantsCoreVO.MOONSHINE_IDE_LABEL +" Project Team";}
 		override public function get description():String 	{return ResourceManager.getInstance().getString('resources','plugin.desc.templating');}
 		
 		public static var fileTemplates:Array = [];
 		public static var projectTemplates:Array = [];
+
+		public var categoryType:String = CATEGORY_PROJECTS;
 		
 		protected var templatesDir:FileLocation;
 		protected var customTemplatesDir:FileLocation;
@@ -109,13 +125,16 @@ package actionScripts.plugin.templating
 		protected var newGroovyComponentPopup:NewGroovyFilePopup;
 		protected var newHaxeComponentPopup:NewHaxeFilePopup;
 		protected var newCSSComponentPopup:NewCSSFilePopup;
+		protected var newMXMLModuleComponentPopup:NewMXMLGenericFilePopup;
 		protected var newVisualEditorFilePopup:NewVisualEditorFilePopup;
+		protected var newOnDiskFilePopup:NewOnDiskFilePopup;
 		protected var newFilePopup:NewFilePopup;
 		
 		private var resetIndex:int = -1;
 
 		private var templateConfigs:Array;
 		private var allLoadedTemplates:Array;
+		private var settings:Vector.<ISetting>;
 
 		public function TemplatingPlugin()
 		{
@@ -154,6 +173,7 @@ package actionScripts.plugin.templating
 			{
 	            dispatcher.addEventListener(ExportVisualEditorProjectEvent.EVENT_EXPORT_VISUALEDITOR_PROJECT_TO_FLEX, handleExportNewProjectFromTemplate);
 				dispatcher.addEventListener(NewFileEvent.EVENT_NEW_VISUAL_EDITOR_FILE, onVisualEditorFileCreateRequest, false, 0, true);
+				dispatcher.addEventListener(NewFileEvent.EVENT_FILE_CREATED, onNewFileBeingCreated, false, 0, true);
 			}
 		}
 		
@@ -169,6 +189,12 @@ package actionScripts.plugin.templating
 			}
 			
 			readTemplates();
+		}
+		
+		public static function checkAndUpdateIfTemplateModified(event:NewFileEvent):void
+		{
+			var modifiedTemplate:FileLocation = TemplatingHelper.getCustomFileFor(event.fromTemplate);
+			if (modifiedTemplate.fileBridge.exists) event.fromTemplate = modifiedTemplate;
 		}
 		
 		protected function readTemplates():void
@@ -200,6 +226,20 @@ package actionScripts.plugin.templating
                 if (!file.isHidden && !file.isDirectory)
                     ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_FLEX.addItem(file);
             }
+			//domino template ,need copy folder
+			files = templatesDir.resolvePath("files/visualeditor/domino/nsfs/nsf-moonshine/odp/Forms/");
+			ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_DOMINO.addItem(files);
+			list = files.fileBridge.getDirectoryListing();
+			for each (file in list)
+            {
+                if (!file.isHidden && !file.isDirectory)
+                    ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_DOMINO.addItem(file);
+            }
+
+
+			files = templatesDir.resolvePath("files/visualeditor/domino/nsfs/nsf-moonshine/odp/Forms/DominoVisualEditorExample.form");
+			if (!files.fileBridge.isHidden && !files.fileBridge.isDirectory)
+				ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_DOMINO_FORM = files;
 
             files = templatesDir.resolvePath("files/visualeditor/primeFaces");
             list = files.fileBridge.getDirectoryListing();
@@ -208,6 +248,10 @@ package actionScripts.plugin.templating
                 if (!file.isHidden && !file.isDirectory)
                     ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_PRIMEFACES.addItem(file);
             }
+			
+			files = templatesDir.resolvePath("files/MXML Module.mxml.template");
+			if (!files.fileBridge.isHidden && !files.fileBridge.isDirectory)
+				ConstantsCoreVO.TEMPLATE_MXML_MODULE = files;
 
 			files = templatesDir.resolvePath("files/AS3 Class.as.template");
 			if (!files.fileBridge.isHidden && !files.fileBridge.isDirectory)
@@ -263,6 +307,14 @@ package actionScripts.plugin.templating
                 if (!file.isHidden && !file.isDirectory)
                     ConstantsCoreVO.TEMPLATES_MXML_ROYALE_COMPONENTS.addItem(file);
             }
+			
+			files = templatesDir.resolvePath("files/Visual Editor DXL File.dve.template");
+			if (!files.fileBridge.isHidden && !files.fileBridge.isDirectory)
+				ConstantsCoreVO.TEMPLATE_ODP_VISUALEDITOR_FILE = files;
+			
+			files = templatesDir.resolvePath("files/Form Builder DXL File.dfb.template");
+			if (!files.fileBridge.isHidden && !files.fileBridge.isDirectory)
+				ConstantsCoreVO.TEMPLATE_ODP_FORMBUILDER_FILE = files;
 
 			var projects:FileLocation = templatesDir.resolvePath("projects");
 			list = projects.fileBridge.getDirectoryListing();
@@ -305,6 +357,9 @@ package actionScripts.plugin.templating
 				}
 			}
 			
+			// sort when done
+			fileTemplates.sortOn("name", Array.CASEINSENSITIVE);
+			
 			projects = customTemplatesDir.resolvePath("projects");
 			if (!projects.fileBridge.exists) projects.fileBridge.createDirectory();
 			var projectList:Array = projects.fileBridge.getDirectoryListing();
@@ -317,13 +372,15 @@ package actionScripts.plugin.templating
 					projectTemplates.push(new FileLocation(file.nativePath));
 				}
 			}
-
+			
+			var tmpABCD:Object = projectTemplates;
 			generateTemplateProjects();
 		}
 
         private function generateTemplateProjects():void
         {
             var projectTemplateCollection:ArrayCollection = new ArrayCollection();
+			var actionScriptProjectTemplates:ArrayCollection = new ArrayCollection();
             var feathersProjectTemplates:ArrayCollection = new ArrayCollection();
 			var royaleProjectTemplates:ArrayCollection = new ArrayCollection();
 			var javaProjectTemplates:ArrayCollection = new ArrayCollection();
@@ -352,7 +409,7 @@ package actionScripts.plugin.templating
 						template.logoImagePath = iconFile.url;
                     }
 
-                    if (templateName.indexOf("Feathers") != -1 || templateName.indexOf("Away3D") != -1)
+                    if (templateName.indexOf("Feathers SDK") != -1 || templateName.indexOf("Away3D") != -1)
 					{
 						feathersProjectTemplates.addItem(template);
                     }
@@ -360,6 +417,11 @@ package actionScripts.plugin.templating
 					{
 						projectTemplateCollection.addItem(template);
                     }
+					
+					if (templateName.indexOf("ActionScript") != -1)
+					{
+						actionScriptProjectTemplates.addItem(template);
+					}
 
 					if (templateName.indexOf("Royale") != -1 && templateName.indexOf("FlexJS") == -1)
 					{
@@ -392,56 +454,36 @@ package actionScripts.plugin.templating
 			ConstantsCoreVO.TEMPLATES_PROJECTS_JAVA = javaProjectTemplates;
 			ConstantsCoreVO.TEMPLATES_PROJECTS_GRAILS = grailsProjectTemplates;
 			ConstantsCoreVO.TEMPLATES_PROJECTS_HAXE = haxeProjectTemplates;
+			ConstantsCoreVO.TEMPLATES_PROJECTS_ACTIONSCRIPT = actionScriptProjectTemplates;
         }
-		
-		public function getSettingsList():Vector.<ISetting>	
+
+		public function getSettingsList():Vector.<ISetting>
 		{	
 			// Build settings on each template (just a File object pointing to a directory)
 			//  requires good names for the directories, but shouldn't be a problem
-			var settings:Vector.<ISetting> = new Vector.<ISetting>();
+			settings = new Vector.<ISetting>();
 			
-			var fileLabel:StaticLabelSetting = new StaticLabelSetting("Files", 14);
-			settings.push(fileLabel);
-			
-			var setting:TemplateSetting;
-			for each (var t:FileLocation in fileTemplates)
-			{
-				if (t.fileBridge.isHidden) continue;
-				setting = getTemplateSetting(t);
-				settings.push(setting);
-			}
-			
-			newFileTemplateSetting = new NewTemplateSetting("Add file template");
-			newFileTemplateSetting.renderer.addEventListener('create', handleFileTemplateCreate, false, 0, true);
-			
-			settings.push(newFileTemplateSetting);
-			
-			var projectLabel:StaticLabelSetting = new StaticLabelSetting("Projects", 14);
-			settings.push(projectLabel);
-			
-			for each (var p:FileLocation in projectTemplates)
-			{
-				if (p.fileBridge.isHidden) continue;
-				setting = getTemplateSetting(p);				
-				settings.push(setting);
-			}
-			
-			newProjectTemplateSetting = new NewTemplateSetting("Add project template");
-			newProjectTemplateSetting.renderer.addEventListener('create', handleProjectTemplateCreate, false, 0, true);
-			
-			settings.push(newProjectTemplateSetting);
-			
+			var categorySetting:MultiOptionSetting = new MultiOptionSetting(this, 'categoryType', "Select Category",
+					Vector.<NameValuePair>([
+						new NameValuePair("Projects", CATEGORY_PROJECTS),
+						new NameValuePair("Files", CATEGORY_FILES)
+					])
+			);
+			categorySetting.addEventListener(MultiOptionSetting.EVENT_MULTIOPTION_CHANGE, onCategorySettingsChanged, false, 0, true);
+			settings.push(categorySetting);
+
+			addProjectsOptions();
+
 			settingsList = settings;
 			return settings;
 		}
-		
+
 		public function getMenu():MenuItem
 		{	
 			var newFileMenu:MenuItem = new MenuItem('New');
 			var enableTypes:Array;
 			newFileMenu.parents = ["File", "New"];
 			newFileMenu.items = new Vector.<MenuItem>();
-
 			for each (var fileTemplate:FileLocation in fileTemplates)
 			{
 				if (fileTemplate.fileBridge.isHidden) continue;
@@ -464,6 +506,7 @@ package actionScripts.plugin.templating
 			newFileMenu.items.push(separator);
 
 			var filteredProjectTemplatesToMenu:Array = allLoadedTemplates.filter(filterProjectsTemplates);
+			filteredProjectTemplatesToMenu.sortOn("homeTitle", Array.CASEINSENSITIVE);
 
 			for each (var projectTemplate:TemplateVO in filteredProjectTemplatesToMenu)
 			{
@@ -483,6 +526,44 @@ package actionScripts.plugin.templating
 			}
 			
 			return newFileMenu;
+		}
+
+		protected function addFilesOptions():void
+		{
+			var fileLabel:StaticLabelSetting = new StaticLabelSetting("Files", 14);
+			settings.push(fileLabel);
+
+			var setting:TemplateSetting;
+			for each (var t:FileLocation in fileTemplates)
+			{
+				if (t.fileBridge.isHidden) continue;
+				setting = getTemplateSetting(t);
+				settings.push(setting);
+			}
+
+			newFileTemplateSetting = new NewTemplateSetting("Add file template");
+			newFileTemplateSetting.renderer.addEventListener('create', handleFileTemplateCreate, false, 0, true);
+
+			settings.push(newFileTemplateSetting);
+		}
+
+		protected function addProjectsOptions():void
+		{
+			var projectLabel:StaticLabelSetting = new StaticLabelSetting("Projects", 14);
+			settings.push(projectLabel);
+
+			var setting:TemplateSetting;
+			for each (var p:FileLocation in projectTemplates)
+			{
+				if (p.fileBridge.isHidden) continue;
+				setting = getTemplateSetting(p);
+				settings.push(setting);
+			}
+
+			newProjectTemplateSetting = new NewTemplateSetting("Add project template");
+			newProjectTemplateSetting.renderer.addEventListener('create', handleProjectTemplateCreate, false, 0, true);
+
+			settings.push(newProjectTemplateSetting);
 		}
 		
 		protected function getTemplateSetting(template:FileLocation):TemplateSetting
@@ -543,6 +624,7 @@ package actionScripts.plugin.templating
 			
 			// Update internal template list
 			fileTemplates.push(newTemplate);
+			fileTemplates.sortOn("name", Array.CASEINSENSITIVE);
 			
 			// send event to get the new item added immediately to File/New menu
 			var lbl:String = TemplatingHelper.getTemplateLabel(newTemplate);
@@ -581,6 +663,7 @@ package actionScripts.plugin.templating
 			NewTemplateRenderer(event.target).dispatchEvent(new Event('refresh'));
 			
 			projectTemplates.push(newTemplate);
+			projectTemplates.sortOn("homeTitle", Array.CASEINSENSITIVE);
 			
 			// send event to get the new item added immediately to File/New menu
 			// send event to get the new item added immediately to File/New menu
@@ -758,7 +841,14 @@ package actionScripts.plugin.templating
 					
 					// update file list
 					tmpOldIndex = fileTemplates.indexOf(custom);
-					if (tmpOldIndex != -1) fileTemplates[tmpOldIndex] = customNewLocation;
+					if (tmpOldIndex != -1) 
+					{
+						fileTemplates[tmpOldIndex] = customNewLocation;
+						setTimeout(function():void
+						{
+							fileTemplates.sortOn("name", Array.CASEINSENSITIVE);
+						}, 1000);
+					}
 					
 					// updating file/new menu
 					dispatcher.dispatchEvent(new TemplatingEvent(TemplatingEvent.RENAME_TEMPLATE, false, oldFileName, null, newFileName, customNewLocation));
@@ -773,7 +863,11 @@ package actionScripts.plugin.templating
 					
 					// update file list
 					tmpOldIndex = projectTemplates.indexOf(custom);
-					if (tmpOldIndex != -1) projectTemplates[tmpOldIndex] = customNewLocation;
+					if (tmpOldIndex != -1) 
+					{
+						projectTemplates[tmpOldIndex] = customNewLocation;
+						projectTemplates.sortOn("homeTitle", Array.CASEINSENSITIVE);
+					}
 					
 					// updating file/new menu
 					dispatcher.dispatchEvent(new TemplatingEvent(TemplatingEvent.RENAME_TEMPLATE, true, oldFileName, null, newFileName, customNewLocation));
@@ -818,6 +912,9 @@ package actionScripts.plugin.templating
 			{
 				eventName = event.type.substr(24);
 				
+				//Alert.show("eventName1:"+event.type);
+				//Alert.show("eventName2:"+(event as NewFileEvent).type);
+				
 				// MXML type choose
 				switch (eventName)
 				{
@@ -833,6 +930,9 @@ package actionScripts.plugin.templating
 					case "CSS File":
 						openCSSComponentTypeChoose(event);
                         break;
+					case "MXML Module":
+						openMXMLModuleTypeChoose(event);
+						break;
 					case "XML File":
 						openNewComponentTypeChoose(event, NewFilePopup.AS_XML);
                         break;
@@ -841,6 +941,12 @@ package actionScripts.plugin.templating
                         break;
 					case "Visual Editor Flex File":
 					case "Visual Editor PrimeFaces File":
+						openVisualEditorComponentTypeChoose(event);
+						break;
+					// case "Domino Visual Editor Form":
+					// 	openDominoVisualEditorFormTypeChoose(event);
+					// 	break;	
+					case "Visual Editor Domino File":
 						openVisualEditorComponentTypeChoose(event);
 						break;
 					case "Java Class":
@@ -854,6 +960,12 @@ package actionScripts.plugin.templating
 						break;
 					case "Haxe Interface":
 						openHaxeTypeChoose(event, true);
+						break;
+					case "Form Builder DXL File":
+						openOnDiskFormBuilderTypeChoose(event);
+						break;
+					case "Visual Editor DXL File":
+						openOnDiskVisualEditorTypeChoose(event);
 						break;
 					default:
 						for (i = 0; i < fileTemplates.length; i++)
@@ -990,6 +1102,83 @@ package actionScripts.plugin.templating
                 PopUpManager.centerPopUp(newVisualEditorFilePopup);
             }
         }
+		
+		protected function openDominoVisualEditorFormTypeChoose(event:Event):void
+        {
+            var tmpOnDiskEvent:NewFileEvent = new NewFileEvent(
+				OnDiskProjectPlugin.EVENT_NEW_FILE_WINDOW, (event as NewFileEvent).filePath,
+				ConstantsCoreVO.TEMPLATES_VISUALEDITOR_FILES_DOMINO_FORM, (event as NewFileEvent).insideLocation
+				);
+			tmpOnDiskEvent.ofProject = (event as NewFileEvent).ofProject;
+			
+			dispatcher.dispatchEvent(tmpOnDiskEvent);
+        }
+		protected function openOnDiskFormBuilderTypeChoose(event:Event):void
+		{
+			var tmpOnDiskEvent:NewFileEvent = new NewFileEvent(
+				OnDiskProjectPlugin.EVENT_NEW_FILE_WINDOW, (event as NewFileEvent).filePath,
+				ConstantsCoreVO.TEMPLATE_ODP_FORMBUILDER_FILE, (event as NewFileEvent).insideLocation
+				);
+			tmpOnDiskEvent.ofProject = (event as NewFileEvent).ofProject;
+			
+			dispatcher.dispatchEvent(tmpOnDiskEvent);
+		}
+		
+		protected function openOnDiskVisualEditorTypeChoose(event:Event):void
+		{
+			// if(!newOnDiskFilePopup){
+			// 	newOnDiskFilePopup = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, NewOnDiskFilePopup, true) as NewOnDiskFilePopup;
+			// 	newOnDiskFilePopup.addEventListener(CloseEvent.CLOSE, handleNewFilePopupClose);
+			// 	if (event is NewFileEvent)
+            //     {
+            //         newOnDiskFilePopup.folderLocation = new FileLocation((event as NewFileEvent).filePath);
+			// 		newOnDiskFilePopup.wrapperOfFolderLocation = (event as NewFileEvent).insideLocation;
+			// 		newOnDiskFilePopup.wrapperBelongToProject = UtilsCore.getProjectFromProjectFolder((event as NewFileEvent).insideLocation);
+			
+            //     }
+            //     else
+            //     {
+			// 		var treeSelectedItem:FileWrapper = model.mainView.getTreeViewPanel().tree.selectedItem as FileWrapper;
+            //         if (treeSelectedItem)
+            //         {
+            //             var creatingItemIn:FileWrapper = (treeSelectedItem.file.fileBridge.isDirectory) ? treeSelectedItem : FileWrapper(model.mainView.getTreeViewPanel().tree.getParentItem(treeSelectedItem));
+            //             newOnDiskFilePopup.folderLocation = creatingItemIn.file;
+            //             newOnDiskFilePopup.wrapperOfFolderLocation = creatingItemIn;
+            //             newOnDiskFilePopup.wrapperBelongToProject = UtilsCore.getProjectFromProjectFolder(creatingItemIn);
+            //         }
+			// 	}
+			// 	PopUpManager.centerPopUp(newOnDiskFilePopup);
+			// }
+			
+			var tmpOnDiskEvent:NewFileEvent =null;
+			if(event is NewFileEvent){
+				tmpOnDiskEvent= new NewFileEvent(
+				OnDiskProjectPlugin.EVENT_NEW_FILE_WINDOW, (event as NewFileEvent).filePath,
+				ConstantsCoreVO.TEMPLATE_ODP_VISUALEDITOR_FILE, (event as NewFileEvent).insideLocation
+				);
+				tmpOnDiskEvent.ofProject = (event as NewFileEvent).ofProject;
+			}else{
+				var treeSelectedItem:FileWrapper = model.mainView.getTreeViewPanel().tree.selectedItem as FileWrapper;
+				if(treeSelectedItem){
+				var creatingItemIn:FileWrapper = (treeSelectedItem.file.fileBridge.isDirectory) ? treeSelectedItem : FileWrapper(model.mainView.getTreeViewPanel().tree.getParentItem(treeSelectedItem));
+				tmpOnDiskEvent= new NewFileEvent(
+				OnDiskProjectPlugin.EVENT_NEW_FILE_WINDOW, creatingItemIn.file.fileBridge.nativePath,
+				ConstantsCoreVO.TEMPLATE_ODP_VISUALEDITOR_FILE, creatingItemIn
+				);
+				}
+			}
+			
+			//tmpOnDiskEvent.ofProject = (event as NewFileEvent).ofProject;
+			
+			dispatcher.dispatchEvent(tmpOnDiskEvent);
+		}
+
+		protected function handleNewFilePopupClose(event:CloseEvent):void
+		{
+			newOnDiskFilePopup.removeEventListener(CloseEvent.CLOSE, handleNewFilePopupClose);
+			// newOnDiskFilePopup.removeEventListener(NewFileEvent.EVENT_NEW_FILE, onNewFileCreateRequest);
+			newOnDiskFilePopup = null;
+		}
 
 		protected function openCSSComponentTypeChoose(event:Event):void
 		{
@@ -1025,6 +1214,42 @@ package actionScripts.plugin.templating
 			}
 		}
 		
+		protected function openMXMLModuleTypeChoose(event:Event):void
+		{
+			if (!newMXMLModuleComponentPopup)
+			{
+				newMXMLModuleComponentPopup = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, NewMXMLGenericFilePopup, true) as NewMXMLGenericFilePopup;
+				newMXMLModuleComponentPopup.title = "New MXML Module File";
+				newMXMLModuleComponentPopup.fileTemplate = ConstantsCoreVO.TEMPLATE_MXML_MODULE;
+				newMXMLModuleComponentPopup.addEventListener(CloseEvent.CLOSE, handleMXMLModulePopupClose);
+				newMXMLModuleComponentPopup.addEventListener(NewFileEvent.EVENT_NEW_FILE, onMXMLModuleFileCreateRequest);
+				
+				// newFileEvent sends by TreeView when right-clicked 
+				// context menu
+				if (event is NewFileEvent) 
+				{
+					newMXMLModuleComponentPopup.folderLocation = new FileLocation((event as NewFileEvent).filePath);
+					newMXMLModuleComponentPopup.wrapperOfFolderLocation = (event as NewFileEvent).insideLocation;
+					newMXMLModuleComponentPopup.wrapperBelongToProject = UtilsCore.getProjectFromProjectFolder((event as NewFileEvent).insideLocation);
+				}
+				else
+				{
+					// try to check if there is any selection in 
+					// TreeView item
+					var treeSelectedItem:FileWrapper = model.mainView.getTreeViewPanel().tree.selectedItem as FileWrapper;
+					if (treeSelectedItem)
+					{
+						var creatingItemIn:FileWrapper = (treeSelectedItem.file.fileBridge.isDirectory) ? treeSelectedItem : FileWrapper(model.mainView.getTreeViewPanel().tree.getParentItem(treeSelectedItem));
+						newMXMLModuleComponentPopup.folderLocation = creatingItemIn.file;
+						newMXMLModuleComponentPopup.wrapperOfFolderLocation = creatingItemIn;
+						newMXMLModuleComponentPopup.wrapperBelongToProject = UtilsCore.getProjectFromProjectFolder(creatingItemIn);
+					}
+				}
+				
+				PopUpManager.centerPopUp(newMXMLModuleComponentPopup);
+			}
+		}
+		
 		protected function openNewComponentTypeChoose(event:Event, openType:String, fileTemplate:FileLocation=null):void
 		{
 			if (!newFilePopup)
@@ -1054,6 +1279,16 @@ package actionScripts.plugin.templating
 						newFilePopup.wrapperBelongToProject = UtilsCore.getProjectFromProjectFolder(creatingItemIn);
 					}
 				}
+				var eventName:String = event.type.substr(24)
+				if(eventName){
+					if(eventName=="Domino Visual Editor Form"){
+						if(newFilePopup.wrapperBelongToProject){
+							(newFilePopup.wrapperBelongToProject as IVisualEditorProjectVO).isDominoVisualEditorProject = true;
+							//Alert.show("Domino Visual set to true");
+						}
+						
+					}
+				}
 				
 				PopUpManager.centerPopUp(newFilePopup);
 			}
@@ -1071,6 +1306,13 @@ package actionScripts.plugin.templating
 			newCSSComponentPopup.removeEventListener(CloseEvent.CLOSE, handleCSSPopupClose);
 			newCSSComponentPopup.removeEventListener(NewFileEvent.EVENT_NEW_FILE, onCSSFileCreateRequest);
 			newCSSComponentPopup = null;
+		}
+		
+		protected function handleMXMLModulePopupClose(event:CloseEvent):void
+		{
+			newMXMLModuleComponentPopup.removeEventListener(CloseEvent.CLOSE, handleMXMLModulePopupClose);
+			newMXMLModuleComponentPopup.removeEventListener(NewFileEvent.EVENT_NEW_FILE, onMXMLModuleFileCreateRequest);
+			newMXMLModuleComponentPopup = null;
 		}
 		
 		protected function handleMXMLPopupClose(event:CloseEvent):void
@@ -1188,12 +1430,6 @@ package actionScripts.plugin.templating
 			}
 		}
 		
-		protected function checkAndUpdateIfTemplateModified(event:NewFileEvent):void
-		{
-			var modifiedTemplate:FileLocation = TemplatingHelper.getCustomFileFor(event.fromTemplate);
-			if (modifiedTemplate.fileBridge.exists) event.fromTemplate = modifiedTemplate;
-		}
-
 		protected function openGroovyTypeChoose(event:Event, isInterfaceDialog:Boolean):void
 		{
 			if (!newGroovyComponentPopup)
@@ -1263,7 +1499,7 @@ package actionScripts.plugin.templating
 				PopUpManager.centerPopUp(newHaxeComponentPopup);
 			}
 		}
-
+		
 		protected function onNewAS3FileCreateRequest(event:NewFileEvent):void
 		{
 			checkAndUpdateIfTemplateModified(event);
@@ -1273,9 +1509,9 @@ package actionScripts.plugin.templating
 				var pattern:RegExp = new RegExp(TextUtil.escapeRegex("$fileName"), "g");
 				var as3FileAttributes:AS3ClassAttributes = event.extraParameters[0] as AS3ClassAttributes;
 
-				content = content.replace(pattern, event.fileName);
+				content = content.replace(pattern, getNestingClassName(event.fileName));
 				
-				var packagePath:String = UtilsCore.getPackageReferenceByProjectPath(event.ofProject["classpaths"], event.insideLocation.nativePath, null, null, false);
+				var packagePath:String = UtilsCore.getPackageReferenceByProjectPath(event.ofProject["classpaths"], getNestedPackagePath(event.fileName, event.insideLocation.nativePath), null, null, false);
 				if (packagePath != "")
 				{
 					packagePath = packagePath.substr(1, packagePath.length);
@@ -1329,9 +1565,9 @@ package actionScripts.plugin.templating
 				var pattern:RegExp = new RegExp(TextUtil.escapeRegex("$fileName"), "g");
                 var as3InterfaceAttributes:AS3ClassAttributes = event.extraParameters[0] as AS3ClassAttributes;
 
-				content = content.replace(pattern, event.fileName);
+				content = content.replace(pattern, getNestingClassName(event.fileName));
 				
-				var packagePath:String = UtilsCore.getPackageReferenceByProjectPath(event.ofProject["classpaths"], event.insideLocation.nativePath, null, null, false);
+				var packagePath:String = UtilsCore.getPackageReferenceByProjectPath(event.ofProject["classpaths"], getNestedPackagePath(event.fileName, event.insideLocation.nativePath), null, null, false);
 				if (packagePath != "") packagePath = packagePath.substr(1, packagePath.length); // removing . at index 0
 				content = content.replace("$packageName", packagePath);
                 content = content.replace("$imports", as3InterfaceAttributes.getImports());
@@ -1347,7 +1583,7 @@ package actionScripts.plugin.templating
 			}
 		}
 
-		protected function onMXMLFileCreateRequest(event:NewFileEvent):void
+		protected function onMXMLFileCreateRequest(event:NewFileEvent):FileLocation
 		{
 			checkAndUpdateIfTemplateModified(event);
 			if (event.fromTemplate.fileBridge.exists)
@@ -1357,6 +1593,21 @@ package actionScripts.plugin.templating
 				fileToSave.fileBridge.save(content);
 
                 notifyNewFileCreated(event.insideLocation, fileToSave);
+				return fileToSave;
+			}
+			
+			return null;
+		}
+		
+		protected function onMXMLModuleFileCreateRequest(event:NewFileEvent):void
+		{
+			if (event.fromTemplate.fileBridge.exists)
+			{
+				var tmpFile:FileLocation = onMXMLFileCreateRequest(event);
+				if (tmpFile)
+				{
+					dispatcher.dispatchEvent(new ASModulesEvent(ASModulesEvent.EVENT_ADD_MODULE, tmpFile, (event.ofProject as AS3ProjectVO)));
+				}
 			}
 		}
 		
@@ -1529,6 +1780,11 @@ package actionScripts.plugin.templating
 			
 			return false;
 		}
+		
+		private function onNewFileBeingCreated(event:NewFileEvent):void
+		{
+			notifyNewFileCreated(event.insideLocation, event.newFileCreated, event.isOpenAfterCreate);
+		}
 
 		private function notifyNewFileCreated(insideLocation:FileWrapper, fileToSave:FileLocation, isOpenAfterCreate:Boolean=true):void
 		{
@@ -1548,6 +1804,46 @@ package actionScripts.plugin.templating
 				treeEvent.extra = fileToSave;
 				dispatcher.dispatchEvent(treeEvent);
             }
+		}
+		
+		private function getNestingClassName(value:String):String
+		{
+			if (value.indexOf("/") != -1)
+			{
+				return value.split("/").pop() as String;
+			}
+			
+			return value;
+		}
+		
+		private function getNestedPackagePath(fileName:String, insideLocationPath:String):String
+		{
+			if (fileName.indexOf("/") != -1)
+			{
+				var tmpSplit:Array = fileName.split("/");
+				tmpSplit.pop();
+				
+				return insideLocationPath + model.fileCore.separator + tmpSplit.join(model.fileCore.separator);
+			}
+			
+			return insideLocationPath;
+		}
+
+		private function onCategorySettingsChanged(event:Event):void
+		{
+			// remove everything
+			settings.splice(2,settings.length-2);
+
+			if ((event.target as MultiOptionSetting).value == CATEGORY_FILES)
+			{
+				addFilesOptions();
+			}
+			else
+			{
+				addProjectsOptions();
+			}
+
+			dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_REFRESH_CURRENT_SETTINGS));
 		}
 	}
 }

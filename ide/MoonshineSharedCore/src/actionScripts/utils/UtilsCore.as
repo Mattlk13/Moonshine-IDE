@@ -19,12 +19,15 @@
 package actionScripts.utils
 {
 	import flash.display.DisplayObject;
+	import flash.events.Event;
 	import flash.geom.Point;
 	import flash.system.Capabilities;
 	
 	import mx.collections.ArrayCollection;
 	import mx.collections.ICollectionView;
 	import mx.collections.IList;
+	import mx.collections.Sort;
+	import mx.collections.SortField;
 	import mx.core.FlexGlobals;
 	import mx.core.UIComponent;
 	import mx.events.CloseEvent;
@@ -32,6 +35,7 @@ package actionScripts.utils
 	import mx.managers.PopUpManager;
 	import mx.resources.ResourceManager;
 	import mx.utils.UIDUtil;
+	import mx.controls.Alert;
 	
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.ProjectEvent;
@@ -40,11 +44,13 @@ package actionScripts.utils
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.actionscript.as3project.vo.SWFOutputVO;
 	import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
+	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
 	import actionScripts.plugin.settings.SettingsView;
 	import actionScripts.ui.IContentWindow;
-	import actionScripts.ui.editor.BasicTextEditor;
+	import actionScripts.ui.IFileContentWindow;
 	import actionScripts.ui.menu.vo.MenuItem;
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
 	import actionScripts.ui.tabview.CloseTabEvent;
@@ -58,18 +64,17 @@ package actionScripts.utils
 	import actionScripts.valueObjects.SDKTypes;
 	
 	import components.popup.ModifiedFileListPopup;
-	import components.popup.SDKDefinePopup;
-	import components.popup.SDKSelectorPopup;
 	import components.renderers.CustomToolTipGBA;
 	import components.views.splashscreen.SplashScreen;
-	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
+	
+	import feathers.data.ArrayCollection;
+
+	//import flash.filesystem.File;
 
 	public class UtilsCore 
 	{
 		public static var wrappersFoundThroughFindingAWrapper:Vector.<FileWrapper>;
 		
-		private static var sdkPopup:SDKSelectorPopup;
-		private static var sdkPathPopup:SDKDefinePopup;
 		private static var model:IDEModel = IDEModel.getInstance();
 		
 		/**
@@ -270,6 +275,21 @@ package actionScripts.utils
 			return null;
 		}
 		
+		public static function sortCollection(collection:mx.collections.ArrayCollection, fields:Array):void
+		{
+			var sortFields:Array = [];
+			fields.forEach(function(field:String, index:int, arr:Array):void
+			{
+				if (field != "")
+				{
+					sortFields.push(new SortField(field, true));
+				}
+			});
+			
+			collection.sort = new Sort(sortFields);
+			collection.refresh();
+		}
+		
 		/**
 		 * Returns project based on its path
 		 */
@@ -439,6 +459,51 @@ package actionScripts.utils
 			
 			return wrapper;
 		}
+
+		public static  function findDominoFileWrapperInDepth(wrapper:FileWrapper, searchPath:String):FileWrapper
+		{
+			//Alert.show("searchPath:"+searchPath);
+
+
+			for each (var child:FileWrapper in wrapper.children)
+			{
+			
+			
+				if (searchPath == child.nativePath || searchPath.indexOf(child.nativePath + child.file.fileBridge.separator) == 0)
+				{
+					wrappersFoundThroughFindingAWrapper.push(child);
+					if (searchPath == child.nativePath) 
+					{
+						return child;
+					}
+					if (child.children && child.children.length > 0) return findFileWrapperInDepth(child, searchPath);
+				}
+
+				
+				if(child.children && child.children.length > 0){
+					
+					if(endsWith(child.nativePath,"nsfs")|| endsWith(child.nativePath,"nsf-moonshine")||endsWith(child.nativePath,"odp")){
+						findDominoFileWrapperInDepth(child, searchPath);
+					}
+					
+					//
+				}
+				
+			
+			
+			}
+			
+			return wrapper;
+		}
+
+		public static  function endsWith(str:String, ending:String):Boolean {
+   			 var index:int = str.lastIndexOf(ending)
+    		return index > -1 && index == str.length - ending.length;
+		}
+
+		
+		
+	
 		
 		/**
 		 * Finding fileWrapper by its UDID
@@ -487,39 +552,6 @@ package actionScripts.utils
 			}
 			
 			return true;
-		}
-		
-		public static function sdkSelection():void
-		{
-			if (!sdkPathPopup)
-			{
-				if(!sdkPopup)
-				{
-					sdkPopup = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, SDKSelectorPopup, false) as SDKSelectorPopup;
-					sdkPopup.addEventListener(ProjectEvent.FLEX_SDK_UDPATED, onFlexSDKUpdated);
-					sdkPopup.addEventListener(CloseEvent.CLOSE, onSDKPopupClosed);
-					PopUpManager.centerPopUp(sdkPopup);
-				}
-				else
-				{
-					PopUpManager.bringToFront(sdkPopup);
-				}
-			}
-			else
-			{
-				PopUpManager.bringToFront(sdkPathPopup);
-			}
-			
-			function onFlexSDKUpdated(event:ProjectEvent):void
-			{
-				onSDKPopupClosed(null);
-			}
-			function onSDKPopupClosed(event:CloseEvent):void
-			{
-				sdkPopup.removeEventListener(CloseEvent.CLOSE, onSDKPopupClosed);
-				sdkPopup.removeEventListener(ProjectEvent.FLEX_SDK_UDPATED, onFlexSDKUpdated);
-				sdkPopup = null;
-			}
 		}
 		
 		/**
@@ -739,7 +771,7 @@ package actionScripts.utils
 		{
 			var projectReferencePath:String;
 			var editorsCount:int = model.editors.length;
-			var hasChangesEditors:ArrayCollection = new ArrayCollection();
+			var hasChangesEditors:mx.collections.ArrayCollection = new mx.collections.ArrayCollection();
 			var editorsToClose:Array = [];
 			
 			// closes all opened file editor instances belongs to the deleted project
@@ -760,10 +792,10 @@ package actionScripts.utils
 			
 			for (var i:int = 0; i < editorsCount; i++)
 			{
-				if ((model.editors[i] is BasicTextEditor) && model.editors[i].currentFile &&
-					(!projectReferencePath || model.editors[i].projectPath == projectReferencePath))
+				if ((model.editors[i] is IFileContentWindow) && model.editors[i].currentFile &&
+					(!projectReferencePath || (model.editors[i].hasOwnProperty("projectPath") && model.editors[i].projectPath == projectReferencePath)))
 				{
-                    var editor:BasicTextEditor = model.editors[i];
+                    var editor:IContentWindow = model.editors[i];
 					if (editor)
 					{
 						editorsToClose.push(editor);
@@ -837,7 +869,11 @@ package actionScripts.utils
 		/**
 		 * Parse all acceptable files in a given project
 		 */
-		public static function parseFilesList(collection:IList, project:ProjectVO=null, readableExtensions:Array=null, isSourceFolderOnly:Boolean=false):void
+		public static function parseFilesList(flexCollection:IList=null, 
+											  feathersCollection:feathers.data.ArrayCollection=null, 
+											  project:ProjectVO=null, 
+											  readableExtensions:Array=null, 
+											  isSourceFolderOnly:Boolean=false):void
 		{
 			if (project)
 			{
@@ -848,22 +884,59 @@ package actionScripts.utils
 					var sourceWrapper:FileWrapper = findFileWrapperAgainstFileLocation(project.projectFolder, (project as AS3ProjectVO).sourceFolder);
 					if (sourceWrapper) 
 					{
-						parseChildrens(sourceWrapper, collection, readableExtensions);
+						initiateFilesParsingByPath(sourceWrapper.file.fileBridge.nativePath);
 						return;
 					}
 				}
 				
-				parseChildrens(project.projectFolder, collection, readableExtensions);
+				initiateFilesParsingByPath(project.projectFolder.nativePath);
 			}
 			else
 			{
 				for each (var i:ProjectVO in model.projects)
 				{
-					parseChildrens(i.projectFolder, collection, readableExtensions);
+					initiateFilesParsingByPath(i.projectFolder.nativePath);
+				}
+			}
+			
+			/*
+			 * @local
+			 */
+			function initiateFilesParsingByPath(value:String):void
+			{
+				var tmpFSP:FileSystemParser = new FileSystemParser();
+				tmpFSP.addEventListener(FileSystemParser.EVENT_PARSE_COMPLETED, onFilesListParseCompleted, false, 0, true);
+				tmpFSP.parseFilesPaths(value, "", readableExtensions);
+			}
+			function onFilesListParseCompleted(event:Event):void
+			{
+				event.currentTarget.removeEventListener(FileSystemParser.EVENT_PARSE_COMPLETED, onFilesListParseCompleted);
+				
+				var parsedFilesList:Array = (event.target as FileSystemParser).resultsArrayFormat;
+				var fileCount:int = parsedFilesList.length;
+				var separator:String = model.fileCore.separator;
+				var tmpNameLabel:String;
+				var tmpNameExtension:String;
+				for each (var i:String in parsedFilesList)
+				{
+					//var resource:ResourceVO = ResourceVO(parsedFilesList.getItemAt(i));
+					//resources.add(resource);
+					if (i != "")
+					{
+						tmpNameLabel = i.substr(i.lastIndexOf(separator)+1, i.length);
+						tmpNameExtension = tmpNameLabel.substr(tmpNameLabel.lastIndexOf(".")+1, tmpNameLabel.length);
+						if (!readableExtensions || (readableExtensions && isAcceptableResource(tmpNameExtension, readableExtensions)))
+						{
+							if (flexCollection) 
+								flexCollection.addItem({name:tmpNameLabel, extension: tmpNameExtension, resourcePath: i});
+							if (feathersCollection) 
+								feathersCollection.add({name:tmpNameLabel, extension: tmpNameExtension, resourcePath: i});
+						}
+					}
 				}
 			}
 		}
-
+		
 		/**
 		 * Returns menu options on current
 		 * recent opened projects
@@ -885,6 +958,7 @@ package actionScripts.utils
 				}
 			}
 			
+			openProjectMenu.items.sort(menuComparer);
 			return openProjectMenu;
 		}
 		
@@ -909,6 +983,7 @@ package actionScripts.utils
 				}
 			}
 			
+			openFileMenu.items.sort(menuComparer);
 			return openFileMenu;
 		}
 		
@@ -933,6 +1008,9 @@ package actionScripts.utils
 				else if ((value as AS3ProjectVO).isPrimeFacesVisualEditorProject)
 				{
 					currentMenuType = ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES;
+				}else if ((value as AS3ProjectVO).isDominoVisualEditorProject)
+				{
+					currentMenuType = ProjectMenuTypes.VISUAL_EDITOR_DOMINO;
 				}
 				else if ((value as AS3ProjectVO).isVisualEditorProject)
 				{
@@ -958,6 +1036,10 @@ package actionScripts.utils
 			else if (value is HaxeProjectVO)
 			{
 				currentMenuType = ProjectMenuTypes.HAXE;
+			}
+			else if (value is OnDiskProjectVO)
+			{
+				currentMenuType = ProjectMenuTypes.ON_DISK;
 			}
 
 			if (!value.menuType)
@@ -1090,6 +1172,25 @@ package actionScripts.utils
 			}
 			
 			return true;
+		}
+		
+		public static function isNodeAvailable():Boolean
+		{
+			if (!model.nodePath || model.nodePath == "")
+			{
+				return false;
+			}
+			
+			var component:Object = model.flexCore.getComponentByType(SDKTypes.NODEJS);
+			if (component && component.pathValidation)
+			{
+				if (model.fileCore.isPathExists(model.nodePath + model.fileCore.separator + component.pathValidation)) 
+					return true;
+				else if (model.fileCore.isPathExists(model.nodePath + model.fileCore.separator + "node"))
+					return true;
+			}
+			
+			return false;
 		}
 		
 		public static function isHaxeAvailable():Boolean
@@ -1226,7 +1327,14 @@ package actionScripts.utils
             }
             else
             {
-                return UtilsCore.convertString(nodeLocation.resolvePath("node").fileBridge.nativePath);
+				if (nodeLocation.resolvePath("node").fileBridge.exists)
+				{
+					return UtilsCore.convertString(nodeLocation.resolvePath("node").fileBridge.nativePath);
+				}
+				else if (nodeLocation.resolvePath("bin/node").fileBridge.exists)
+				{
+	                return UtilsCore.convertString(nodeLocation.resolvePath("bin/node").fileBridge.nativePath);
+				}
             }
 			
 			return null;
@@ -1256,6 +1364,16 @@ package actionScripts.utils
 			}
 			
 			return true;
+		}
+		
+		public static function isJava8Present():Boolean
+		{
+			if (model.java8Path && model.java8Path.fileBridge.exists)
+			{
+				return true;
+			}
+			
+			return false;
 		}
 		
 		public static function isAntAvailable():Boolean
@@ -1306,9 +1424,41 @@ package actionScripts.utils
 			return true;
 		}
 		
+		public static function isNotesDominoAvailable():Boolean
+		{
+			if (!model.notesPath || !model.fileCore.isPathExists(model.notesPath))
+			{
+				return false;
+			}
+			
+			var component:Object = model.flexCore.getComponentByType(SDKTypes.NOTES);
+			if (component && component.pathValidation)
+			{
+				return model.fileCore.resolvePath(model.notesPath +"/"+ component.pathValidation).fileBridge.exists;
+				//return model.flexCore.isValidExecutableBy(SDKTypes.NOTES, model.notesPath, component.pathValidation);
+			}
+			
+			return true;
+		}
+		
 		public static function getLineBreakEncoding():String
 		{
 			return (ConstantsCoreVO.IS_MACOS ? "\n" : "\r\n");
+		}
+
+		public static function getVisualEditorSourceFile(fw:FileWrapper):FileLocation
+		{
+			var as3ProjectVO:AS3ProjectVO = UtilsCore.getProjectFromProjectFolder(fw) as AS3ProjectVO;
+			if (as3ProjectVO && as3ProjectVO.isVisualEditorProject)
+			{
+				var veSourcePathFile:String = fw.file.fileBridge.nativePath
+						.replace(as3ProjectVO.sourceFolder.fileBridge.nativePath,
+								as3ProjectVO.visualEditorSourceFolder.fileBridge.nativePath)
+						.replace(/.mxml$|.xhtml$|.form/, ".xml");
+				return new FileLocation(veSourcePathFile);
+			}
+
+			return null;
 		}
 
         private static function parseChildrens(value:FileWrapper, collection:IList, readableExtensions:Array=null):void
@@ -1347,5 +1497,12 @@ package actionScripts.utils
                         return item == extension;
                     });
         }
+		
+		private static function menuComparer(itemA:MenuItem, itemB:MenuItem):Number 
+		{
+			if (itemA.label.toLowerCase() < itemB.label.toLowerCase()) return -1;
+			else if (itemA.label.toLowerCase() > itemB.label.toLowerCase()) return 1;
+			else return 0;
+		}
     }
 }

@@ -13,7 +13,7 @@
   </output>
   &lt;!-- Other classes to be compiled into your SWF --&gt;
   <jsOutput>
-    <option path="/Users/santanu/Documents/Adobe Flash Builder 4.7/ProminicGITBranch/ide/MoonshineDESKTOPevolved"/>
+    <option path=""/>
   </jsOutput>
   <classpaths>
     <class path="../MoonshineSharedCore/src"/>
@@ -51,7 +51,7 @@
     <option warnings="True"/>
   </build>
   <mavenBuild>
-    <option mavenBuildPath="/Users/santanu/Documents/Adobe Flash Builder 4.7/ProminicGITBranch/ide/MoonshineDESKTOPevolved"/>
+    <option mavenBuildPath=""/>
     <option settingsFilePath=""/>
     <option commandLine=""/>
     <actions>
@@ -67,6 +67,8 @@
     <element path="libs/VisualEditor-0.2.0.swc"/>
     <element path="../MoonshineSharedCore/libs/AsWing.swc"/>
     <element path="../MoonshineSharedCore/libs/Global.swc"/>
+    <element path="../MoonshineGUICore/bin/flash/bin/MoonshineGUICore.swc"/>
+	<element path="../../../Moonshine-SDK-Installer/MoonshineSDKInstallerGUICore/bin/flash/bin/MoonshineSDKInstallerGUICore.swc"/>
   </libraryPaths>
   <externalLibraryPaths></externalLibraryPaths>
   <rslPaths></rslPaths>

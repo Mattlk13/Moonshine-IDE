@@ -1,18 +1,168 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) 
+
+## Moonshine IDE [3.1.1]
+
+### Summary
+
+Moonshine 3.1.1 is a quick-fix release for an error with Apache Maven builds.
+
+### Added
+
+### Changed
+
+### Fixed
+
+* Fixed error with build for Java Maven projects ([#834](https://github.com/prominic/Moonshine-IDE/issues/837))
+* Fixed error with build for Domino Visual Editor projects ([#834](https://github.com/prominic/Moonshine-IDE/issues/834))
+
+
+## Moonshine IDE [3.1.0]
+
+### Summary
+
+Moonshine 3.1.0 includes:
+* Quickly switch between sets of projects using the improved workspace support
+* Better performance for opening large projects.
+* Create HCL Domino forms from a Visual Editor mockup, or generate a form by defining a list of fields.
+* Default JDK updated to OpenJDK v11.0.10.  OpenJDK 8 is still supported.
+
+### Added
+* Domino Visual Editor:  Use a Visual Editor mockup to create HCL Domino forms.   This is based on the [ODP Compiler](https://frostillic.us/blog/posts/2019/7/8/f9643d0349dfd211852584310054b892)  ([#646](https://github.com/prominic/Moonshine-IDE/issues/646))
+* Domino On Disk Project:  Generate HCL Domino forms by defining a list of fields.   This is based on the [ODP Compiler](https://frostillic.us/blog/posts/2019/7/8/f9643d0349dfd211852584310054b892)  ([#670](https://github.com/prominic/Moonshine-IDE/issues/670))
+* Domino On Disk Project:  Automatically generate an update site to support On Disk Project.  Only available for macOS.  ([#689](https://github.com/prominic/Moonshine-IDE/issues/689))
+* Java JDK: Updated default OpenJDK to v11.0.10 to support the latest language server. ([#755](https://github.com/prominic/Moonshine-IDE/issues/755))
+* Java JDK: Added additional OpenJDK 8 SDK for projects that still require JDK 8 (including HCL Domino projects). ([#755](https://github.com/prominic/Moonshine-IDE/issues/755))
+
+### Changed
+
+* Workspace: Create and manage project workspaces from the File > Workspace menu. ([#416](https://github.com/prominic/Moonshine-IDE/issues/416))
+* Improved performance when launching large projects ([#756](https://github.com/prominic/Moonshine-IDE/issues/756))
+* New Folder:  Create multiple folders at once by separating the folders with '/' ([#468](https://github.com/prominic/Moonshine-IDE/issues/468))
+* Find Symbol: General improvements to filter and search functionality. ([#724](https://github.com/prominic/Moonshine-IDE/issues/724))
+* Git and SVN: Improved validation for the Clone Repository target path ([#750](https://github.com/prominic/Moonshine-IDE/issues/750))
+* Git: Added validation for new branch name ([#751](https://github.com/prominic/Moonshine-IDE/issues/751))
+* Git: List local and remote branches separately. ([#754](https://github.com/prominic/Moonshine-IDE/issues/754))
+* Haxe Migration: Updated **Find Resources** window to allow navigation with the arrow keys. ([#771](https://github.com/prominic/Moonshine-IDE/issues/771))
+* Moonshine source code: Switched from Adobe AIR to Harman AIR. ([#773](https://github.com/prominic/Moonshine-IDE/issues/773))
+* Haxe Migration: Converted **Load Workspace** view to Haxe. ([#775](https://github.com/prominic/Moonshine-IDE/issues/775))
+* Haxe Migration: Converted **Search** view to Haxe. ([#798](https://github.com/prominic/Moonshine-IDE/issues/798))
+* Haxe Migration: Converted **New Workspace** view to Haxe. ([#779](https://github.com/prominic/Moonshine-IDE/issues/779))
+* Language Server:  Updated [ActionScript & MXML](https://as3mxml.com) engine to v1.6.0.
+* Language Server:  Updated [Haxe](https://as3mxml.com) engine to latest version.
+* Language Server:  Updated [Java eclipse.jdt.ls](https://github.com/eclipse/eclipse.jdt.ls) engine to v0.69.0.
+* Debugging:  Updated [Chrome debug](https://github.com/microsoft/vscode-chrome-debug) engine to v4.12.12.
+* Debugging:  Updated [Firefox debug](https://github.com/firefox-devtools/vscode-firefox-debug) engine to v2.9.1.
+* You may customize the SDK label when adding a Flex or Royale SDK. ([#767](https://github.com/prominic/Moonshine-IDE/issues/767))
+
+### Fixed
+* Windows: Fixed file association Windows Moonshine ([#800](https://github.com/prominic/Moonshine-IDE/issues/800))
+* Git: Branches will not be pushed to remote by default ([#754](https://github.com/prominic/Moonshine-IDE/issues/754))
+* Git: Fixed issue with authentication prompt on macOS. ([#617](https://github.com/prominic/Moonshine-IDE/issues/617))
+* Language server:  Fixed issue where Java project used wrong language server for superclass and interface completion. ([#742](https://github.com/prominic/Moonshine-IDE/issues/742))
+* Git: Fixed broken Pull action. ([#758](https://github.com/prominic/Moonshine-IDE/issues/758))
+* Haxe: Fixed issue where code completion was closing immediately. ([#772](https://github.com/prominic/Moonshine-IDE/issues/772))
+* Haxe: Fixed issue where code completion did not insert the correct text. ([#776](https://github.com/prominic/Moonshine-IDE/issues/776))
+* Fixed "Local environment setup failed" error ([#785](https://github.com/prominic/Moonshine-IDE/issues/785))
+* Fixed issue where previously opened projects did not open after a Moonshine restart. ([#786](https://github.com/prominic/Moonshine-IDE/issues/786))
+* Java Gradle: Fixed bug which prevented users from creating new Java classes. ([#805](https://github.com/prominic/Moonshine-IDE/issues/805))
+* Java: Fixed display of source directory icon. ([#814](https://github.com/prominic/Moonshine-IDE/issues/814))
+* Getting Started: Fixed issue where SDKs installed by Moonshine SDK Installer were not automatically detected on Windows. ([#817](https://github.com/prominic/Moonshine-IDE/issues/817))
+* About page: Fixed issue where Grails version displayed error. ([#818](https://github.com/prominic/Moonshine-IDE/issues/818))
+* macOS: Display build number in About page. ([#824](https://github.com/prominic/Moonshine-IDE/issues/824))
+* macOS: Fixed issue where About page showed "App Store" for Non-Sandbox build ([#816](https://github.com/prominic/Moonshine-IDE/issues/816))
+
+## Moonshine IDE [3.0.0]
+
+### Summary
+
+Moonshine 3.0.0 includes:
+* Support for Actionscript Mobile projects and Flex Modules
+* Debugging improvements for mobile and Haxe projects
+* Miscellaneous bug fixes and quality-of-life improvements.
+
+### Added
+* Configure and build modules for Flex projects.
+* Open files with external editors (ex. Notepad++, VIM etc.).
+* Navigate between tabs using keyboard-shortcuts (CTRL+Tab, CTRL+Shift+Tab).
+* Detect and configure NodeJS
+* Detect and configure IBM/HCL Notes.
+* Debug mobile projects using USB or Wi-Fi.
+* Debug Haxe projects
+* Create ActionScript Mobile Projects.
+* Choose between Chrome and Firefox when debugging Apache Royale and OpenFL projects targeting HTML/JS.
+* Debug OpenFL projects targeting native Windows, macOS, and Linux with the HXCPP debugger.
+* Debug OpenFL projects targeting HashLink (Windows).
+
+### Changed
+* Windows: Switched from the native AIR installer to NSIS to reduce installation times
+* Windows: Changed Moonshine to a 64-bit application.  You will be prompted to uninstall your old copy of Moonshine, but your settings will be saved.
+* Updated application to use new icon new icon
+* Updated [ActionScript & MXML](https://as3mxml.com) engine to v1.2.2.
+* Updated [Haxe](https://as3mxml.com) engine to latest version.
+* Updated [Java eclipse.jdt.ls](https://github.com/eclipse/eclipse.jdt.ls) engine to v0.59.0.
+* Updated [SWF debug](https://as3mxml.com) engine to v1.2.2.
+* Updated [Chrome debug](https://github.com/microsoft/vscode-chrome-debug) engine to v4.12.10.
+* Updated [Firefox debug](https://github.com/firefox-devtools/vscode-firefox-debug) engine to v2.9.0.
+
+### Fixed
+* Fixed macOS shortcuts for **Build & Run**
+* Fixed issue where project build failed if source files were placed in the root folder.
+* Fixed issue where project files and folders were not sorted alphabetically. 
+* MacOS: Fixed issue where menu options were not sorted alphabetically.
+* Fixed issue where projects could not be reopened from the File > Recent Projects menu if the Home tab was closed
+* MacOS: Fixed issue where closing an editor using the shortcut **CMD+W** triggered an exception.
+* MacOS: Fixed issue where Moonshine could not clone a private Git repository
+* Fixed issue where button **Step Over** did not work during Debugging.
+* Fixed issue where code completion stopped working when tab was moved into the hamburger menu.
+* Fixed duplicate mappings for **CTRL+F** shortcut.  Find references has been updated to CMD+Shift+F
+* Fixed issue where right-click the file tree in the New File prompt triggered exceptions
+* Fixed error when committing a sub-project under a Git repository.
+* Fixed Error #3218 in the language-server output.
+* Fixed issue when opened editors did not update their content when the file was updated externally (for example, by an svn update or git pull).
+* Fixed issue where mobile Mobile stage dimensions did not update when changing the device model
+* Fixed file modification warning for new Java files
+
+
 
 ## Moonshine IDE [2.6.0]
 
 ### Summary
 
+Moonshine 2.6.0 has a couple new features for Apache Royale.  
+- Generate a report for a Flex project to see what is needed to convert it to Apache Royale
+- Quickly download the latest nightly build for Apache Royale
+- Debug Apache Royale applications in Moonshine using the Chrome debug adapter.   
+
+Some other changes:
+- Additional support for Haxe
+- Updates for some of the language servers
+- Various bug fixes.
+
 ### Added
+* Apache Royale browser projects support debugging when launched in Chrome.
+* Generate a report to aid migration from Flex to Royale with Project > Apache Royale API Report.  See the [Apache Royale API](https://github.com/apache/royale-asjs/wiki/Generating-an-API-Report) page for more details.
+* Added support for additional Haxe project types.
+* Added new Haxe Feathers UI project type.
+* Getting Started:  Download the current nightly build of Apache Royale with Moonshine SDK Installer
 
 ### Changed
 * Updated [Groovy language server](https://github.com/prominic/groovy-langugage-server) engine to latest.
+* Updated [ActionScript and MXML](https://as3mxml.com/) engine to v0.25.0.
+* Updated [SWF debug adapter](https://as3mxml.com/) engine to v1.0.2.
+* Updated [Chrome debug adapter](https://github.com/microsoft/vscode-chrome-debug) engine to v4.12.5.
 
 ### Fixed
+* Royale: Fixed issue where resources were not copied to bin/js-release folder.
+* Java: Fixed issue where changes to _pom.xml_ or _build.gradle_ were not properly reflected in code intelligence.
+* Java: Fixed issue where the Windows Java path was not recognized by the Maven build.
+* Project Sidebar: Fixed issue where project files/folders was not sorted alphabetically.
+* Ant: Fixed issue where new Ant process request dismisses any running process output
+* Ant: Fixed issue where notification not showing during Ant build start and end
+* Ant: Fixed issue on Windows where running a Ant script triggers a 'The syntax of the command is incorrect' error.
+
 
 ## Moonshine IDE [2.5.0]
 

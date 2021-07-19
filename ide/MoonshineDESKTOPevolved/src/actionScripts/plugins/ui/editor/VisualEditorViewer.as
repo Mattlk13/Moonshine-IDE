@@ -19,8 +19,8 @@
 package actionScripts.plugins.ui.editor
 {
 	import actionScripts.events.PreviewPluginEvent;
-	import actionScripts.factory.FileLocation;
-    import actionScripts.utils.MavenPomUtil;
+import actionScripts.events.TreeMenuItemEvent;
+import actionScripts.factory.FileLocation;
 
     import flash.events.Event;
 
@@ -30,20 +30,26 @@ package actionScripts.plugins.ui.editor
     
     import actionScripts.events.AddTabEvent;
     import actionScripts.events.ChangeEvent;
-    import actionScripts.impls.IVisualEditorLibraryBridgeImp;
-    import actionScripts.interfaces.IVisualEditorViewer;
-    import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
-    import actionScripts.plugins.help.view.VisualEditorView;
-    import actionScripts.plugins.help.view.events.VisualEditorEvent;
-    import actionScripts.plugins.help.view.events.VisualEditorViewChangeEvent;
-    import actionScripts.plugins.ui.editor.text.UndoManagerVisualEditor;
-    import actionScripts.ui.editor.BasicTextEditor;
-    import actionScripts.ui.editor.text.TextEditor;
     import actionScripts.ui.tabview.CloseTabEvent;
-    import actionScripts.ui.tabview.TabEvent;
-
-    import view.suportClasses.events.PropertyEditorChangeEvent;
+	import actionScripts.impls.IVisualEditorLibraryBridgeImp;
+	import actionScripts.interfaces.IVisualEditorProjectVO;
+	import actionScripts.interfaces.IVisualEditorViewer;
+	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
+	import actionScripts.plugins.help.view.VisualEditorView;
+	import actionScripts.plugins.help.view.events.VisualEditorEvent;
+	import actionScripts.plugins.help.view.events.VisualEditorViewChangeEvent;
+	import actionScripts.plugins.ui.editor.text.UndoManagerVisualEditor;
+	import actionScripts.ui.editor.BasicTextEditor;
+	import actionScripts.ui.editor.text.TextEditor;
+	import actionScripts.ui.tabview.TabEvent;
+	import actionScripts.utils.MavenPomUtil;
+	import actionScripts.utils.SharedObjectUtil;
+	import actionScripts.valueObjects.ProjectVO;
 	
+	import view.suportClasses.events.PropertyEditorChangeEvent;
+	import flash.filesystem.File;
+
 	public class VisualEditorViewer extends BasicTextEditor implements IVisualEditorViewer
 	{
 		private static const EVENT_SWITCH_TAB_TO_CODE:String = "switchTabToCode";
@@ -51,7 +57,7 @@ package actionScripts.plugins.ui.editor
 		private var visualEditorView:VisualEditorView;
 		private var hasChangedProperties:Boolean;
 		
-		private var visualEditorProject:AS3ProjectVO;
+		private var visualEditorProject:ProjectVO;
 		private var visualEditoryLibraryCore:IVisualEditorLibraryBridgeImp;
 		private var undoManager:UndoManagerVisualEditor;
 		
@@ -60,7 +66,7 @@ package actionScripts.plugins.ui.editor
 			return visualEditorView;
 		}
 		
-		public function VisualEditorViewer(visualEditorProject:AS3ProjectVO = null)
+		public function VisualEditorViewer(visualEditorProject:ProjectVO = null)
 		{
 			this.visualEditorProject = visualEditorProject;
 			
@@ -73,7 +79,7 @@ package actionScripts.plugins.ui.editor
 			
 			// at this moment prifefaces projects only using the bridge
 			// this condition can be remove if requires
-			if (visualEditorProject.isPrimeFacesVisualEditorProject)
+			if ((visualEditorProject as IVisualEditorProjectVO).isPrimeFacesVisualEditorProject || (visualEditorProject as IVisualEditorProjectVO).isDominoVisualEditorProject)
 			{
 				visualEditoryLibraryCore = new IVisualEditorLibraryBridgeImp();
 				visualEditoryLibraryCore.visualEditorProject = visualEditorProject;
@@ -81,9 +87,14 @@ package actionScripts.plugins.ui.editor
 			
 			visualEditorView = new VisualEditorView();
 			
-			visualEditorProject.isPrimeFacesVisualEditorProject ?
-				visualEditorView.currentState = "primeFacesVisualEditor" :
+			if((visualEditorProject as IVisualEditorProjectVO).isDominoVisualEditorProject){
+				visualEditorView.currentState = "dominoVisualEditor" 
+			}else if((visualEditorProject as IVisualEditorProjectVO).isPrimeFacesVisualEditorProject){
+				visualEditorView.currentState = "primeFacesVisualEditor" 
+			}else{
 				visualEditorView.currentState = "flexVisualEditor";
+			}
+
 			visualEditorView.visualEditorProject = visualEditorProject;
 			
 			visualEditorView.percentWidth = 100;
@@ -109,6 +120,7 @@ package actionScripts.plugins.ui.editor
 			dispatcher.addEventListener(PreviewPluginEvent.PREVIEW_STOPPED, previewStoppedHandler);
 			dispatcher.addEventListener(PreviewPluginEvent.PREVIEW_START_FAILED, previewStartFailedHandler);
 			dispatcher.addEventListener(PreviewPluginEvent.PREVIEW_STARTING, previewStartingHandler);
+			dispatcher.addEventListener(TreeMenuItemEvent.FILE_RENAMED, fileRenamedHandler);
 
 			model.editors.addEventListener(CollectionEvent.COLLECTION_CHANGE, handleEditorCollectionChange);
 		}
@@ -131,14 +143,13 @@ package actionScripts.plugins.ui.editor
 				}
 				
 				dispatcher.removeEventListener(AddTabEvent.EVENT_ADD_TAB, addTabHandler);
-				dispatcher.removeEventListener(CloseTabEvent.EVENT_CLOSE_TAB, closeTabHandler);
-				dispatcher.removeEventListener(TabEvent.EVENT_TAB_SELECT, tabSelectHandler);
 				dispatcher.removeEventListener(VisualEditorEvent.DUPLICATE_ELEMENT, duplicateSelectedElementHandler);
 				dispatcher.removeEventListener(PreviewPluginEvent.PREVIEW_START_COMPLETE, previewStartCompleteHandler);
 				dispatcher.removeEventListener(PreviewPluginEvent.PREVIEW_STOPPED, previewStoppedHandler);
 				dispatcher.removeEventListener(PreviewPluginEvent.PREVIEW_START_FAILED, previewStartFailedHandler);
 				dispatcher.removeEventListener(PreviewPluginEvent.PREVIEW_STARTING, previewStartingHandler);
 				dispatcher.removeEventListener(EVENT_SWITCH_TAB_TO_CODE, switchTabToCodeHandler);
+				dispatcher.removeEventListener(TreeMenuItemEvent.FILE_RENAMED, fileRenamedHandler);
 
 				model.editors.removeEventListener(CollectionEvent.COLLECTION_CHANGE, handleEditorCollectionChange);
 				undoManager.dispose();
@@ -183,6 +194,11 @@ package actionScripts.plugins.ui.editor
 			visualEditorView.currentState = "primeFacesVisualEditor";
 		}
 
+		private function fileRenamedHandler(event:TreeMenuItemEvent):void
+		{
+			reload();
+		}
+
 		private function onVisualEditorSaveCode(event:Event):void
 		{
             _isChanged = true;
@@ -214,15 +230,56 @@ package actionScripts.plugins.ui.editor
 			
 			super.save();
 
+			//this line for sync .dve file to ODP form folder file
+			if(visualEditorProject is OnDiskProjectVO){
+				if((visualEditorProject as OnDiskProjectVO).isDominoVisualEditorProject){
+					var sourceVisualPath:String=(visualEditorProject as OnDiskProjectVO).visualEditorSourceFolder.fileBridge.nativePath;
+					//visualeditor-src/main/webapp
+					var targetProjectPath:String = sourceVisualPath.substring(0, sourceVisualPath.lastIndexOf("visualeditor-src"));
+					var targetProject:FileLocation=new FileLocation(targetProjectPath);
+					var fileName:String=this.currentFile.fileBridge.name;
+					fileName= fileName.substring(0, fileName.lastIndexOf(".dve"));
+					
+					//this.currentFile.fileBridge.nativePath
+					// var original_form:FileLocation =  templateDir.resolvePath("src_domino_nsfs"+File.separator +"nsf-moonshine"+File.separator+"odp"+File.separator+"Forms"+File.separator+"Template.form");
+					if(this.currentFile.fileBridge.exists){
+						var newFormFile:FileLocation =  targetProject.resolvePath("nsfs"+File.separator+"nsf-moonshine"+File.separator+"odp"+File.separator+"Forms"+File.separator+fileName + ".form"); 
+						this.currentFile.fileBridge.copyTo(newFormFile, true); 
+					}
+				}
+			}
+
 			refreshFileForPreview();
+		}
+
+		/**
+		 *When user rename the form file, it require the title match the file name.
+		 *So in this case , we need save the form file again
+		 */
+
+		public function renameDominoFormFileSave(fileName:String):String 
+		{
+			//visualEditorView.visualEditor.saveEditedFile();
+			return getDominoMxmlCode(fileName);
+			
+
 		}
 
         private function refreshFileForPreview():void
         {
-			if (visualEditorProject.isPrimeFacesVisualEditorProject)
+			if ((visualEditorProject as IVisualEditorProjectVO).isPrimeFacesVisualEditorProject)
 			{
+				var mavenBuildPath:String;
+				if (visualEditorProject is AS3ProjectVO)
+				{
+					mavenBuildPath = (visualEditorProject as AS3ProjectVO).mavenBuildOptions.buildPath;
+				}
+				else if (visualEditorProject is OnDiskProjectVO)
+				{
+					mavenBuildPath = (visualEditorProject as OnDiskProjectVO).mavenBuildOptions.buildPath;
+				}
+				
 				var separator:String = file.fileBridge.separator;
-				var mavenBuildPath:String = visualEditorProject.mavenBuildOptions.buildPath;
 				var mavenPomPath:String = mavenBuildPath.concat(separator, "pom.xml");
 				var targetPath:String = mavenBuildPath.concat(separator, "target");
 
@@ -304,25 +361,26 @@ package actionScripts.plugins.ui.editor
 			visualEditorView.visualEditor.editingSurface.selectedItem = null;
 		}
 		
-		private function closeTabHandler(event:Event):void
+		override protected function closeTabHandler(event:Event):void
 		{
-			if (!visualEditorView.visualEditor) return;
+			super.closeTabHandler(event);
 			
-			if (event is CloseTabEvent)
+			if (!visualEditorView.visualEditor) return;
+
+			if (model.activeEditor == this)
 			{
-				var tmpEvent:CloseTabEvent = event as CloseTabEvent;
-				if (tmpEvent.tab.hasOwnProperty("editor") && tmpEvent.tab["editor"] == this.editor)
-				{
-					visualEditorView.visualEditor.editingSurface.removeEventListener(Event.CHANGE, onEditingSurfaceChange);
-					visualEditorView.visualEditor.propertyEditor.removeEventListener("propertyEditorChanged", onPropertyEditorChanged);
-					visualEditorView.visualEditor.editingSurface.selectedItem = null;
-				}
+				visualEditorView.visualEditor.editingSurface.removeEventListener(Event.CHANGE, onEditingSurfaceChange);
+				visualEditorView.visualEditor.propertyEditor.removeEventListener("propertyEditorChanged", onPropertyEditorChanged);
+				visualEditorView.visualEditor.editingSurface.selectedItem = null;
+				
+				SharedObjectUtil.removeLocationOfEditorFile(model.activeEditor);
 			}
 		}
 		
-		private function tabSelectHandler(event:TabEvent):void
+		override protected function tabSelectHandler(event:TabEvent):void
 		{
 			if (!visualEditorView.visualEditor) return;
+			super.tabSelectHandler(event);
 			
 			if (!event.child.hasOwnProperty("editor") || event.child["editor"] != this.editor)
 			{
@@ -340,15 +398,33 @@ package actionScripts.plugins.ui.editor
 		{
 			if (visualEditorView.currentState == "primeFacesVisualEditor")
 			{
-				dispatcher.dispatchEvent(new PreviewPluginEvent(PreviewPluginEvent.START_VISUALEDITOR_PREVIEW, file, visualEditorProject));
+				dispatcher.dispatchEvent(new PreviewPluginEvent(PreviewPluginEvent.START_VISUALEDITOR_PREVIEW, file, visualEditorProject as AS3ProjectVO));
 			}
 		}
 
 		private function getMxmlCode():String
 		{
-			var mxmlCode:XML = visualEditorView.visualEditor.editingSurface.toCode();
+			var mxmlCode:XML = null;
+
+			if((visualEditorProject as IVisualEditorProjectVO).isDominoVisualEditorProject){			
+				mxmlCode=visualEditorView.visualEditor.editingSurface.toDominoCode(getDominoFormFileName());
+			}else if(file.fileBridge.nativePath.lastIndexOf(".form")>=0){
+				mxmlCode=visualEditorView.visualEditor.editingSurface.toDominoCode(getDominoFormFileName());
+			} 
+			else{
+				mxmlCode=visualEditorView.visualEditor.editingSurface.toCode();
+			
+			}
 			var markAsXml:String = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 			
+			return markAsXml + mxmlCode.toXMLString();
+		}
+
+		private function getDominoMxmlCode(fileName:String):String
+		{
+			var mxmlCode:XML = null;
+			mxmlCode=visualEditorView.visualEditor.editingSurface.toDominoCode(fileName);
+			var markAsXml:String = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 			return markAsXml + mxmlCode.toXMLString();
 		}
 		
@@ -360,16 +436,25 @@ package actionScripts.plugins.ui.editor
 				visualEditorView.visualEditor.loadFile(veFilePath);
 			}
 		}
+
+		private function getDominoFormFileName():String
+		{
+			var fullPath:String = getVisualEditorFilePath();
+			//maybe this will broken on windows env ,it need be improve in next
+			var fileName:String = fullPath.substr(fullPath.lastIndexOf("/") + 1);
+			fileName = fileName.slice(0, -4);
+			return fileName;
+		}
 		
 		private function getVisualEditorFilePath():String
 		{
-			if (visualEditorProject.visualEditorSourceFolder)
+			if ((visualEditorProject as IVisualEditorProjectVO).visualEditorSourceFolder)
 			{
 				var filePath:String = file.fileBridge.nativePath
 						.replace(visualEditorProject.sourceFolder.fileBridge.nativePath,
-								 visualEditorProject.visualEditorSourceFolder.fileBridge.nativePath)
-						.replace(/.mxml$|.xhtml$/, ".xml");
-
+								(visualEditorProject as IVisualEditorProjectVO).visualEditorSourceFolder.fileBridge.nativePath)
+						.replace(/.mxml$|.xhtml$|.form$|.dve$/, ".xml");
+			
 				return filePath;
 			}
 

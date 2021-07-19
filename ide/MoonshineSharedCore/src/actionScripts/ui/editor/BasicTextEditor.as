@@ -20,11 +20,14 @@ package actionScripts.ui.editor
 {
     import flash.display.DisplayObject;
     import flash.events.Event;
+    import flash.utils.clearInterval;
+    import flash.utils.setTimeout;
     
     import mx.core.FlexGlobals;
     import mx.events.FlexEvent;
     import mx.managers.IFocusManagerComponent;
     import mx.managers.PopUpManager;
+    import mx.utils.ObjectUtil;
     
     import spark.components.Group;
     
@@ -33,53 +36,55 @@ package actionScripts.ui.editor
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.events.RefreshTreeEvent;
     import actionScripts.events.SaveFileEvent;
+    import actionScripts.events.UpdateTabEvent;
     import actionScripts.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.console.ConsoleOutputEvent;
     import actionScripts.ui.IContentWindow;
+    import actionScripts.ui.IContentWindowReloadable;
+    import actionScripts.ui.IFileContentWindow;
     import actionScripts.ui.editor.text.DebugHighlightManager;
     import actionScripts.ui.editor.text.TextEditor;
     import actionScripts.ui.editor.text.vo.SearchResult;
+    import actionScripts.ui.tabview.CloseTabEvent;
+    import actionScripts.ui.tabview.TabEvent;
+    import actionScripts.utils.SharedObjectUtil;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.ProjectVO;
     import actionScripts.valueObjects.URLDescriptorVO;
     
     import components.popup.FileSavePopup;
-    import components.popup.SelectOpenedFlexProject;
+    import components.popup.SelectOpenedProject;
     import components.views.project.TreeView;
 
-    public class BasicTextEditor extends Group implements IContentWindow, IFocusManagerComponent
+    public class BasicTextEditor extends Group implements IContentWindow, IFileContentWindow, IFocusManagerComponent, IContentWindowReloadable
 	{
 		public var defaultLabel:String = "New";
 		public var projectPath:String;
 		public var editor:TextEditor;
 		public var lastOpenType:String;
 		
+		protected var lastOpenedUpdatedInMoonshine:Date;
 		protected var file:FileLocation;
 		protected var created:Boolean;
 		protected var loadingFile:Boolean;
 		protected var tempScrollTo:int = -1;
 		protected var loader: DataAgent;
+		protected var model:IDEModel = IDEModel.getInstance();
+        protected var dispatcher:GlobalEventDispatcher = GlobalEventDispatcher.getInstance();
+        protected var _isChanged:Boolean;
+
+		private var pop:FileSavePopup;
+		private var selectProjectPopup:SelectOpenedProject;
+		protected var isVisualEditor:Boolean;
 
 		private var _readOnly:Boolean = false;
-
 		public function get readOnly():Boolean
 		{
 			return this._readOnly;
 		}
-
-		private var pop:FileSavePopup;
-		protected var model:IDEModel = IDEModel.getInstance();
-
-		private var selectProjectPopup:SelectOpenedFlexProject;
-
-		protected var isVisualEditor:Boolean;
-
-        protected var _isChanged:Boolean;
-
-        protected var dispatcher:GlobalEventDispatcher = GlobalEventDispatcher.getInstance();
-
+		
 		public function get label():String
 		{
 			var labelChangeIndicator:String = _isChanged ? "*" : "";
@@ -90,7 +95,6 @@ package actionScripts.ui.editor
 
 			return labelChangeIndicator + file.fileBridge.name;
 		}
-
 		public function get longLabel():String
 		{
 			if (!file) 
@@ -102,13 +106,11 @@ package actionScripts.ui.editor
 		{
 			return file;
 		}
-
 		public function set currentFile(value:FileLocation):void
 		{
 			if (file != value)
             {
                 file = value;
-
                 dispatchEvent(new Event('labelChanged'));
             }
 		}
@@ -117,7 +119,6 @@ package actionScripts.ui.editor
 		{
 			return editor.dataProvider;
 		}
-
 		public function set text(value:String):void
 		{
 			editor.dataProvider = value;
@@ -164,10 +165,62 @@ package actionScripts.ui.editor
 			super();
 			_readOnly = readOnly;
 			
+			this.addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
+			this.addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
+			
 			percentHeight = 100;
 			percentWidth = 100;
 			addEventListener(FlexEvent.CREATION_COMPLETE, basicTextEditorCreationCompleteHandler);
 			initializeChildrens();
+		}
+		
+		protected function addedToStageHandler(event:Event):void
+		{
+			this.addGlobalListeners();
+		}
+		
+		protected function removedFromStageHandler(event:Event):void
+		{
+			this.removeGlobalListeners();
+		}
+		
+		protected function addGlobalListeners():void
+		{
+			dispatcher.addEventListener(CloseTabEvent.EVENT_CLOSE_TAB, closeTabHandler);
+			dispatcher.addEventListener(TabEvent.EVENT_TAB_SELECT, tabSelectHandler);
+		}
+		
+		protected function removeGlobalListeners():void
+		{
+			dispatcher.removeEventListener(CloseTabEvent.EVENT_CLOSE_TAB, closeTabHandler);
+			dispatcher.removeEventListener(TabEvent.EVENT_TAB_SELECT, tabSelectHandler);
+		}
+		
+		protected function closeTabHandler(event:Event):void
+		{
+			if (event is CloseTabEvent)
+			{
+				if ((event as CloseTabEvent).isUserTriggered)
+				{
+					SharedObjectUtil.removeLocationOfEditorFile(
+						(event as CloseTabEvent).tab as IContentWindow
+					);
+				}
+			}
+			// suppose to call only when keyboard shortcuts Event
+			else if (model.activeEditor == this)
+			{
+				SharedObjectUtil.removeLocationOfEditorFile(model.activeEditor);
+			}
+		}
+		
+		protected function tabSelectHandler(event:TabEvent):void
+		{
+			if (event.child == this)
+			{
+				// check for any externally update
+				checkFileIfChanged();
+			}
 		}
 		
 		protected function initializeChildrens():void
@@ -257,6 +310,22 @@ package actionScripts.ui.editor
 			callLater(file.fileBridge.load);
 		}
 		
+		public function checkFileIfChanged():void
+		{
+			// physical file do not exist anymore
+			if (file && !file.fileBridge.exists)
+			{
+				dispatcher.dispatchEvent(new UpdateTabEvent(UpdateTabEvent.EVENT_TAB_FILE_EXIST_NOMORE, this));
+			}
+			
+			// physical file is an updated one
+			else if (lastOpenedUpdatedInMoonshine && 
+				ObjectUtil.dateCompare(file.fileBridge.modificationDate, lastOpenedUpdatedInMoonshine) != 0)
+			{
+				dispatcher.dispatchEvent(new UpdateTabEvent(UpdateTabEvent.EVENT_TAB_UPDATED_OUTSIDE, this));
+			}
+		}
+		
 		public function reload():void
 		{
 			loadingFile = true;
@@ -279,7 +348,7 @@ package actionScripts.ui.editor
 			text = file.fileBridge.data.toString();
 
 			scrollToTempValue();
-
+			updateChangeStatus();
 			file.fileBridge.getFile.removeEventListener(Event.COMPLETE, openHandler);
 		}
 
@@ -363,18 +432,21 @@ package actionScripts.ui.editor
 					if (model.mainView.isProjectViewAdded)
 					{
 						var tmpTreeView:TreeView = model.mainView.getTreeViewPanel();
-						var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
-						if (projectReference)
+						if(tmpTreeView) //might be null if closed by user
 						{
-							saveAsPath(projectReference.folderPath);
-							return;
+							var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
+							if (projectReference)
+							{
+								saveAsPath(projectReference.folderPath);
+								return;
+							}
 						}
 					}
-					selectProjectPopup = new SelectOpenedFlexProject();
+					selectProjectPopup = new SelectOpenedProject();
 					PopUpManager.addPopUp(selectProjectPopup, FlexGlobals.topLevelApplication as DisplayObject, false);
 					PopUpManager.centerPopUp(selectProjectPopup);
-					selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-					selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+					selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+					selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
 				}
 				else if (model.projects.length != 0)
 				{
@@ -399,8 +471,8 @@ package actionScripts.ui.editor
 			}
 			function onProjectSelectionCancelled(event:Event):void
 			{
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
 				selectProjectPopup = null;
 			}
 		}
@@ -411,8 +483,8 @@ package actionScripts.ui.editor
 			this.file = file;
 			dispatchEvent(new Event('labelChanged'));
 			editor.save();
-			updateChangeStatus();
 			dispatcher.dispatchEvent(new SaveFileEvent(SaveFileEvent.FILE_SAVED, file, this));
+			updateChangeStatus();
 		}
 		
 		protected function handleTextChange(event:ChangeEvent):void
@@ -427,6 +499,12 @@ package actionScripts.ui.editor
 		{
 			_isChanged = editor.hasChanged;
 			dispatchEvent(new Event('labelChanged'));
+			
+			var setLastUpdateTime:uint = setTimeout(function():void
+			{
+				clearInterval(setLastUpdateTime);
+				lastOpenedUpdatedInMoonshine = file.fileBridge.modificationDate;
+			}, 1000);
 		}
 
 		protected function handleSaveAsSelect(fileObj:Object):void

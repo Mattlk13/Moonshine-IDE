@@ -24,31 +24,31 @@ package actionScripts.plugin.findreplace
     import flash.events.Event;
     
     import mx.core.FlexGlobals;
-    import mx.events.CloseEvent;
     import mx.managers.PopUpManager;
     
     import actionScripts.events.ApplicationEvent;
     import actionScripts.events.GeneralEvent;
     import actionScripts.plugin.PluginBase;
-    import actionScripts.plugin.findreplace.view.GoToLineView;
-    import actionScripts.plugin.findreplace.view.SearchView;
+    import moonshine.plugin.findreplace.view.GoToLineView;
+    import moonshine.plugin.findreplace.view.FindReplaceView;
     import actionScripts.ui.editor.BasicTextEditor;
     import actionScripts.ui.editor.text.TextEditor;
     import actionScripts.ui.editor.text.vo.SearchResult;
     import actionScripts.utils.TextUtil;
     import actionScripts.valueObjects.ConstantsCoreVO;
+    import actionScripts.ui.FeathersUIWrapper;
 
 	public class FindReplacePlugin extends PluginBase
 	{
 		public static const EVENT_FIND_NEXT:String = "findNextEvent";
 		public static const EVENT_FIND_PREV:String = "findPrevEvent";
-		public static const EVENT_REPLACE_ONE:String = "replaceOneEvent";
-		public static const EVENT_REPLACE_ALL:String = "replaceAllEvent";
 		public static const EVENT_FIND_SHOW_ALL:String = "findAndShowAllEvent";
 		public static const EVENT_GO_TO_LINE:String = "goToLine";
 
-		private var searchView:SearchView;
+		private var findReplaceView:FindReplaceView;
+		private var findReplaceViewWrapper:FeathersUIWrapper;
 		private var gotoLineView:GoToLineView;
+		private var gotoLineViewWrapper:FeathersUIWrapper;
 		
 		private var searchReplaceRe:RegExp = /^(?:\/)?((?:\\[^\/]|\\\/|\[(?:\\[^\]]|\\\]|[^\\\]])+\]|[^\[\]\\\/])+)\/((?:\\[^\/]|\\\/|[^\\\/])+)?(?:\/([gismx]*))?$/;
 		private var tempObj:Object;
@@ -85,6 +85,16 @@ package actionScripts.plugin.findreplace
             dispatcher.addEventListener(EVENT_FIND_PREV, searchHandler);
 			dispatcher.addEventListener(EVENT_FIND_SHOW_ALL, findAndShowAllHandler);
 			dispatcher.addEventListener(EVENT_GO_TO_LINE, goToLineRequestHandler);
+			dispatcher.addEventListener(ApplicationEvent.APPLICATION_EXIT, applicationExitHandler);
+		}
+		
+		override public function deactivate():void
+		{
+			dispatcher.removeEventListener(EVENT_FIND_NEXT, searchHandler);
+            dispatcher.removeEventListener(EVENT_FIND_PREV, searchHandler);
+			dispatcher.removeEventListener(EVENT_FIND_SHOW_ALL, findAndShowAllHandler);
+			dispatcher.removeEventListener(EVENT_GO_TO_LINE, goToLineRequestHandler);
+			dispatcher.removeEventListener(ApplicationEvent.APPLICATION_EXIT, applicationExitHandler);
 		}
 		
 		protected function searchHandler(event:Event):void
@@ -92,20 +102,22 @@ package actionScripts.plugin.findreplace
 			// No searching for other components than BasicTextEditor
 			if (!model.activeEditor || (model.activeEditor as BasicTextEditor) == null) return;
 			
-			if (searchView)
+			if (findReplaceView)
 			{
 				dialogSearch(event);
 			}
 			else
 			{
-				searchView = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, SearchView, false) as SearchView;
+				findReplaceView = new FindReplaceView();
+				findReplaceViewWrapper = new FeathersUIWrapper(findReplaceView);
+				PopUpManager.addPopUp(findReplaceViewWrapper, FlexGlobals.topLevelApplication as DisplayObject, false);
 
 				var as3Project:AS3ProjectVO = model.activeProject as AS3ProjectVO;
 				if (as3Project)
 				{
 					if (as3Project.isVisualEditorProject)
 					{
-						searchView.currentState = "findOnly";
+						findReplaceView.findOnly = true;
 					}
 				}
 
@@ -114,18 +126,18 @@ package actionScripts.plugin.findreplace
 				var str:String = editor.getEditorComponent().getSelection(); 
 				if (str.indexOf("\n") == -1) 
 				{
-					searchView.initialSearchString = str;
+					findReplaceView.initialFindText = str;
 				}
 
-				searchView.addEventListener(Event.CLOSE, handleSearchViewClose);
-				searchView.addEventListener(EVENT_FIND_NEXT, dialogSearch);
-				searchView.addEventListener(EVENT_FIND_PREV, dialogSearch);
-				searchView.addEventListener(EVENT_REPLACE_ALL, dialogSearch);
-				searchView.addEventListener(EVENT_REPLACE_ONE, dialogSearch);
-				
-				// Close window when app is closed
-				dispatcher.addEventListener(ApplicationEvent.APPLICATION_EXIT, closeSearchView);
-				PopUpManager.centerPopUp(searchView);
+				findReplaceView.addEventListener(Event.CLOSE, handleFindReplaceViewClose);
+				findReplaceView.addEventListener(FindReplaceView.EVENT_FIND_NEXT, dialogSearch);
+				findReplaceView.addEventListener(FindReplaceView.EVENT_FIND_PREVIOUS, dialogSearch);
+				findReplaceView.addEventListener(FindReplaceView.EVENT_REPLACE_ONE, dialogSearch);
+				findReplaceView.addEventListener(FindReplaceView.EVENT_REPLACE_ALL, dialogSearch);
+
+				PopUpManager.centerPopUp(findReplaceViewWrapper);
+				findReplaceViewWrapper.assignFocus("top");
+				findReplaceViewWrapper.stage.addEventListener(Event.RESIZE, findReplaceView_stage_resizeHandler, false, 0, true);
 			}
 		}
 		
@@ -148,19 +160,23 @@ package actionScripts.plugin.findreplace
 			{
 				var editor:BasicTextEditor = model.activeEditor as BasicTextEditor;
 				
-				gotoLineView = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, GoToLineView, true) as GoToLineView;
-				gotoLineView.totalLinesCount = editor.getEditorComponent().model.lines.length;
-				gotoLineView.addEventListener(CloseEvent.CLOSE, onGotoLineClosed);
-				PopUpManager.centerPopUp(gotoLineView);
+				gotoLineView = new GoToLineView();
+				gotoLineViewWrapper = new FeathersUIWrapper(gotoLineView);
+				PopUpManager.addPopUp(gotoLineViewWrapper, FlexGlobals.topLevelApplication as DisplayObject, true);
+				gotoLineView.maxLineNumber = editor.getEditorComponent().model.lines.length;
+				gotoLineView.addEventListener(Event.CLOSE, onGotoLineClosed);
+				PopUpManager.centerPopUp(gotoLineViewWrapper);
+				gotoLineViewWrapper.assignFocus("top");
+				gotoLineViewWrapper.stage.addEventListener(Event.RESIZE, gotoLineView_stage_resizeHandler, false, 0, true);
 			}
 		}
 		
-		private function onGotoLineClosed(event:CloseEvent):void
+		private function onGotoLineClosed(event:Event):void
 		{
 			if (gotoLineView.lineNumber != -1)
 			{
 				var editor:BasicTextEditor = model.activeEditor as BasicTextEditor;
-				var tmpLineIndex:int = --gotoLineView.lineNumber != -1 ? gotoLineView.lineNumber : 0;
+				var tmpLineIndex:int = gotoLineView.lineNumber - 1;
 				
 				var textEditor:TextEditor = editor.getEditorComponent();
 				textEditor.model.setSelection(tmpLineIndex, 0, tmpLineIndex, 0);
@@ -168,26 +184,47 @@ package actionScripts.plugin.findreplace
 				textEditor.invalidateLines();
 			}
 			
-			gotoLineView.removeEventListener(CloseEvent.CLOSE, onGotoLineClosed);
+			gotoLineViewWrapper.stage.removeEventListener(Event.RESIZE, gotoLineView_stage_resizeHandler);
+			PopUpManager.removePopUp(gotoLineViewWrapper);
+			gotoLineView.removeEventListener(Event.CLOSE, onGotoLineClosed);
 			gotoLineView = null;
+			gotoLineViewWrapper = null;
 		}
 
-		protected function closeSearchView(event:Event):void
+		protected function gotoLineView_stage_resizeHandler(event:Event):void
 		{
-			PopUpManager.removePopUp(searchView);
+			PopUpManager.centerPopUp(gotoLineViewWrapper);
+		}
+
+		protected function findReplaceView_stage_resizeHandler(event:Event):void
+		{
+			PopUpManager.centerPopUp(findReplaceViewWrapper);
+		}
+
+		protected function applicationExitHandler(event:Event):void
+		{
+			if(findReplaceView)
+			{
+				findReplaceView.dispatchEvent(new Event(Event.CLOSE));
+			}
+			if(gotoLineView)
+			{
+				gotoLineView.dispatchEvent(new Event(Event.CLOSE));
+			}
 		}
 		
-		protected function handleSearchViewClose(event:Event):void
+		protected function handleFindReplaceViewClose(event:Event):void
 		{
-			searchView.removeEventListener(Event.CLOSE, handleSearchViewClose);
-			searchView.removeEventListener(EVENT_FIND_NEXT, dialogSearch);
-			searchView.removeEventListener(EVENT_FIND_PREV, dialogSearch);
-			searchView.removeEventListener(EVENT_REPLACE_ALL, dialogSearch);
-			searchView.removeEventListener(EVENT_REPLACE_ONE, dialogSearch);
-			
-			dispatcher.removeEventListener(ApplicationEvent.APPLICATION_EXIT, closeSearchView);
-			
-			searchView = null;
+			findReplaceViewWrapper.stage.removeEventListener(Event.RESIZE, findReplaceView_stage_resizeHandler);
+			PopUpManager.removePopUp(findReplaceViewWrapper);
+			findReplaceViewWrapper = null;
+
+			findReplaceView.removeEventListener(Event.CLOSE, handleFindReplaceViewClose);
+			findReplaceView.removeEventListener(FindReplaceView.EVENT_FIND_NEXT, dialogSearch);
+			findReplaceView.removeEventListener(FindReplaceView.EVENT_FIND_PREVIOUS, dialogSearch);
+			findReplaceView.removeEventListener(FindReplaceView.EVENT_REPLACE_ONE, dialogSearch);
+			findReplaceView.removeEventListener(FindReplaceView.EVENT_REPLACE_ALL, dialogSearch);
+			findReplaceView = null;
 		}
 
 		protected function search(args:Array):void
@@ -276,20 +313,20 @@ package actionScripts.plugin.findreplace
 		{
 			var editor:BasicTextEditor = model.activeEditor as BasicTextEditor;
 			
-			var searchText:String = searchView.findInput.text;
-			var replaceText:String = searchView.replaceInput.text;
+			var searchText:String = findReplaceView.findText;
+			var replaceText:String = findReplaceView.replaceText;
 			var searchRegExp:RegExp;
 			
 			if (searchText == "") return;
 			
-			if (searchView.optionRegExp.selected)
+			if (findReplaceView.regExpEnabled)
 			{
 				var flags:String = 'g';
-				if (!searchView.optionMatchCase.selected) flags += 'i';
-				if (searchView.optionEscapeChars.selected) searchText = TextUtil.escapeRegex(searchText);
+				if (!findReplaceView.matchCaseEnabled) flags += 'i';
+				if (findReplaceView.escapeCharsEnabled) searchText = TextUtil.escapeRegex(searchText);
 				searchRegExp = new RegExp(searchText, flags);
 			} 
-			else if (searchView.optionMatchCase.selected == false)
+			else if (findReplaceView.matchCaseEnabled == false)
 			{
 				// We need to use regexp for case non-matching,
 				//  but we hide that from the user. (always escape chars)
@@ -301,31 +338,33 @@ package actionScripts.plugin.findreplace
 			var result:SearchResult;
 			
 			// Perform search of type
-			if (event.type == EVENT_FIND_NEXT)
+			if (event.type == FindReplaceView.EVENT_FIND_NEXT)
 			{
 				result = editor.search(searchRegExp || searchText);	
 			}
-			else if (event.type == EVENT_FIND_PREV)
+			else if (event.type == FindReplaceView.EVENT_FIND_PREVIOUS)
 			{
 				result = editor.search(searchRegExp || searchText, true);
 			}
-			else if (event.type == EVENT_REPLACE_ALL)
-			{
-				result = editor.searchReplace(searchRegExp || searchText, replaceText, true);
-			}
-			else if (event.type == EVENT_REPLACE_ONE)
+			else if (event.type == FindReplaceView.EVENT_REPLACE_ONE)
 			{
 				result = editor.searchReplace(searchRegExp || searchText, replaceText, false);
+			}
+			else if (event.type == FindReplaceView.EVENT_REPLACE_ALL)
+			{
+				result = editor.searchReplace(searchRegExp || searchText, replaceText, true);
 			}
 			
 			// Display # of matches & position if any
 			if (result.totalMatches > 0)
 			{
-				searchView.findInput.resultText = (result.selectedIndex+1) + "/" + result.totalMatches;
+				findReplaceView.resultCount = result.totalMatches;
+				findReplaceView.resultIndex = (result.selectedIndex + 1);
 			}
 			else
 			{
-				searchView.findInput.resultText = result.totalMatches.toString();
+				findReplaceView.resultIndex = 0;
+				findReplaceView.resultCount = result.totalMatches;
 			}
 
 			var as3Project:AS3ProjectVO = model.activeProject as AS3ProjectVO;

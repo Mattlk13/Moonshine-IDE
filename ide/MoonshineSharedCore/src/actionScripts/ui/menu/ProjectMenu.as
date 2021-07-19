@@ -27,18 +27,20 @@ package actionScripts.ui.menu
     import actionScripts.events.GradleBuildEvent;
     import actionScripts.events.MavenBuildEvent;
     import actionScripts.events.PreviewPluginEvent;
+    import actionScripts.events.RoyaleApiReportEvent;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;
     import actionScripts.plugin.core.compiler.GrailsBuildEvent;
+    import actionScripts.plugin.core.compiler.HaxeBuildEvent;
     import actionScripts.plugin.core.compiler.JavaBuildEvent;
     import actionScripts.plugin.core.compiler.ProjectActionEvent;
     import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
+    import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
     import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
+    import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
     import actionScripts.ui.menu.vo.MenuItem;
     import actionScripts.ui.menu.vo.ProjectMenuTypes;
     import actionScripts.valueObjects.ProjectVO;
-    import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
-    import actionScripts.plugin.core.compiler.HaxeBuildEvent;
 
     public class ProjectMenu
     {
@@ -48,9 +50,11 @@ package actionScripts.ui.menu
         private var vePrimeFaces:Vector.<MenuItem>;
         private var veFlex:Vector.<MenuItem>;
         private var javaMenu:Vector.<MenuItem>;
+        private var dominoMenu:Vector.<MenuItem>;
 		private var javaMenuGradle:Vector.<MenuItem>;
         private var grailsMenu:Vector.<MenuItem>;
         private var haxeMenu:Vector.<MenuItem>;
+		private var onDiskMenu:Vector.<MenuItem>;
 
         private var currentProject:ProjectVO;
 
@@ -74,6 +78,9 @@ package actionScripts.ui.menu
                     if (as3Project.isPrimeFacesVisualEditorProject)
                     {
                         return getVisualEditorMenuPrimeFacesItems();
+                    } else if(as3Project.isDominoVisualEditorProject){
+                        return getDominoMenuItems();
+                    }else {
                     }
 
                     return getVisualEditorMenuFlexItems();
@@ -101,6 +108,11 @@ package actionScripts.ui.menu
             {
                 return getHaxeMenuItems();
             }
+			
+			if (project is OnDiskProjectVO)
+			{
+				return getOnDiskMenuItems();
+			}
 
             return null;
         }
@@ -112,16 +124,17 @@ package actionScripts.ui.menu
                 var resourceManager:IResourceManager = ResourceManager.getInstance();
                 actionScriptMenu = Vector.<MenuItem>([
                     new MenuItem(null),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD,
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JS_ROYALE], ProjectActionEvent.BUILD,
                             'b', [Keyboard.COMMAND],
                             'b', [Keyboard.CONTROL]),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD_AND_RUN,
-                            "\n", [Keyboard.COMMAND],
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE], ProjectActionEvent.BUILD_AND_RUN,
+                            "\r\n", [Keyboard.COMMAND],
                             "\n", [Keyboard.CONTROL]),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.BUILD_RELEASE),
-                    new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ProjectActionEvent.CLEAN_PROJECT),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ProjectActionEvent.BUILD_RELEASE),
                     new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_ANT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], "selectedProjectAntBuild"),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.JAVA], MavenBuildEvent.START_MAVEN_BUILD)
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.JAVA], MavenBuildEvent.START_MAVEN_BUILD),
+                    new MenuItem(resourceManager.getString('resources', 'ROYALE_API_REPORT'), null, [ProjectMenuTypes.FLEX_AS], RoyaleApiReportEvent.LAUNCH_REPORT_CONFIGURATION),
+                    new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ProjectActionEvent.CLEAN_PROJECT)
                 ]);
                 actionScriptMenu.forEach(makeDynamic);
             }
@@ -157,19 +170,15 @@ package actionScripts.ui.menu
                 var resourceManager:IResourceManager = ResourceManager.getInstance();
                 royaleMenu = Vector.<MenuItem>([
                     new MenuItem(null),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.LIBRARY_FLEX_AS, ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD,
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_PROJECT'), null, [ProjectMenuTypes.JS_ROYALE], ProjectActionEvent.BUILD,
                             'b', [Keyboard.COMMAND],
                             'b', [Keyboard.CONTROL]),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD_AND_RUN,
-                            "\n", [Keyboard.COMMAND],
-                            "\n", [Keyboard.CONTROL]),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_AS_JS'), null, [ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD_AS_JAVASCRIPT,
-                            'j', [Keyboard.COMMAND],
-                            'j', [Keyboard.CONTROL]),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN_AS_JS'), null, [ProjectMenuTypes.JS_ROYALE], ActionScriptBuildEvent.BUILD_AND_RUN_JAVASCRIPT),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ActionScriptBuildEvent.BUILD_RELEASE),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_ANT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], "selectedProjectAntBuild"),
-                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.JAVA], MavenBuildEvent.START_MAVEN_BUILD),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, [ProjectMenuTypes.JS_ROYALE], ProjectActionEvent.BUILD_AND_RUN,
+                            "\r\n", [Keyboard.COMMAND],
+							"\n", [Keyboard.CONTROL]),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, [ProjectMenuTypes.JS_ROYALE], ProjectActionEvent.BUILD_RELEASE),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_ANT'), null, [ProjectMenuTypes.JS_ROYALE], "selectedProjectAntBuild"),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.JAVA], MavenBuildEvent.START_MAVEN_BUILD),
                     new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS], ProjectActionEvent.CLEAN_PROJECT)
                 ]);
                 royaleMenu.forEach(makeDynamic);
@@ -250,9 +259,7 @@ package actionScripts.ui.menu
 						new MenuItem(resourceManager.getString('resources', 'RUN_GRADLE_TASKS'), null, enabledTypes, JavaBuildEvent.JAVA_BUILD,
 							'b', [Keyboard.COMMAND],
 							'b', [Keyboard.CONTROL]),
-						new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, enabledTypes, ProjectActionEvent.CLEAN_PROJECT),
-						new MenuItem(null),
-						new MenuItem(resourceManager.getString('resources', 'REFRESH_GRADLE_CLASSPATH'), null, enabledTypes, GradleBuildEvent.REFRESH_GRADLE_CLASSPATH)
+						new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, enabledTypes, ProjectActionEvent.CLEAN_PROJECT)
 					]);
 				}
 				
@@ -267,7 +274,7 @@ package actionScripts.ui.menu
                         'b', [Keyboard.COMMAND],
                         'b', [Keyboard.CONTROL]),
                 new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, enabledTypes, JavaBuildEvent.BUILD_AND_RUN,
-                        "\n", [Keyboard.COMMAND],
+                        "\r\n", [Keyboard.COMMAND],
                         "\n", [Keyboard.CONTROL]),
                 new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, enabledTypes, ProjectActionEvent.CLEAN_PROJECT)
             ]);
@@ -275,7 +282,25 @@ package actionScripts.ui.menu
             javaMenu.forEach(makeDynamic);
             return javaMenu;
         }
+        private function getDominoMenuItems():Vector.<MenuItem>
+        {
 
+
+            
+            if (dominoMenu == null)
+            {           
+                var resourceManager:IResourceManager = ResourceManager.getInstance();
+
+                dominoMenu = Vector.<MenuItem>([
+                    new MenuItem(null),
+                    new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.VISUAL_EDITOR_PRIMEFACES, ProjectMenuTypes.JAVA,ProjectMenuTypes.VISUAL_EDITOR_DOMINO], MavenBuildEvent.START_MAVEN_BUILD),
+                    new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, [ProjectMenuTypes.FLEX_AS, ProjectMenuTypes.PURE_AS, ProjectMenuTypes.JS_ROYALE, ProjectMenuTypes.LIBRARY_FLEX_AS,ProjectMenuTypes.JAVA,ProjectMenuTypes.VISUAL_EDITOR_DOMINO], ProjectActionEvent.CLEAN_PROJECT)
+                ]);
+                dominoMenu.forEach(makeDynamic);
+            }
+
+            return dominoMenu;
+        }
         private function getGrailsMenuItems():Vector.<MenuItem>
         {
             if (grailsMenu == null)
@@ -289,7 +314,7 @@ package actionScripts.ui.menu
 						'b', [Keyboard.COMMAND],
 						'b', [Keyboard.CONTROL]),
                     new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, enabledTypes, GrailsBuildEvent.BUILD_RELEASE,
-						"\n", [Keyboard.COMMAND],
+						"\r\n", [Keyboard.COMMAND],
 						"\n", [Keyboard.CONTROL]),
                     new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, enabledTypes, ProjectActionEvent.CLEAN_PROJECT),
 					new MenuItem(null),
@@ -316,8 +341,8 @@ package actionScripts.ui.menu
                         'b', [Keyboard.COMMAND],
                         'b', [Keyboard.CONTROL]),
                     new MenuItem(resourceManager.getString('resources', 'BUILD_AND_RUN'), null, enabledTypes, HaxeBuildEvent.BUILD_AND_RUN,
-						'\n', [Keyboard.COMMAND],
-						'\n', [Keyboard.CONTROL]),
+						"\r\n", [Keyboard.COMMAND],
+						"\n", [Keyboard.CONTROL]),
                     new MenuItem(resourceManager.getString('resources', 'BUILD_RELEASE'), null, enabledTypes, HaxeBuildEvent.BUILD_RELEASE),
                 ]);
                 haxeMenu.forEach(makeDynamic);
@@ -325,6 +350,23 @@ package actionScripts.ui.menu
 
             return haxeMenu;
         }
+		
+		private function getOnDiskMenuItems():Vector.<MenuItem>
+		{
+			if (onDiskMenu == null)
+			{
+				var resourceManager:IResourceManager = ResourceManager.getInstance();
+				onDiskMenu = Vector.<MenuItem>([
+					new MenuItem(null),
+					new MenuItem(resourceManager.getString('resources', 'BUILD_WITH_APACHE_MAVEN'), null, [ProjectMenuTypes.ON_DISK], MavenBuildEvent.START_MAVEN_BUILD),
+					new MenuItem(resourceManager.getString('resources', 'CLEAN_PROJECT'), null, [ProjectMenuTypes.ON_DISK], ProjectActionEvent.CLEAN_PROJECT)
+				]);
+				
+				onDiskMenu.forEach(makeDynamic);
+			}
+			
+			return onDiskMenu;
+		}
 
         private function makeDynamic(item:MenuItem, index:int, vector:Vector.<MenuItem>):void
         {

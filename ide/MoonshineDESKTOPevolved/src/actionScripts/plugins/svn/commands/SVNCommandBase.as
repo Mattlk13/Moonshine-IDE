@@ -28,10 +28,12 @@ package actionScripts.plugins.svn.commands
 	import mx.events.CloseEvent;
 	import mx.managers.PopUpManager;
 	
+	import actionScripts.locator.IDEModel;
 	import actionScripts.plugins.core.ExternalCommandBase;
 	import actionScripts.plugins.svn.view.ServerCertificateDialog;
 	import actionScripts.plugins.versionControl.VersionControlUtils;
 	import actionScripts.plugins.versionControl.event.VersionControlEvent;
+	import actionScripts.ui.IContentWindowReloadable;
 	import actionScripts.utils.SharedObjectUtil;
 	import actionScripts.valueObjects.RepositoryItemVO;
 	import actionScripts.valueObjects.VersionControlTypes;
@@ -141,12 +143,8 @@ package actionScripts.plugins.svn.commands
 			{
 				if (target.userObject.save && repositoryItem)
 				{
-					var tmpTopLevel:RepositoryItemVO = VersionControlUtils.getRepositoryItemByUdid(repositoryItem.udid);
-					tmpTopLevel.userName = target.userObject.userName;
-					tmpTopLevel.userPassword = target.userObject.password;
-					SharedObjectUtil.saveRepositoriesToSO(VersionControlUtils.REPOSITORIES);
+					repositoryItem.userName = target.userObject.userName;
 				}
-				
 				onAuthenticationSuccess(target.userObject.userName, target.userObject.password);
 			}
 		}
@@ -189,6 +187,15 @@ package actionScripts.plugins.svn.commands
 					}
 					break;
 				}
+			}
+		}
+		
+		protected function checkCurrentEditorForModification():void
+		{
+			var model:IDEModel = IDEModel.getInstance();
+			if (model.activeEditor && (model.activeEditor is IContentWindowReloadable))
+			{
+				(model.activeEditor as IContentWindowReloadable).checkFileIfChanged();
 			}
 		}
 		

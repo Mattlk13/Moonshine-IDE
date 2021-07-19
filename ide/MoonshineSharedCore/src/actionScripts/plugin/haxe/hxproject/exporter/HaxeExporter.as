@@ -1,4 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
+// 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,6 +14,7 @@
 // 
 // No warranty of merchantability or fitness of any kind. 
 // Use this software at your own risk.
+// 
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.haxe.hxproject.exporter
 {
@@ -78,6 +80,21 @@ package actionScripts.plugin.haxe.hxproject.exporter
 			if (project.testMovieCommand && project.testMovieCommand != "") 
 			{
 				optionPairs.testMovieCommand = project.testMovieCommand;
+			}
+			options.appendChild(SerializeUtil.serializePairs(optionPairs, <option />));
+			projectXML.appendChild(options);
+
+			options = <moonshineRunCustomization />;
+			if(project.isLime)
+			{
+				optionPairs = {
+					targetPlatform:	project.limeTargetPlatform,
+					webBrowser:   project.runWebBrowser
+				};
+			}
+			else
+			{
+				optionPairs = {};
 			}
 			options.appendChild(SerializeUtil.serializePairs(optionPairs, <option />));
 			projectXML.appendChild(options);

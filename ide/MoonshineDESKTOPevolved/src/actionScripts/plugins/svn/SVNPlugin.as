@@ -63,6 +63,8 @@ package actionScripts.plugins.svn
 		public static const UPDATE_REQUEST:String = "svnUpdateRequest";
 		public static const SVN_TEST_COMPLETED:String = "svnTestCompleted";
 		
+		public static const NAMESPACE:String = "actionScripts.plugins.svn::SVNPlugin";
+		
 		override public function get name():String			{ return "Subversion"; }
 		override public function get author():String		{ return ConstantsCoreVO.MOONSHINE_IDE_LABEL +" Project Team"; }
 		override public function get description():String	{ return ResourceManager.getInstance().getString('resources','plugin.desc.subversion'); }
@@ -103,7 +105,6 @@ package actionScripts.plugins.svn
 			dispatcher.addEventListener(COMMIT_REQUEST, handleCommitRequest);
 			dispatcher.addEventListener(UPDATE_REQUEST, handleUpdateRequest);
 			dispatcher.addEventListener(ProjectEvent.CHECK_SVN_PROJECT, handleCheckSVNRepository);
-			dispatcher.addEventListener(VersionControlEvent.OSX_XCODE_PERMISSION_GIVEN, onOSXodePermission);
 			dispatcher.addEventListener(VersionControlEvent.LOAD_REMOTE_SVN_LIST, onLoadRemoteSVNList);
 		}
 		
@@ -116,14 +117,12 @@ package actionScripts.plugins.svn
 			dispatcher.removeEventListener(COMMIT_REQUEST, handleCommitRequest);
 			dispatcher.removeEventListener(UPDATE_REQUEST, handleUpdateRequest);
 			dispatcher.removeEventListener(ProjectEvent.CHECK_SVN_PROJECT, handleCheckSVNRepository);
-			dispatcher.removeEventListener(VersionControlEvent.OSX_XCODE_PERMISSION_GIVEN, onOSXodePermission);
 			dispatcher.removeEventListener(VersionControlEvent.LOAD_REMOTE_SVN_LIST, onLoadRemoteSVNList);
 		}
 		
 		override public function resetSettings():void
 		{
 			svnBinaryPath = null;
-			ConstantsCoreVO.IS_SVN_OSX_AVAILABLE = false;
 			dispatcher.dispatchEvent(new Event(MenuPlugin.CHANGE_SVN_CHECKOUT_PERMISSION_LABEL));
 			
 			removeIfAlreadyVersioned();
@@ -137,7 +136,7 @@ package actionScripts.plugins.svn
 			setUsualMessage();
 			
 			return Vector.<ISetting>([
-				new PathSetting(this,'svnBinaryPath', 'SVN Binary', false, svnBinaryPath)
+				pathSetting
 			]);
 		}
 		
@@ -171,7 +170,7 @@ package actionScripts.plugins.svn
 		private function setUsualMessage():void
 		{
 			var svnMessage:String = "SVN binary needs to be command-line compliant";
-			if (ConstantsCoreVO.IS_MACOS) svnMessage += "\nFor most users, it will be easier to set this with \"Subversion > Grant Permission\"";
+			//if (ConstantsCoreVO.IS_MACOS) svnMessage += "\nFor most users, it will be easier to set this with \"Subversion > Grant Permission\"";
 			
 			pathSetting.setMessage(svnMessage, AbstractSetting.MESSAGE_IMPORTANT);
 		}
@@ -196,19 +195,6 @@ package actionScripts.plugins.svn
 			{
 				dispatcher.dispatchEvent(new Event(MenuPlugin.REFRESH_MENU_STATE));
 			}
-		}
-		
-		protected function onOSXodePermission(event:VersionControlEvent):void
-		{
-			svnBinaryPath = String(event.value) +"/usr/bin/svn";
-			
-			// save the settings
-			var thisSettings: Vector.<ISetting> = getSettingsList();
-			var pathSettingToDefaultSDK:PathSetting = thisSettings[0] as PathSetting;
-			dispatcher.dispatchEvent(new SetSettingsEvent(SetSettingsEvent.SAVE_SPECIFIC_PLUGIN_SETTING, null, "actionScripts.plugins.svn::SVNPlugin", thisSettings));
-			
-			// if an opened project lets test it if Git repository
-			if (model.activeProject) handleProjectOpen(new ProjectEvent(ProjectEvent.ADD_PROJECT, model.activeProject));
 		}
 		
 		protected function handleProjectOpen(event:ProjectEvent):void
@@ -245,14 +231,8 @@ package actionScripts.plugins.svn
 			// Need to check OSX svn existence someway
 			if (!UtilsCore.isSVNPresent())
 			{
-				if (ConstantsCoreVO.IS_MACOS)
-				{
-					dispatcher.dispatchEvent(new Event(GitHubPlugin.RELAY_SVN_XCODE_REQUEST));
-                }
-				else
-				{
-					dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_OPEN_SETTINGS, "actionScripts.plugins.svn::SVNPlugin"));
-                }
+				error("Error: Subversion path has not been set.");
+				dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_OPEN_SETTINGS, NAMESPACE));
 				return;
 			}
 			

@@ -18,22 +18,28 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.symbols
 {
-	import flash.display.DisplayObject;
-	import flash.events.Event;
-	
-	import mx.collections.ArrayCollection;
-	import mx.core.UIComponent;
-	import mx.managers.PopUpManager;
-	
 	import actionScripts.events.LanguageServerEvent;
+	import actionScripts.events.OpenLocationEvent;
 	import actionScripts.events.SymbolsEvent;
 	import actionScripts.plugin.PluginBase;
-	import actionScripts.plugin.symbols.view.SymbolsView;
-	import actionScripts.ui.editor.ActionScriptTextEditor;
+	import actionScripts.ui.FeathersUIWrapper;
+	import actionScripts.ui.editor.BasicTextEditor;
 	import actionScripts.ui.editor.LanguageServerTextEditor;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.DocumentSymbol;
+	import actionScripts.valueObjects.Location;
+	import actionScripts.valueObjects.Range;
 	import actionScripts.valueObjects.SymbolInformation;
+
+	import feathers.data.ArrayCollection;
+
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+
+	import moonshine.plugin.symbols.view.SymbolsView;
+
+	import mx.core.UIComponent;
+	import mx.managers.PopUpManager;
 
 	public class SymbolsPlugin extends PluginBase
 	{
@@ -41,17 +47,21 @@ package actionScripts.plugin.symbols
 		public static const EVENT_OPEN_WORKSPACE_SYMBOLS_VIEW:String = "openWorkspaceSymbolsView";
 
 		private static const TITLE_DOCUMENT:String = "Find Symbol in Document";
-		private static const TITLE_WORKSPACE:String = "Find Symbol in Workspace";
+		private static const TITLE_WORKSPACE:String = "Find Symbol in Project";
 
 		public function SymbolsPlugin()
 		{
+			this.symbolsView = new SymbolsView();
+			this.symbolsView.addEventListener(Event.CLOSE, symbolsView_closeHandler);
+			this.symbolsViewWrapper = new FeathersUIWrapper(this.symbolsView);
 		}
 
 		override public function get name():String { return "Symbols Plugin"; }
 		override public function get author():String { return ConstantsCoreVO.MOONSHINE_IDE_LABEL +" Project Team"; }
 		override public function get description():String { return "Displays symbols in current document or entire workspace."; }
 
-		private var symbolsView:SymbolsView = new SymbolsView();
+		private var symbolsViewWrapper:FeathersUIWrapper;
+		private var symbolsView:SymbolsView;
 		private var isWorkspace:Boolean = false;
 
 		override public function activate():void
@@ -67,6 +77,7 @@ package actionScripts.plugin.symbols
 		override public function deactivate():void
 		{
 			super.deactivate();
+			symbolsView.removeEventListener(SymbolsView.EVENT_QUERY_CHANGE, handleQueryChange);
 			dispatcher.removeEventListener(EVENT_OPEN_DOCUMENT_SYMBOLS_VIEW, handleOpenDocumentSymbolsView);
 			dispatcher.removeEventListener(EVENT_OPEN_WORKSPACE_SYMBOLS_VIEW, handleOpenWorkspaceSymbolsView);
 			dispatcher.removeEventListener(SymbolsEvent.EVENT_SHOW_DOCUMENT_SYMBOLS, handleShowSymbols);
@@ -75,16 +86,14 @@ package actionScripts.plugin.symbols
 		
 		private function handleQueryChange(event:Event):void
 		{
+			if(symbolsViewWrapper.parent == null)
+			{
+				//ignore query changes if they happen after the window is closed
+				return;
+			}
 			var query:String = this.symbolsView.query;
 			if(this.isWorkspace)
 			{
-				if(!query)
-				{
-					//no point in calling the language server here
-					//an empty query is supposed to have zero results
-					this.symbolsView.symbols.removeAll();
-					return;
-				}
 				var languageServerEvent:LanguageServerEvent = new LanguageServerEvent(LanguageServerEvent.EVENT_WORKSPACE_SYMBOLS);
 				//using newText instead of a dedicated field is kind of hacky...
 				languageServerEvent.newText = query;
@@ -111,6 +120,43 @@ package actionScripts.plugin.symbols
 			}
 		}
 
+		private function symbolSortCompareFunction(symbol1:Object, symbol2:Object):int
+		{
+			var symbol1Name:String = null;
+			var symbol2Name:String = null;
+			if(symbol1 is DocumentSymbol)
+			{
+				var docSymbol1:DocumentSymbol = DocumentSymbol(symbol1);
+				symbol1Name = docSymbol1.name;
+			}
+			else if(symbol1 is SymbolInformation)
+			{
+				var symbolInfo1:SymbolInformation = SymbolInformation(symbol1);
+				symbol1Name = symbolInfo1.name;
+			}
+			if(symbol2 is DocumentSymbol)
+			{
+				var docSymbol2:DocumentSymbol = DocumentSymbol(symbol2);
+				symbol2Name = docSymbol2.name;
+			}
+			else if(symbol2 is SymbolInformation)
+			{
+				var symbolInfo2:SymbolInformation = SymbolInformation(symbol2);
+				symbol2Name = symbolInfo2.name;
+			}
+			symbol1Name = symbol1Name.toLowerCase();
+			symbol2Name = symbol2Name.toLowerCase();
+			if(symbol1Name < symbol2Name)
+			{
+				return -1;
+			}
+			else if(symbol1Name > symbol2Name)
+			{
+				return 1;
+			}
+			return 0;
+		}
+
 		private function handleOpenDocumentSymbolsView(event:Event):void
 		{
 			var editor:LanguageServerTextEditor = model.activeEditor as LanguageServerTextEditor;
@@ -120,12 +166,17 @@ package actionScripts.plugin.symbols
 			}
 			isWorkspace = false;
 			symbolsView.title = TITLE_DOCUMENT;
+			symbolsView.query = "";
+			var collection:ArrayCollection = symbolsView.symbols;
+			collection.filterFunction = null;
+			collection.removeAll();
 			var parentApp:Object = UIComponent(model.activeEditor).parentApplication;
-			PopUpManager.addPopUp(symbolsView, DisplayObject(parentApp), true);
-			PopUpManager.centerPopUp(symbolsView);
+			PopUpManager.addPopUp(symbolsViewWrapper, DisplayObject(parentApp), true);
+			PopUpManager.centerPopUp(symbolsViewWrapper);
 			dispatcher.dispatchEvent(new LanguageServerEvent(LanguageServerEvent.EVENT_DOCUMENT_SYMBOLS,
 				editor.currentFile.fileBridge.url));
-			symbolsView.focusManager.setFocus(symbolsView.txt_query);
+			symbolsViewWrapper.assignFocus("top");
+			symbolsViewWrapper.stage.addEventListener(Event.RESIZE, symbolsView_stage_resizeHandler, false, 0, true);
 		}
 
 		private function handleOpenWorkspaceSymbolsView(event:Event):void
@@ -136,15 +187,29 @@ package actionScripts.plugin.symbols
 			}
 			isWorkspace = true;
 			symbolsView.title = TITLE_WORKSPACE;
+			symbolsView.query = "";
+			var collection:ArrayCollection = symbolsView.symbols;
+			collection.filterFunction = null;
+			collection.removeAll();
 			var parentApp:Object = UIComponent(model.activeEditor).parentApplication;
-			PopUpManager.addPopUp(symbolsView, DisplayObject(parentApp), true);
-			PopUpManager.centerPopUp(symbolsView);
-			symbolsView.focusManager.setFocus(symbolsView.txt_query);
+			PopUpManager.addPopUp(symbolsViewWrapper, DisplayObject(parentApp), true);
+			PopUpManager.centerPopUp(symbolsViewWrapper);
+			symbolsView.stage.focus = symbolsView.searchFieldTextInput;
+			symbolsViewWrapper.stage.addEventListener(Event.RESIZE, symbolsView_stage_resizeHandler, false, 0, true);
+		
+			//start by listing all symbols, if the language server supports it
+			var languageServerEvent:LanguageServerEvent = new LanguageServerEvent(LanguageServerEvent.EVENT_WORKSPACE_SYMBOLS);
+			languageServerEvent.newText = "";
+			dispatcher.dispatchEvent(languageServerEvent);
 		}
 
 		private function handleShowSymbols(event:SymbolsEvent):void
 		{
 			var collection:ArrayCollection = symbolsView.symbols;
+			collection.filterFunction = null;
+			//don't sort until after all items have been added because it's
+			//expensive to repeatedly sort when adding new items one by one
+			collection.sortCompareFunction = null;
 			collection.removeAll();
 			var symbols:Array = event.symbols;
 			var itemCount:int = symbols.length;
@@ -154,16 +219,16 @@ package actionScripts.plugin.symbols
 				if(symbol is SymbolInformation)
 				{
 					var symbolInfo:SymbolInformation = symbol as SymbolInformation;
-					collection.addItem(symbolInfo);
+					collection.add(symbolInfo);
 				}
 				else if(symbol is DocumentSymbol)
 				{
 					var documentSymbol:DocumentSymbol = symbol as DocumentSymbol;
-					collection.addItem(documentSymbol);
+					collection.add(documentSymbol);
 					this.addDocumentSymbolChildren(documentSymbol, collection);
 				}
 			}
-			collection.filterFunction = null;
+			collection.sortCompareFunction = symbolSortCompareFunction;
 			collection.refresh();
 		}
 
@@ -178,9 +243,38 @@ package actionScripts.plugin.symbols
 			for(var j:int = 0; j < childCount; j++)
 			{
 				var child:DocumentSymbol = children[j];
-				collection.addItem(child);
+				collection.add(child);
 				this.addDocumentSymbolChildren(child, collection);
 			}
+		}
+
+		private function symbolsView_closeHandler(event:Event):void
+		{
+			var selectedSymbol:Object = this.symbolsView.selectedSymbol;
+			if(selectedSymbol is SymbolInformation)
+			{
+				var symbolInfo:SymbolInformation = selectedSymbol as SymbolInformation;
+				dispatcher.dispatchEvent(
+					new OpenLocationEvent(OpenLocationEvent.OPEN_LOCATION, symbolInfo.location));
+			}
+			else if(selectedSymbol is DocumentSymbol)
+			{
+				var documentSymbol:DocumentSymbol = selectedSymbol as DocumentSymbol;
+				var activeEditor:BasicTextEditor = model.activeEditor as BasicTextEditor;
+				var uri:String = activeEditor.currentFile.fileBridge.url;
+				var range:Range = documentSymbol.range;
+				var location:Location = new Location(uri, range);
+				dispatcher.dispatchEvent(
+					new OpenLocationEvent(OpenLocationEvent.OPEN_LOCATION, location));
+			}
+
+			symbolsViewWrapper.stage.removeEventListener(Event.RESIZE, symbolsView_stage_resizeHandler);
+			PopUpManager.removePopUp(symbolsViewWrapper);
+		}
+
+		protected function symbolsView_stage_resizeHandler(event:Event):void
+		{
+			PopUpManager.centerPopUp(symbolsViewWrapper);
 		}
 
 	}

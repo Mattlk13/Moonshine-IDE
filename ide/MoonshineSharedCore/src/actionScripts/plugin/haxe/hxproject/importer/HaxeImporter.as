@@ -1,14 +1,32 @@
+////////////////////////////////////////////////////////////////////////////////
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+// http://www.apache.org/licenses/LICENSE-2.0 
+// 
+// Unless required by applicable law or agreed to in writing, software 
+// distributed under the License is distributed on an "AS IS" BASIS, 
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and 
+// limitations under the License
+// 
+// No warranty of merchantability or fitness of any kind. 
+// Use this software at your own risk.
+// 
+////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.haxe.hxproject.importer
 {
-	import actionScripts.factory.FileLocation;
 	import flash.filesystem.File;
-	import flash.filesystem.FileStream;
 	import flash.filesystem.FileMode;
+	import flash.filesystem.FileStream;
+
+	import actionScripts.factory.FileLocation;
 	import actionScripts.plugin.core.importer.FlashDevelopImporterBase;
-	import actionScripts.ui.menu.vo.ProjectMenuTypes;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.utils.SerializeUtil;
-	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 	import actionScripts.utils.UtilsCore;
 
 	public class HaxeImporter extends FlashDevelopImporterBase
@@ -67,9 +85,10 @@ package actionScripts.plugin.haxe.hxproject.importer
             project.targets.length = 0;
 			
             parsePaths(data.compileTargets.compile, project.targets, project, "path");
-            parsePaths(data.hiddenPaths.hidden, project.hiddenPaths, project, "path");
-			
+            parsePaths(data.hiddenPaths.hidden, project.hiddenPaths, project, "path");		
 			parsePaths(data.classpaths["class"], project.classpaths, project, "path");
+			parsePathString(data.haxelib["library"], project.haxelibs, project, "name");
+	
 			if (!project.buildOptions.additional) project.buildOptions.additional = "";
 			
 			if (project.hiddenPaths.length > 0 && project.projectFolder)
@@ -133,16 +152,34 @@ package actionScripts.plugin.haxe.hxproject.importer
             project.haxeOutput.parse(data.output, project);
 
 			project.isLime = UtilsCore.isLime(project);
-			
-			if (project.haxeOutput.platform == "")
+
+			if(project.isLime)
 			{
-				project.haxeOutput.platform = HaxeOutputVO.PLATFORM_LIME;
+				var limeTargetPlatform:String = data.moonshineRunCustomization.option.@targetPlatform.toString();
+				if(limeTargetPlatform.length == 0)
+				{
+					//when Haxe projects were first introduced, they didn't have
+					//the moonshineRunCustomization section, so we should
+					//provide them with a default
+					limeTargetPlatform = HaxeProjectVO.LIME_PLATFORM_HTML5;
+				}
+				project.limeTargetPlatform = limeTargetPlatform;
+			}
+			else
+			{
+				if (project.haxeOutput.platform == "")
+				{
+					project.haxePlatform = HaxeOutputVO.PLATFORM_JAVASCRIPT;
+				}
+				project.limeTargetPlatform = null;
 			}
 			
 			if (project.testMovie == HaxeProjectVO.TEST_MOVIE_CUSTOM || project.testMovie == HaxeProjectVO.TEST_MOVIE_OPEN_DOCUMENT)
 			{
                 project.testMovieCommand = data.options.option.@testMovieCommand;
 			}
+			
+			project.runWebBrowser = SerializeUtil.deserializeString(data.moonshineRunCustomization.option.@webBrowser);
 			
 			UtilsCore.setProjectMenuType(project);
 

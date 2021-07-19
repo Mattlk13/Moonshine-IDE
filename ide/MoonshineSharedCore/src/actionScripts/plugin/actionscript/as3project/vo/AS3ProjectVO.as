@@ -18,7 +18,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.actionscript.as3project.vo
 {
-    import flash.events.Event;
+	import actionScripts.plugin.java.javaproject.vo.JavaTypes;
+	import actionScripts.plugin.settings.vo.MultiOptionSetting;
+
+	import flash.events.Event;
     import flash.events.MouseEvent;
     
     import mx.collections.ArrayCollection;
@@ -29,6 +32,7 @@ package actionScripts.plugin.actionscript.as3project.vo
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.factory.FileLocation;
     import actionScripts.interfaces.ICloneable;
+    import actionScripts.interfaces.IVisualEditorProjectVO;
     import actionScripts.plugin.actionscript.as3project.AS3ProjectPlugin;
     import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
     import actionScripts.plugin.run.RunMobileSetting;
@@ -47,10 +51,11 @@ package actionScripts.plugin.actionscript.as3project.vo
     import actionScripts.utils.SDKUtils;
     import actionScripts.utils.UtilsCore;
     import actionScripts.valueObjects.ConstantsCoreVO;
+    import actionScripts.valueObjects.FileWrapper;
     import actionScripts.valueObjects.MobileDeviceVO;
     import actionScripts.valueObjects.ProjectVO;
 	
-	public class AS3ProjectVO extends ProjectVO implements ICloneable
+	public class AS3ProjectVO extends ProjectVO implements ICloneable, IVisualEditorProjectVO
 	{
 		public static const CHANGE_CUSTOM_SDK:String = "CHANGE_CUSTOM_SDK";
 		public static const NATIVE_EXTENSION_MESSAGE:String = "NATIVE_EXTENSION_MESSAGE";
@@ -63,11 +68,12 @@ package actionScripts.plugin.actionscript.as3project.vo
 		[Bindable] public var isLibraryProject:Boolean;
 		
 		public var fromTemplate:FileLocation;
-		public var visualEditorSourceFolder:FileLocation;
 		
 		public var swfOutput:SWFOutputVO;
 		public var buildOptions:BuildOptions;
         public var mavenBuildOptions:MavenBuildOptions;
+		public var mavenDominoBuildOptions:MavenDominoBuildOptions;
+		public var flashModuleOptions:FlashModuleOptions;
 		public var customHTMLPath:String;
 		
 		public var classpaths:Vector.<FileLocation> = new Vector.<FileLocation>();
@@ -82,7 +88,6 @@ package actionScripts.plugin.actionscript.as3project.vo
 		public var targets:Vector.<FileLocation> = new Vector.<FileLocation>();
 		public var hiddenPaths:Vector.<FileLocation> = new Vector.<FileLocation>();
 		public var showHiddenPaths:Boolean = false;
-		public var filesList:ArrayCollection; // all acceptable files list those can be opened in Moonshine editor (mainly generates for VisualEditor project)
 		
 		public var prebuildCommands:String;
 		public var postbuildCommands:String;
@@ -104,10 +109,10 @@ package actionScripts.plugin.actionscript.as3project.vo
 
         public var isMobile:Boolean;
         public var isProjectFromExistingSource:Boolean;
-		public var isVisualEditorProject:Boolean;
 		public var isActionScriptOnly:Boolean;
-		public var isPrimeFacesVisualEditorProject:Boolean;
-		public var isPreviewRunning:Boolean;
+		//public var isPrimeFacesVisualEditorProject:Boolean;
+		//public var isDominoVisualEditorProject:Boolean;
+		//public var isPreviewRunning:Boolean;
 		public var isExportedToExistingSource:Boolean;
 		public var visualEditorExportPath:String;
 
@@ -118,16 +123,34 @@ package actionScripts.plugin.actionscript.as3project.vo
 		private var jsOutputPathSetting:PathSetting;
 		private var nativeExtensionPath:PathListSetting;
 		private var mobileRunSettings:RunMobileSetting;
+		private var webBrowserSettings:DropDownListSetting;
 		private var targetPlatformSettings:DropDownListSetting;
 
         private var _jsOutputPath:String;
 		private var _urlToLaunch:String;
 
+		private var _jdkType:String = JavaTypes.JAVA_DEFAULT;
+		public function get jdkType():String
+		{	return _jdkType;	}
+		public function set jdkType(value:String):void
+		{	_jdkType = value;	}
+
+		override public function set folderLocation(value:FileLocation):void
+		{
+			super.folderLocation = value;
+			if (flashModuleOptions) flashModuleOptions.projectFolderLocation = value;
+		}
+		
+		override public function set sourceFolder(value:FileLocation):void
+		{
+			super.sourceFolder = value;
+			if (flashModuleOptions) flashModuleOptions.sourceFolderLocation = value;
+		}
+		
 		public function get air():Boolean
 		{
 			return UtilsCore.isAIR(this);
 		}
-		
 		public function set air(v:Boolean):void
 		{
 			this.testMovie = v ? TEST_MOVIE_AIR : "";
@@ -137,7 +160,6 @@ package actionScripts.plugin.actionscript.as3project.vo
 		{
 			return buildOptions.customSDKPath;
 		}
-		
 		public function set customSDKPath(value:String):void
 		{
 			if(buildOptions.customSDKPath === value)
@@ -146,6 +168,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 			}
 			buildOptions.customSDKPath = value;
 			swfOutput.swfVersion = SDKUtils.getSdkSwfMajorVersion(value);
+			swfOutput.swfMinorVersion = SDKUtils.getSdkSwfMinorVersion(value);
 			this.dispatchEvent(new Event(CHANGE_CUSTOM_SDK));
 		}
 
@@ -153,7 +176,6 @@ package actionScripts.plugin.actionscript.as3project.vo
 		{
 			return buildOptions.antBuildPath;
 		}
-		
 		public function set antBuildPath(value:String):void
 		{
 			buildOptions.antBuildPath = value;
@@ -202,6 +224,78 @@ package actionScripts.plugin.actionscript.as3project.vo
 			return _isMobileHasSimulatedDevice;
 		}
 		
+		private var _runWebBrowser:String;
+		public function set runWebBrowser(value:String):void
+		{
+			_runWebBrowser = value;
+		}
+		public function get runWebBrowser():String
+		{
+			return _runWebBrowser;
+		}
+		
+		private var _isVisualEditorProject:Boolean;
+		public function get isVisualEditorProject():Boolean
+		{
+			return _isVisualEditorProject;
+		}
+		public function set isVisualEditorProject(value:Boolean):void
+		{
+			_isVisualEditorProject = value;
+		}
+		
+		private var _isPrimeFacesVisualEditorProject:Boolean;
+		public function get isPrimeFacesVisualEditorProject():Boolean
+		{
+			return _isPrimeFacesVisualEditorProject;
+		}
+		public function set isPrimeFacesVisualEditorProject(value:Boolean):void
+		{
+			_isPrimeFacesVisualEditorProject = value;
+		}
+
+
+		private var _isDominoVisualEditorProject:Boolean;
+		public function get isDominoVisualEditorProject():Boolean
+		{
+			return _isDominoVisualEditorProject;
+		}
+		public function set isDominoVisualEditorProject(value:Boolean):void
+		{
+			_isDominoVisualEditorProject = value;
+		}
+		
+		private var _isPreviewRunning:Boolean;
+		public function get isPreviewRunning():Boolean
+		{
+			return _isPreviewRunning;
+		}
+		public function set isPreviewRunning(value:Boolean):void
+		{
+			_isPreviewRunning = value;
+		}
+		
+		private var _visualEditorSourceFolder:FileLocation;
+		public function get visualEditorSourceFolder():FileLocation
+		{
+			return _visualEditorSourceFolder;
+		}
+		public function set visualEditorSourceFolder(value:FileLocation):void
+		{
+			_visualEditorSourceFolder = value;
+		}
+		
+		private var _filesList:ArrayCollection;
+		[Bindable]
+		public function get filesList():ArrayCollection
+		{
+			return _filesList;
+		}
+		public function set filesList(value:ArrayCollection):void
+		{
+			_filesList = value;
+		}
+		
 		public function get platformTypes():ArrayCollection
 		{
 			var tmpCollection:ArrayCollection;
@@ -211,7 +305,14 @@ package actionScripts.plugin.actionscript.as3project.vo
 			nativeExtensionPath.isEditable = air;
 			mobileRunSettings.visible = isMobile;
 			
-			if (!air)
+			if (isRoyale)
+			{
+				tmpCollection = new ArrayCollection([
+					new NameValuePair("JS", AS3ProjectPlugin.AS3PROJ_JS_WEB),
+					new NameValuePair("SWF", AS3ProjectPlugin.AS3PROJ_AS_WEB)
+				]);
+			}
+			else if (!air)
 			{
 				tmpCollection = new ArrayCollection([
 					new NameValuePair("Web", AS3ProjectPlugin.AS3PROJ_AS_WEB)
@@ -306,6 +407,10 @@ package actionScripts.plugin.actionscript.as3project.vo
 				mobileRunSettings.updateDevices(targetPlatformSettings.stringValue);
 				buildOptions.isMobileHasSimulatedDevice = (!targetPlatformSettings.stringValue || targetPlatformSettings.stringValue == "Android") ? ConstantsCoreVO.TEMPLATES_ANDROID_DEVICES[0] : ConstantsCoreVO.TEMPLATES_IOS_DEVICES[0];
 			}
+			if (webBrowserSettings)
+			{
+				webBrowserSettings.isEditable = targetPlatformSettings.stringValue == "JS";
+			}
 		}
 		
 		public function AS3ProjectVO(folder:FileLocation, projectName:String=null, updateToTreeView:Boolean=true) 
@@ -315,6 +420,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 			swfOutput = new SWFOutputVO();
 			buildOptions = new BuildOptions();
             mavenBuildOptions = new MavenBuildOptions(projectFolder.nativePath);
+			flashModuleOptions = new FlashModuleOptions(folder, sourceFolder);
 			
 			config = new MXMLCConfigVO();
 
@@ -335,6 +441,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 			if (nativeExtensionPath) nativeExtensionPath = null;
 			if (mobileRunSettings) mobileRunSettings = null;
 			if (targetPlatformSettings) targetPlatformSettings = null;
+			if (webBrowserSettings) webBrowserSettings = null;
 			
 			additional = new StringSetting(buildOptions, "additional", "Additional compiler options");
 			htmlFilePath = new PathSetting(this, "urlToLaunch", "URL to Launch", false, urlToLaunch);
@@ -345,6 +452,8 @@ package actionScripts.plugin.actionscript.as3project.vo
 			nativeExtensionPath = getExtensionsSettings();
 			mobileRunSettings = new RunMobileSetting(buildOptions, "Launch Method");
 			targetPlatformSettings = new DropDownListSetting(buildOptions, "targetPlatform", "Platform", platformTypes, "name");
+			webBrowserSettings = new DropDownListSetting(this, "runWebBrowser", "Web Browser", ConstantsCoreVO.TEMPLATES_WEB_BROWSERS, "name");
+			webBrowserSettings.isEditable = targetPlatformSettings.stringValue == "JS";
 
 			if (isRoyale)
 			{
@@ -362,7 +471,15 @@ package actionScripts.plugin.actionscript.as3project.vo
 
 			if (isVisualEditorProject)
 			{
-				settings = getSettingsForVisualEditorTypeOfProjects();
+				if(isDominoVisualEditorProject){
+					settings = getSettingsForVisualEditorDominoTypeOfProjects();
+				}else{
+					settings = getSettingsForVisualEditorTypeOfProjects();
+				}
+			}
+			else if (isRoyale)
+			{
+				settings = getSettingsForRoyale();
 			}
 			else if (!isFlashBuilderProject)
 			{
@@ -418,6 +535,24 @@ package actionScripts.plugin.actionscript.as3project.vo
 			if (targetPlatformSettings) targetPlatformSettings.removeEventListener(Event.CHANGE, onTargetPlatformChanged);
 		}
 		
+		override public function cancelledSettings():void
+		{
+			flashModuleOptions.cancelledSettings();
+		}
+		
+		override public function closedSettings():void
+		{
+			flashModuleOptions.cancelledSettings();
+		}
+		
+		override public function projectFileDelete(fw:FileWrapper):void
+		{
+			if (flashModuleOptions)
+			{
+				flashModuleOptions.onRemoveModuleEvent(fw, this);
+			}
+		}
+		
 		public function updateConfig():void 
 		{
 			/*if (configInvalid)
@@ -430,6 +565,65 @@ package actionScripts.plugin.actionscript.as3project.vo
 		private function dispatchNativeExtensionMessageRequest(event:MouseEvent):void
 		{
 			GlobalEventDispatcher.getInstance().dispatchEvent(new Event(AS3ProjectVO.NATIVE_EXTENSION_MESSAGE));
+		}
+
+		private function getSettingsForRoyale():Vector.<SettingsWrapper>
+		{
+			var settings:Vector.<SettingsWrapper> = Vector.<SettingsWrapper>([
+
+				new SettingsWrapper("Build options",
+						Vector.<ISetting>([
+							new PathSetting(this, "customSDKPath", "Custom SDK", true, buildOptions.customSDKPath, true),
+							additional,
+
+							new BooleanSetting(buildOptions, "sourceMap", "Source map"),
+							new StringSetting(buildOptions, "compilerConstants", "Compiler constants"),
+							new StringSetting(buildOptions, "loadConfig", "Load config")
+						])
+				),
+				new SettingsWrapper("Ant Build", Vector.<ISetting>([
+					new PathSetting(this, "antBuildPath", "Ant Build File", false, this.antBuildPath, false)
+				])),
+				new SettingsWrapper("Maven Build", Vector.<ISetting>([
+					new ProjectDirectoryPathSetting(this.mavenBuildOptions, this.projectFolder.nativePath, "buildPath", "Maven Build File", this.mavenBuildOptions.buildPath),
+					new BuildActionsListSettings(this.mavenBuildOptions, mavenBuildOptions.buildActions, "commandLine", "Build Actions"),
+					new PathSetting(this.mavenBuildOptions, "settingsFilePath", "Maven Settings File", false, this.mavenBuildOptions.settingsFilePath, false)
+				])),
+				new SettingsWrapper("Paths",
+						Vector.<ISetting>([
+							new PathListSetting(this, "classpaths", "Class paths", folderLocation, false, true, true, true),
+							new PathListSetting(this, "resourcePaths", "Resource folders", folderLocation, false),
+							new PathListSetting(this, "externalLibraries", "External libraries", folderLocation, true, false),
+							new PathListSetting(this, "libraries", "Libraries", folderLocation),
+							nativeExtensionPath
+						])
+				),
+				new SettingsWrapper("Warnings & Errors",
+						Vector.<ISetting>([
+							new BooleanSetting(buildOptions, "showActionScriptWarnings",		"Show actionscript warnings"),
+							new BooleanSetting(buildOptions, "showBindingWarnings",				"Show binding warnings"),
+							new BooleanSetting(buildOptions, "showDeprecationWarnings",			"Show deprecation warnings"),
+							new BooleanSetting(buildOptions, "showUnusedTypeSelectorWarnings",	"Show unused type selector warnings"),
+							new BooleanSetting(buildOptions, "warnings",						"Show all warnings"),
+							new BooleanSetting(buildOptions, "strict",							"Strict error checking"),
+						])
+				)
+			]);
+
+			var runSettingsContent:Vector.<ISetting> = Vector.<ISetting>([
+				targetPlatformSettings,
+				htmlFilePath,
+				customHTMLFilePath,
+				outputPathSetting,
+				webBrowserSettings
+			]);
+
+			var runSettings:SettingsWrapper = new SettingsWrapper("Run", runSettingsContent);
+			runSettingsContent.insertAt(4, jsOutputPathSetting);
+
+			settings.push(runSettings);
+
+			return settings;
 		}
 
 		private function getSettingsForNonFlashBuilderProject():Vector.<SettingsWrapper>
@@ -475,6 +669,9 @@ package actionScripts.plugin.actionscript.as3project.vo
                             nativeExtensionPath
                         ])
                 ),
+				new SettingsWrapper("Modules",
+					flashModuleOptions.getSettings()
+				),
                 new SettingsWrapper("Warnings & Errors",
                         Vector.<ISetting>([
                             new BooleanSetting(buildOptions, "showActionScriptWarnings",		"Show actionscript warnings"),
@@ -514,7 +711,8 @@ package actionScripts.plugin.actionscript.as3project.vo
                             new IntSetting(swfOutput,	"width", 		"Width"),
                             new IntSetting(swfOutput,	"height",	 	"Height"),
                             new ColorSetting(swfOutput,	"background",	"Background color"),
-                            new IntSetting(swfOutput,	"swfVersion",	"Minimum player version")
+                            new IntSetting(swfOutput,	"swfVersion",	"Minimum player version"),
+							new StringSetting(swfOutput, "swfVersionStrict",	"Strict player version (manual)")
                         ])
                 ));
             }
@@ -564,6 +762,9 @@ package actionScripts.plugin.actionscript.as3project.vo
 							nativeExtensionPath
                         ])
                 ),
+				new SettingsWrapper("Modules",
+					flashModuleOptions.getSettings()
+				),
                 new SettingsWrapper("Warnings & Errors",
                         Vector.<ISetting>([
                             new BooleanSetting(buildOptions, "warnings",						"Show all warnings"),
@@ -599,6 +800,38 @@ package actionScripts.plugin.actionscript.as3project.vo
 				]);
 		}
 		
+		private function getSettingsForVisualEditorDominoTypeOfProjects():Vector.<SettingsWrapper>
+		{
+			//1. fix the default to clean and install .
+			var setting_new:BuildActionsListSettings=new BuildActionsListSettings(this.mavenBuildOptions, mavenBuildOptions.buildActions, "commandLine", "Build Actions");
+			//setting_new.stringValue="clean install";
+			
+            return Vector.<SettingsWrapper>([
+					new SettingsWrapper("Paths",
+							Vector.<ISetting>([
+								new PathListSetting(this, "classpaths", "Class paths", folderLocation, false, true, true, true),
+                                new PathSetting(this, "visualEditorExportPath", "Export Path", true, visualEditorExportPath)
+							])
+					),
+					new SettingsWrapper("Java Project", new <ISetting>[
+						new MultiOptionSetting(this, 'jdkType', "JDK",
+								Vector.<NameValuePair>([
+									new NameValuePair("Use Default JDK", JavaTypes.JAVA_DEFAULT),
+									new NameValuePair("Use JDK 8", JavaTypes.JAVA_8)
+								])
+						)
+					]),
+					new SettingsWrapper("Maven Build", Vector.<ISetting>([
+						new ProjectDirectoryPathSetting(this.mavenBuildOptions, this.projectFolder.nativePath, "buildPath", "Maven Build File", this.mavenBuildOptions.buildPath),
+						setting_new,	
+						new PathSetting(this.mavenBuildOptions, "settingsFilePath", "Maven Settings File", false, this.mavenBuildOptions.settingsFilePath, false),
+						new PathSetting(this.mavenBuildOptions, "dominoNotesProgram", "Notes Programe Path", true, this.mavenBuildOptions.dominoNotesProgram, false),
+						new PathSetting(this.mavenBuildOptions, "dominoNotesPlatform", "Notes Platform Path", true, this.mavenBuildOptions.dominoNotesPlatform, false)
+						//new ProjectDirectoryPathSetting(this.mavenDominoBuildOptions, this.projectFolder.nativePath, "buildPath", "Notes Programe File Path", this.mavenDominoBuildOptions.buildPath),
+					]))
+				]);
+		}
+
 		private function generateSettingsForSVNProject(value:Vector.<SettingsWrapper>):void
 		{
 			if (isSVN)
@@ -684,6 +917,7 @@ package actionScripts.plugin.actionscript.as3project.vo
             as3Project.isMobile = this.isMobile;
             as3Project.isProjectFromExistingSource = this.isProjectFromExistingSource;
             as3Project.isVisualEditorProject = this.isVisualEditorProject;
+			as3Project.isDominoVisualEditorProject = this.isDominoVisualEditorProject;
             as3Project.isLibraryProject = this.isLibraryProject;
             as3Project.isActionScriptOnly = this.isActionScriptOnly;
             as3Project.isPrimeFacesVisualEditorProject = this.isPrimeFacesVisualEditorProject;

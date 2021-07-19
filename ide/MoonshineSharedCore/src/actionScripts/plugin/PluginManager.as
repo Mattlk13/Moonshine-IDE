@@ -47,11 +47,14 @@ package actionScripts.plugin
         public function setupPlugins():void
         {
 			//Need to copy asset folder into bin dir also.
-        	var allPlugins:Array = corePlugins.concat(defaultPlugins,
+        	var allPlugins:Array = mergePlugins(
+                    corePlugins,
+                    defaultPlugins,
                     model.visualEditorCore.getDefaultPlugins(),
                     model.javaCore.getDefaultPlugins(),
                     model.groovyCore.getDefaultPlugins(),
-                    model.haxeCore.getDefaultPlugins());
+                    model.haxeCore.getDefaultPlugins(),
+					model.ondiskCore.getDefaultPlugins());
         	
             var plug:Class;
             for each (plug in allPlugins)
@@ -136,6 +139,25 @@ package actionScripts.plugin
         moonshine_internal function getPlugins():Vector.<IPlugin>
         {
             return registeredPlugins;
+        }
+
+        private function mergePlugins(...rest:Array):Array
+        {
+            var result:Array = [];
+            for each(var pluginSet:Array in rest)
+            {
+                for each(var pluginClass:Class in pluginSet)
+                {
+                    var index:int = result.indexOf(pluginClass);
+                    if(index != -1)
+                    {
+                        //skip duplicate plugin
+                        continue;
+                    }
+                    result.push(pluginClass);
+                }
+            }
+            return result;
         }
     }
 }

@@ -21,16 +21,18 @@ package actionScripts.plugin.project
     public class ProjectTemplateType
     {
         public static const FEATHERS:String = "Feathers";
-        public static const ACTIONSCRIPT:String = "ActionScript Project";
+        public static const ACTIONSCRIPT:String = "ActionScript";
 		public static const LIBRARY_PROJECT:String = "Library Project";
         public static const MOBILE:String = "Mobile Project";
         public static const VISUAL_EDITOR:String = "Visual Editor";
 		public static const VISUAL_EDITOR_FLEX:String = "Flex Visual Editor";
 		public static const VISUAL_EDITOR_PRIMEFACES:String = "PrimeFaces Visual Editor";
+        public static const VISUAL_EDITOR_DOMINO:String = "Domino NSF Database Visual Editor";
 		public static const AWAY3D:String = "Away3D Project";
         public static const JAVA:String = "Java";
         public static const GRAILS:String = "Grails";
         public static const ROYALE_PROJECT:String = "Royale Browser Project";
         public static const HAXE:String = "Haxe";
+		public static const ONDISK:String = "On Disk Project";
     }
 }

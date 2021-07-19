@@ -24,16 +24,21 @@ package actionScripts.plugin.recentlyOpened
     import flash.utils.setTimeout;
     
     import mx.collections.ArrayCollection;
+    import mx.controls.Alert;
     
     import actionScripts.events.FilePluginEvent;
     import actionScripts.events.GeneralEvent;
+    import actionScripts.events.GlobalEventDispatcher;
+    import actionScripts.events.MenuEvent;
+    import actionScripts.events.OpenFileEvent;
     import actionScripts.events.ProjectEvent;
     import actionScripts.events.StartupHelperEvent;
     import actionScripts.factory.FileLocation;
-    import actionScripts.locator.IDEModel;
     import actionScripts.plugin.IMenuPlugin;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+    import actionScripts.plugin.settings.providers.Java8SettingsProvider;
+    import actionScripts.plugin.settings.providers.JavaSettingsProvider;
     import actionScripts.ui.LayoutModifier;
     import actionScripts.ui.menu.vo.MenuItem;
     import actionScripts.utils.OSXBookmarkerNotifiers;
@@ -44,6 +49,7 @@ package actionScripts.plugin.recentlyOpened
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.MobileDeviceVO;
     import actionScripts.valueObjects.ProjectReferenceVO;
+    import actionScripts.valueObjects.ProjectVO;
     import actionScripts.valueObjects.SDKReferenceVO;
     
     import components.views.project.TreeView;
@@ -58,6 +64,7 @@ package actionScripts.plugin.recentlyOpened
 		override public function get description():String	{ return "Stores the last opened file paths."; }
 		
 		private var cookie:SharedObject;
+		private var recentOpenedProjectObject:FileLocation;
 		
 		override public function activate():void
 		{
@@ -79,11 +86,17 @@ package actionScripts.plugin.recentlyOpened
 			dispatcher.addEventListener(FilePluginEvent.EVENT_JAVA_TYPEAHEAD_PATH_SAVE, onJavaPathForTypeaheadSave);
 			dispatcher.addEventListener(LayoutModifier.SAVE_LAYOUT_CHANGE_EVENT, onSaveLayoutChangeEvent);
 			dispatcher.addEventListener(GeneralEvent.DEVICE_UPDATED, onDeviceListUpdated, false, 0, true);
-			dispatcher.addEventListener(RecentlyOpenedPlugin.RECENT_PROJECT_LIST_UPDATED, updateRecetProjectList);
+			dispatcher.addEventListener(RecentlyOpenedPlugin.RECENT_PROJECT_LIST_UPDATED, updateRecentProjectList);
 			dispatcher.addEventListener(RecentlyOpenedPlugin.RECENT_FILES_LIST_UPDATED, updateRecetFileList);
 			// Give other plugins a chance to cancel the event
 			dispatcher.addEventListener(FilePluginEvent.EVENT_FILE_OPEN, handleOpenFile, false, -100);
 			dispatcher.addEventListener(GeneralEvent.EVENT_FILE_BROWSED, onFileLocationBrowsed, false, 0, true);
+			
+			if (ConstantsCoreVO.IS_AIR)
+			{
+				dispatcher.addEventListener("eventOpenRecentProject", onOpenRecentProject, false, 0, true);
+				dispatcher.addEventListener("eventOpenRecentFile", onOpenRecentFile, false, 0, true);
+			}
 		}
 		
 		public function getMenu():MenuItem
@@ -190,23 +203,51 @@ package actionScripts.plugin.recentlyOpened
 				for each (object in cookie.data.userSDKs)
 				{
 					var tmpSDK:SDKReferenceVO = SDKReferenceVO.getNewReference(object);
-					if (new FileLocation(tmpSDK.path).fileBridge.exists) model.userSavedSDKs.addItem(tmpSDK);
+					if (new FileLocation(tmpSDK.path).fileBridge.exists)
+					{
+						model.userSavedSDKs.addItem(tmpSDK);
+					}
 				}
 			}
 			
 			if (cookie.data.hasOwnProperty('lastBrowsedLocation')) 
 			{
 				ConstantsCoreVO.LAST_BROWSED_LOCATION = cookie.data.lastBrowsedLocation;
-				if (!model.fileCore.isPathExists(ConstantsCoreVO.LAST_BROWSED_LOCATION)) ConstantsCoreVO.LAST_BROWSED_LOCATION = null;
-				else model.fileCore.nativePath = ConstantsCoreVO.LAST_BROWSED_LOCATION;
+				if (!model.fileCore.isPathExists(ConstantsCoreVO.LAST_BROWSED_LOCATION))
+				{
+					ConstantsCoreVO.LAST_BROWSED_LOCATION = null;
+				}
+				else
+				{
+					model.fileCore.nativePath = ConstantsCoreVO.LAST_BROWSED_LOCATION;
+				}
 			}
 			
-			if (cookie.data.hasOwnProperty('moonshineWorkspace')) OSXBookmarkerNotifiers.workspaceLocation = new FileLocation(cookie.data.moonshineWorkspace);
-			if (cookie.data.hasOwnProperty('isWorkspaceAcknowledged')) OSXBookmarkerNotifiers.isWorkspaceAcknowledged = (cookie.data["isWorkspaceAcknowledged"] == "true") ? true : false;
-			if (cookie.data.hasOwnProperty('isBundledSDKpromptDNS')) ConstantsCoreVO.IS_BUNDLED_SDK_PROMPT_DNS = (cookie.data["isBundledSDKpromptDNS"] == "true") ? true : false;
-			if (cookie.data.hasOwnProperty('isSDKhelperPromptDNS')) ConstantsCoreVO.IS_SDK_HELPER_PROMPT_DNS = (cookie.data["isSDKhelperPromptDNS"] == "true") ? true : false;
-			if (cookie.data.hasOwnProperty('isGettingStartedDNS')) ConstantsCoreVO.IS_GETTING_STARTED_DNS = (cookie.data["isGettingStartedDNS"] == "true") ? true : false;
-			if (cookie.data.hasOwnProperty('javaPathForTypeahead')) model.javaPathForTypeAhead = new FileLocation(cookie.data["javaPathForTypeahead"]);
+			if (cookie.data.hasOwnProperty('moonshineWorkspace'))
+			{
+				OSXBookmarkerNotifiers.workspaceLocation = new FileLocation(cookie.data.moonshineWorkspace);
+			}
+
+			if (cookie.data.hasOwnProperty('isWorkspaceAcknowledged'))
+			{
+				OSXBookmarkerNotifiers.isWorkspaceAcknowledged = (cookie.data["isWorkspaceAcknowledged"] == "true") ? true : false;
+			}
+
+			if (cookie.data.hasOwnProperty('isBundledSDKpromptDNS'))
+			{
+				ConstantsCoreVO.IS_BUNDLED_SDK_PROMPT_DNS = (cookie.data["isBundledSDKpromptDNS"] == "true") ? true : false;
+			}
+
+			if (cookie.data.hasOwnProperty('isSDKhelperPromptDNS'))
+			{
+				ConstantsCoreVO.IS_SDK_HELPER_PROMPT_DNS = (cookie.data["isSDKhelperPromptDNS"] == "true") ? true : false;
+			}
+
+			if (cookie.data.hasOwnProperty('isGettingStartedDNS'))
+			{
+				ConstantsCoreVO.IS_GETTING_STARTED_DNS = (cookie.data["isGettingStartedDNS"] == "true") ? true : false;
+			}
+
 			if (cookie.data.hasOwnProperty('devicesAndroid'))
 			{
 				ConstantsCoreVO.TEMPLATES_ANDROID_DEVICES = new ArrayCollection();
@@ -225,6 +266,20 @@ package actionScripts.plugin.recentlyOpened
 			{
 				ConstantsCoreVO.generateDevices();
 			}
+			if (cookie.data.hasOwnProperty('javaPathForTypeahead')) 
+			{
+				model.javaPathForTypeAhead = new FileLocation(cookie.data["javaPathForTypeahead"]);
+				
+				var javaSettingsProvider:JavaSettingsProvider = new JavaSettingsProvider();
+				javaSettingsProvider.currentJavaPath = model.javaPathForTypeAhead.fileBridge.nativePath;
+			}
+			if (cookie.data.hasOwnProperty('java8Path')) 
+			{
+				model.java8Path = new FileLocation(cookie.data["java8Path"]);
+				
+				var java8SettingsProvider:Java8SettingsProvider = new Java8SettingsProvider();
+				java8SettingsProvider.currentJava8Path = model.java8Path.fileBridge.nativePath;
+			}
 			
 			LayoutModifier.parseCookie(cookie);
 		}
@@ -235,11 +290,12 @@ package actionScripts.plugin.recentlyOpened
 			//var f:File = (event.project.projectFile) ? event.project.projectFile : event.project.folder;
 			var f:FileLocation = event.project.folderLocation;
 			var toRemove:int = -1;
-			for each (var file:Object in model.recentlyOpenedProjects)
+			for each (var projectReference:Object in model.recentlyOpenedProjects)
 			{
-				if (file.path == f.fileBridge.nativePath)
+				if ((projectReference.name == event.project.name) && 
+					(projectReference.path == f.fileBridge.nativePath))
 				{
-					toRemove = model.recentlyOpenedProjects.getItemIndex(file);
+					toRemove = model.recentlyOpenedProjects.getItemIndex(projectReference);
 					break;
 				}
 			}
@@ -258,6 +314,8 @@ package actionScripts.plugin.recentlyOpened
 			tmpSOReference.name = event.project.name;
 			tmpSOReference.sdk = customSDKPath ? customSDKPath : (model.defaultSDK ? model.defaultSDK.fileBridge.nativePath : null);
 			tmpSOReference.path = event.project.folderLocation.fileBridge.nativePath;
+			tmpSOReference.sourceFolder = event.project.sourceFolder;
+			//tmpSOReference.projectId = event.project.projectId;
 			//tmpSOReference.isAway3D = (event.type == ProjectEvent.ADD_PROJECT_AWAY3D);
 			
 			model.recentlyOpenedProjects.addItemAt(tmpSOReference, 0);
@@ -321,7 +379,7 @@ package actionScripts.plugin.recentlyOpened
 			cookie.flush();
 		}
 		
-		private function updateRecetProjectList(event:Event):void
+		private function updateRecentProjectList(event:Event):void
 		{
 			save(model.recentlyOpenedProjects.source, 'recentProjects');
 			save(model.recentlyOpenedProjectOpenedOption.source, 'recentProjectsOpenedOption');
@@ -400,13 +458,136 @@ package actionScripts.plugin.recentlyOpened
 			var toSave:Array = [];
 			for each (var f:Object in recent)
 			{
-				if (f is FileLocation) toSave.push(f.fileBridge.nativePath);
-				else toSave.push(f);
+				if (f is FileLocation)
+				{
+					toSave.push(f.fileBridge.nativePath);
+				}
+				else
+				{
+					toSave.push(f);
+				}
 			}
 			
 			// Add to LocalObject
 			cookie.data[key] = toSave;
 			cookie.flush();
+		}
+		
+		private function onOpenRecentProject(menuEvent:MenuEvent):void
+		{
+			openRecentItem(menuEvent.data as ProjectReferenceVO);
+		}
+		
+		private function onOpenRecentFile(menuEvent:MenuEvent):void
+		{
+			openRecentItem(menuEvent.data as ProjectReferenceVO);
+		}
+		
+		protected function openRecentItem(refVO:ProjectReferenceVO):void
+		{
+			// do not open an already opened project
+			if(model.mainView.getTreeViewPanel() && UtilsCore.checkProjectIfAlreadyOpened(refVO.path)) return;
+			
+			// desktop
+			if(ConstantsCoreVO.IS_AIR)
+			{
+				recentOpenedProjectObject = new FileLocation(refVO.path);
+				
+				if(!FileLocation(recentOpenedProjectObject).fileBridge.exists)
+				{
+					Alert.show("Can't import: The file does not exist anymore.", "Error!");
+					return;
+				}
+				
+				if(recentOpenedProjectObject.fileBridge.isDirectory)
+				{
+					var project:ProjectVO;
+					var lastOpenedOption:String;
+					
+					// check if any last opend option is associated with the project
+					for each (var i:Object in model.recentlyOpenedProjectOpenedOption)
+					{
+						if(i.path == recentOpenedProjectObject.fileBridge.nativePath)
+						{
+							lastOpenedOption = i.option;
+							break;
+						}
+					}
+					
+					project = getProjectBasedOnFileOption(lastOpenedOption, refVO.name);
+					
+					if(!project)
+					{
+						Alert.show("Can't import: Not a valid Flex project directory.", "Error!");
+						return;
+					}
+					
+					// save old sdk details to the project
+					if(project is AS3ProjectVO)
+					{
+						var as3Project:AS3ProjectVO = AS3ProjectVO(project);
+						as3Project.buildOptions.oldDefaultSDKPath = refVO.sdk;
+					}
+					
+					// trigger the project to open
+					GlobalEventDispatcher.getInstance().dispatchEvent(
+						new ProjectEvent(ProjectEvent.ADD_PROJECT, project, lastOpenedOption));
+				} else
+				{
+					GlobalEventDispatcher.getInstance().dispatchEvent(
+						new OpenFileEvent(OpenFileEvent.OPEN_FILE, [recentOpenedProjectObject as FileLocation])
+					);
+				}
+			}
+		}
+		
+		private function getProjectBasedOnFileOption(lastOpenedOption:String, projectName:String):ProjectVO
+		{
+			var projectFile:Object = recentOpenedProjectObject.fileBridge.getFile;
+			var projectFileLocation:FileLocation;
+			
+			if(!lastOpenedOption ||
+				lastOpenedOption == ProjectEvent.LAST_OPENED_AS_FB_PROJECT ||
+				lastOpenedOption == ProjectEvent.LAST_OPENED_AS_FD_PROJECT)
+			{
+				projectFileLocation = model.flexCore.testFlashDevelop(projectFile);
+				if(projectFileLocation)
+				{
+					return model.flexCore.parseFlashDevelop(null, projectFileLocation, projectName);
+				}
+				
+				projectFileLocation = model.flexCore.testFlashBuilder(projectFile);
+				if(projectFileLocation)
+				{
+					return model.flexCore.parseFlashBuilder(recentOpenedProjectObject as FileLocation);
+				}
+				
+				projectFileLocation = model.javaCore.testJava(projectFile);
+				if(projectFileLocation)
+				{
+					return model.javaCore.parseJava(recentOpenedProjectObject as FileLocation);
+				}
+				
+				projectFileLocation = model.groovyCore.testGrails(projectFile);
+				if (projectFileLocation)
+				{
+					return model.groovyCore.parseGrails(recentOpenedProjectObject as FileLocation, null, projectFileLocation);
+				}
+				
+				projectFileLocation = model.haxeCore.testHaxe(projectFile);
+				if (projectFileLocation)
+				{
+					return model.haxeCore.parseHaxe(recentOpenedProjectObject as FileLocation);
+				}
+				
+				projectFileLocation = model.ondiskCore.testOnDisk(projectFile);
+				if (projectFileLocation)
+				{
+					return model.ondiskCore.parseOnDisk(recentOpenedProjectObject as FileLocation);
+				}
+			}
+			
+			return null;
 		}
 	}
 }

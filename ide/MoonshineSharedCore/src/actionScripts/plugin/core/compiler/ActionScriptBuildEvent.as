@@ -23,19 +23,13 @@ package actionScripts.plugin.core.compiler
 	public class ActionScriptBuildEvent extends Event
 	{
 		public static const BUILD_AND_RUN:String = "compilerBuildAndRun";
-		public static const BUILD_AND_RUN_JAVASCRIPT:String = "compilerBuildAndRunJavaScript";
-		public static const BUILD_AS_JAVASCRIPT:String = "compilerBuildAsJavaScript";
 		public static const BUILD_AND_DEBUG:String = "compilerBuildAndDebug";
 		public static const RUN_AFTER_DEBUG:String = "compilerRunAfterDebug";
 		public static const BUILD:String = "compilerBuild";
 		public static const BUILD_RELEASE:String = "compilerBuildRelease";
 		public static const PREBUILD:String = "compilerPrebuild";
 		public static const POSTBUILD:String = "compilerPostbuild";
-		public static const DEBUG_STEPOVER:String = "debugStepOVer";
-		public static const TERMINATE_EXECUTION:String = "terminateExecution";
-		public static const STOP_DEBUG:String = "stopDebug";
 		public static const EXIT_FDB: String = "EXIT_FDB";
-		public static const CONTINUE_EXECUTION:String = "continueExecution";
 		public static const SAVE_BEFORE_BUILD:String = "saveBeforeBuild";
 		
 		public function ActionScriptBuildEvent(type:String, bubbles:Boolean=false, cancelable:Boolean=false)

@@ -18,7 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.locator
 {
-    import mx.collections.ArrayCollection;
+	import mx.collections.ArrayCollection;
     import mx.core.IFlexDisplayObject;
     
     import actionScripts.factory.FileLocation;
@@ -28,15 +28,16 @@ package actionScripts.locator
     import actionScripts.interfaces.IFileBridge;
     import actionScripts.interfaces.IFlexCoreBridge;
     import actionScripts.interfaces.IGroovyBridge;
+    import actionScripts.interfaces.IHaxeBridge;
     import actionScripts.interfaces.IJavaBridge;
     import actionScripts.interfaces.ILanguageServerBridge;
     import actionScripts.interfaces.IOSXBookmarkerBridge;
+    import actionScripts.interfaces.IOnDiskBridge;
     import actionScripts.interfaces.IVisualEditorBridge;
     import actionScripts.ui.IContentWindow;
     import actionScripts.ui.MainView;
     import actionScripts.utils.NoSDKNotifier;
     import actionScripts.valueObjects.ProjectVO;
-    import actionScripts.interfaces.IHaxeBridge;
 
 	[Bindable] public class IDEModel
 	{
@@ -57,6 +58,7 @@ package actionScripts.locator
 		public var javaCore:IJavaBridge;
 		public var groovyCore:IGroovyBridge;
 		public var haxeCore:IHaxeBridge;
+		public var ondiskCore:IOnDiskBridge;
 		public var languageServerCore:ILanguageServerBridge;
 		public var osxBookmarkerCore:IOSXBookmarkerBridge;
 		
@@ -81,7 +83,10 @@ package actionScripts.locator
 		public var haxePath:String;
 		public var nekoPath:String;
 		public var nodePath:String;
+		public var notesPath:String;
 		public var javaPathForTypeAhead:FileLocation;
+		public var java8Path:FileLocation;
+		public var javaVersionInJava8Path:String;
 		public var svnPath:String;
 		public var gitPath:String;
 		public var isCodeCompletionJavaPresent:Boolean;
@@ -93,6 +98,7 @@ package actionScripts.locator
 		public var recentSaveProjectPath:ArrayCollection = new ArrayCollection();
 		public var userSavedSDKs:ArrayCollection = new ArrayCollection();
 		public var userSavedTempSDKPath:String;
+		public var individualTabAlertShowingFilePath:String;
 		public var isIndividualCloseTabAlertShowing:Boolean;
 		public var saveFilesBeforeBuild:Boolean;
 
@@ -104,7 +110,19 @@ package actionScripts.locator
 
 		public var version: String = "1.0.0";
 		public var build: String = "";
-		
+
+		private var _javaVersionForTypeAhead:String;
+
+		public function get javaVersionForTypeAhead():String
+		{
+			return _javaVersionForTypeAhead;
+		}
+
+		public function set javaVersionForTypeAhead(value:String):void
+		{
+			_javaVersionForTypeAhead = value;
+		}
+
 		public function removeEditor(editor:Object):Boolean
 		{
 			var index:int = editors.getItemIndex(editor);

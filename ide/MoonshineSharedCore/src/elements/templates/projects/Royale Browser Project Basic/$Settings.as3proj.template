@@ -36,6 +36,7 @@
     <option useNetwork="True"/>
     <option optimize="False"/>
     <option accessible="False"/>
+    <option sourceMap="True"/>
   </build>
   <includeLibraries/>
   <libraryPaths/>
@@ -57,4 +58,7 @@
     <option showHiddenPaths="False"/>
     <option testMovieCommand="ExternalPlayer"/>
   </options>
+  <moonshineRunCustomization>
+    <option targetPlatform="5"/>
+  </moonshineRunCustomization>
 </project>

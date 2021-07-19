@@ -18,48 +18,53 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.ui.renderers
 {
-	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
-
 	import flash.desktop.Clipboard;
-    import flash.desktop.ClipboardFormats;
-    import flash.display.Sprite;
-    import flash.events.Event;
-    import flash.events.FocusEvent;
-    import flash.events.KeyboardEvent;
-    import flash.filters.GlowFilter;
-    import flash.ui.ContextMenuItem;
-    import flash.ui.Keyboard;
-    
-    import mx.binding.utils.ChangeWatcher;
-    import mx.controls.Image;
-    import mx.controls.treeClasses.TreeItemRenderer;
-    import mx.core.UIComponent;
-    import mx.core.mx_internal;
-    import mx.events.ToolTipEvent;
-    import mx.validators.StringValidator;
-    
-    import spark.components.Label;
-    import spark.components.TextInput;
-    
-    import actionScripts.events.TreeMenuItemEvent;
-    import actionScripts.factory.FileLocation;
-    import actionScripts.locator.IDEModel;
-    import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
-    import actionScripts.plugin.templating.TemplatingHelper;
-    import actionScripts.plugin.templating.TemplatingPlugin;
-    import actionScripts.ui.editor.BasicTextEditor;
-    import actionScripts.ui.notifier.ErrorTipManager;
-    import actionScripts.utils.CustomTree;
-    import actionScripts.utils.UtilsCore;
-    import actionScripts.valueObjects.ConstantsCoreVO;
-    import actionScripts.valueObjects.FileWrapper;
-    import actionScripts.valueObjects.ProjectVO;
+	import flash.desktop.ClipboardFormats;
+	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
+	import flash.filters.GlowFilter;
+	import flash.ui.ContextMenuItem;
+	import flash.ui.Keyboard;
+
+	import mx.controls.Alert;
+	
+	import mx.binding.utils.ChangeWatcher;
+	import mx.collections.ArrayCollection;
+	import mx.controls.Image;
+	import mx.controls.treeClasses.TreeItemRenderer;
+	import mx.core.UIComponent;
+	import mx.core.mx_internal;
+	import mx.events.ToolTipEvent;
+	import mx.validators.StringValidator;
+	
+	import spark.components.Label;
+	import spark.components.TextInput;
+	
+	import actionScripts.events.TreeMenuItemEvent;
+	import actionScripts.factory.FileLocation;
+	import actionScripts.interfaces.IExternalEditorVO;
+	import actionScripts.locator.IDEModel;
+	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
+	import actionScripts.plugin.templating.TemplatingHelper;
+	import actionScripts.plugin.templating.TemplatingPlugin;
+	import actionScripts.ui.editor.BasicTextEditor;
+	import actionScripts.ui.notifier.ErrorTipManager;
+	import actionScripts.utils.CustomTree;
+	import actionScripts.utils.UtilsCore;
+	import actionScripts.valueObjects.ConstantsCoreVO;
+	import actionScripts.valueObjects.FileWrapper;
+	import actionScripts.valueObjects.ProjectVO;
 
 	use namespace mx_internal;
 	
 	public class FTETreeItemRenderer extends TreeItemRenderer
 	{
 		public static const OPEN:String = "Open";
+		public static const OPEN_WITH:String = "Open With";
+		public static const CONFIGURE_EXTERNAL_EDITORS:String = "Customize Editors";
 		public static const OPEN_FILE_FOLDER:String = "Open File/Folder";
 		public static const NEW:String = "New";
 		public static const NEW_FOLDER:String = "New Folder";
@@ -246,6 +251,12 @@ package actionScripts.ui.renderers
 				
 				if (ConstantsCoreVO.IS_AIR)
 				{
+					if (!fw.file.fileBridge.isDirectory)
+					{
+						var openWithMenu:Object = model.contextMenuCore.getContextMenuItem(OPEN_WITH, populateOpenWithMenu, "displaying");
+						model.contextMenuCore.addItem(contextMenu, openWithMenu);
+					}
+					
 					var newMenu:Object = model.contextMenuCore.getContextMenuItem(NEW, populateTemplatingMenu, "displaying");
 					model.contextMenuCore.addItem(contextMenu, newMenu);
 				}
@@ -374,7 +385,7 @@ package actionScripts.ui.renderers
 					loadingIcon.source = new ConstantsCoreVO.loaderIcon;
 					loadingIcon.width = loadingIcon.height = 10;
 					loadingIcon.y = (this.height - loadingIcon.height)/2;
-					loadingIcon.x = this.width - loadingIcon.width - 10;
+					loadingIcon.x = label2.x - loadingIcon.width - 10;
 					addChild(loadingIcon);
 				}
 				else if (!fw.isWorking && loadingIcon)
@@ -391,9 +402,46 @@ package actionScripts.ui.renderers
 				{
 					label2.setStyle("lineThrough", false);
 				}
+
+				if (fw.isSourceFolder && !isSourceFolderIcon)
+				{
+					isSourceFolderIcon = new Image();
+					isSourceFolderIcon.toolTip = "Source folder";
+					isSourceFolderIcon.source = new ConstantsCoreVO.sourceFolderIcon;
+					addChild(isSourceFolderIcon);
+				}
 			}
 			
 			isOpenIcon.visible = false;
+		}
+		
+		private function populateOpenWithMenu(event:Event):void
+		{
+			model.contextMenuCore.removeAll(event.target);
+			
+			var activeProject:ProjectVO = UtilsCore.getProjectFromProjectFolder(data as FileWrapper);
+			if (activeProject)
+			{
+				model.activeProject = activeProject;
+			}
+			
+			var enableTypes:Array;
+			var editors:ArrayCollection = model.flexCore.getExternalEditors();
+			for each (var editor:IExternalEditorVO in editors)
+			{
+				var eventType:String = "eventOpenWithExternalEditor"+ editor.localID;
+				var item:Object = model.contextMenuCore.getContextMenuItem(editor.title, redispatchOpenWith, Event.SELECT);
+				item.data = eventType;
+				item.enabled = editor.isValid && editor.isEnabled;
+				
+				model.contextMenuCore.subMenu(event.target, item);
+			}
+
+			model.contextMenuCore.subMenu(event.target, model.contextMenuCore.getContextMenuItem(null));
+			
+			var customize:Object = model.contextMenuCore.getContextMenuItem(CONFIGURE_EXTERNAL_EDITORS, redispatchOpenWith, Event.SELECT);
+			customize.data = CONFIGURE_EXTERNAL_EDITORS;
+			model.contextMenuCore.subMenu(event.target, customize);
 		}
 
 		private function populateTemplatingMenu(e:Event):void
@@ -407,7 +455,7 @@ package actionScripts.ui.renderers
 			}
 			
 			var enableTypes:Array;
-			var folder:Object = model.contextMenuCore.getContextMenuItem("Folder", redispatch, Event.SELECT);
+			var folder:Object = model.contextMenuCore.getContextMenuItem("Folder", redispatchNew, Event.SELECT);
 			folder.data = NEW_FOLDER;
 			model.contextMenuCore.subMenu(e.target, folder);
 			model.contextMenuCore.subMenu(e.target, model.contextMenuCore.getContextMenuItem(null));
@@ -416,7 +464,7 @@ package actionScripts.ui.renderers
 			{
 				var label:String = TemplatingHelper.getTemplateLabel(file);
 				var eventType:String = "eventNewFileFromTemplate"+label;
-				var item:Object = model.contextMenuCore.getContextMenuItem(label, redispatch, Event.SELECT);
+				var item:Object = model.contextMenuCore.getContextMenuItem(label, redispatchNew, Event.SELECT);
 				item.data = eventType;
 				
 				enableTypes = TemplatingHelper.getTemplateMenuType(label);
@@ -443,14 +491,14 @@ package actionScripts.ui.renderers
 		
 		private function redispatch(event:Event):void
 		{
-			var type:String = (event.target is ContextMenuItem) ? event.target.caption : event.target.label;
-			if (type == NEW) return;
-			
-			
-			var e:TreeMenuItemEvent = new TreeMenuItemEvent(TreeMenuItemEvent.RIGHT_CLICK_ITEM_SELECTED, 
-															type, 
-															FileWrapper(data));
-			e.renderer = this;
+			dispatchEvent(
+				getNewTreeMenuItemEvent(event)
+			);
+		}
+		
+		private function redispatchNew(event:Event):void
+		{
+			var e:TreeMenuItemEvent = getNewTreeMenuItemEvent(event);
 			if (event.target.hasOwnProperty("data") && event.target.data)
 			{
 				e.menuLabel = NEW;
@@ -458,6 +506,28 @@ package actionScripts.ui.renderers
 			}
 			
 			dispatchEvent(e);
+		}
+		
+		private function redispatchOpenWith(event:Event):void
+		{
+			var e:TreeMenuItemEvent = getNewTreeMenuItemEvent(event);
+			if (event.target.hasOwnProperty("data") && event.target.data)
+			{
+				e.menuLabel = OPEN_WITH;
+				e.extra = event.target.data;
+			}
+			
+			dispatchEvent(e);
+		}
+		
+		private function getNewTreeMenuItemEvent(event:Event):TreeMenuItemEvent
+		{
+			var type:String = (event.target is ContextMenuItem) ? event.target.caption : event.target.label;
+			var e:TreeMenuItemEvent = new TreeMenuItemEvent(TreeMenuItemEvent.RIGHT_CLICK_ITEM_SELECTED, 
+				type, 
+				FileWrapper(data));
+			e.renderer = this;
+			return e;
 		}
 		
 		override protected function createChildren():void
@@ -595,17 +665,10 @@ package actionScripts.ui.renderers
 	        	}
 	        	else isOpenIcon.visible = false;
 				
-				if (data.isSourceFolder && !isSourceFolderIcon)
+				if (data.isSourceFolder && isSourceFolderIcon)
 				{
-					isSourceFolderIcon = new Image();
-					isSourceFolderIcon.toolTip = "Source folder";
-					isSourceFolderIcon.source = new ConstantsCoreVO.sourceFolderIcon;
 					isSourceFolderIcon.width = isSourceFolderIcon.height = 14;
 					isSourceFolderIcon.x = label2.x - (this.icon ? 44 : 28);
-					addChild(isSourceFolderIcon);
-				}
-				else if (data.isSourceFolder && isSourceFolderIcon)
-				{
 					isSourceFolderIcon.visible = true;
 				}
 				else if (!data.isSourceFolder && isSourceFolderIcon) 

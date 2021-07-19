@@ -18,10 +18,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugins.build
 {
+	import flash.filesystem.File;
+	
 	import actionScripts.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.utils.OSXBookmarkerNotifiers;
 	import actionScripts.valueObjects.ProjectVO;
@@ -40,11 +43,23 @@ package actionScripts.plugins.build
 			{
 				validateJavaVOPaths(project as JavaProjectVO);
 			}
+			else if (project is HaxeProjectVO)
+			{
+				validateHaxeVOPaths(project as HaxeProjectVO);
+			}
 		}
 		
 		protected function onProjectPathsValidated(paths:Array):void
 		{
 			
+		}
+		
+		protected function getWindowsCompilerFile(sdk:File, compilerPath:String):File
+		{
+			var tmpFile:File = sdk.resolvePath(compilerPath +".exe");
+			if (tmpFile.exists) return tmpFile;
+			
+			return sdk.resolvePath(compilerPath +".bat");
 		}
 		
 		private function validateAS3VOPaths(project:AS3ProjectVO):void
@@ -90,6 +105,22 @@ package actionScripts.plugins.build
 		}
 		
 		private function validateJavaVOPaths(project:JavaProjectVO):void
+		{
+			var tmpLocation:FileLocation;
+			invalidPaths = [];
+			
+			checkPathFileLocation(project.folderLocation, "Location");
+			if (project.sourceFolder) checkPathFileLocation(project.sourceFolder, "Source Folder");
+			
+			for each (tmpLocation in project.classpaths)
+			{
+				checkPathFileLocation(tmpLocation, "Classpath");
+			}
+			
+			onProjectPathsValidated((invalidPaths.length > 0) ? invalidPaths : null);
+		}
+		
+		private function validateHaxeVOPaths(project:HaxeProjectVO):void
 		{
 			var tmpLocation:FileLocation;
 			invalidPaths = [];

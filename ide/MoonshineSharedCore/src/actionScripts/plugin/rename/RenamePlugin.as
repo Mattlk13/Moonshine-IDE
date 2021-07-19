@@ -38,7 +38,8 @@ package actionScripts.plugin.rename
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.recentlyOpened.RecentlyOpenedPlugin;
-    import actionScripts.plugin.rename.view.RenameView;
+    import moonshine.plugin.rename.view.RenameFileView;
+    import moonshine.plugin.rename.view.RenameSymbolView;
     import actionScripts.ui.IContentWindow;
     import actionScripts.ui.editor.BasicTextEditor;
     import actionScripts.ui.editor.LanguageServerTextEditor;
@@ -49,16 +50,24 @@ package actionScripts.plugin.rename
     import actionScripts.valueObjects.FileWrapper;
     import actionScripts.valueObjects.ProjectReferenceVO;
     
-    import components.popup.RenamePopup;
     import components.popup.newFile.NewFilePopup;
+    import actionScripts.ui.FeathersUIWrapper;
+    import actionScripts.ui.menu.MenuPlugin;
 
 	public class RenamePlugin extends PluginBase
 	{
-		private var renameView:RenameView = new RenameView();
+		private var renameSymbolViewWrapper:FeathersUIWrapper;
+		private var renameSymbolView:RenameSymbolView;
 		private var newFilePopup:NewFilePopup;
-		private var renameFileView:RenamePopup;
+		private var renameFileViewWrapper:FeathersUIWrapper;
+		private var renameFileView:RenameFileView;
 		
-		public function RenamePlugin() {	}
+		public function RenamePlugin()
+		{
+			renameSymbolView = new RenameSymbolView();
+			renameSymbolView.addEventListener(Event.CLOSE, renameSymbolView_closeHandler);
+			renameSymbolViewWrapper = new FeathersUIWrapper(renameSymbolView);
+		}
 
 		override public function get name():String { return "Rename Plugin"; }
 		override public function get author():String { return ConstantsCoreVO.MOONSHINE_IDE_LABEL +" Project Team"; }
@@ -72,7 +81,7 @@ package actionScripts.plugin.rename
 		override public function activate():void
 		{
 			super.activate();
-			dispatcher.addEventListener(RenameEvent.EVENT_OPEN_RENAME_SYMBOL_VIEW, handleOpenRenameView);
+			dispatcher.addEventListener(RenameEvent.EVENT_OPEN_RENAME_SYMBOL_VIEW, handleOpenRenameSymbolView);
 			dispatcher.addEventListener(RenameEvent.EVENT_OPEN_RENAME_FILE_VIEW, handleOpenRenameFileView);
 			dispatcher.addEventListener(DuplicateEvent.EVENT_OPEN_DUPLICATE_FILE_VIEW, handleOpenDuplicateFileView);
 		}
@@ -80,12 +89,12 @@ package actionScripts.plugin.rename
 		override public function deactivate():void
 		{
 			super.deactivate();
-			dispatcher.removeEventListener(RenameEvent.EVENT_OPEN_RENAME_SYMBOL_VIEW, handleOpenRenameView);
+			dispatcher.removeEventListener(RenameEvent.EVENT_OPEN_RENAME_SYMBOL_VIEW, handleOpenRenameSymbolView);
 			dispatcher.removeEventListener(RenameEvent.EVENT_OPEN_RENAME_FILE_VIEW, handleOpenRenameFileView);
 			dispatcher.removeEventListener(DuplicateEvent.EVENT_OPEN_DUPLICATE_FILE_VIEW, handleOpenDuplicateFileView);
 		}
 
-		private function handleOpenRenameView(event:Event):void
+		private function handleOpenRenameSymbolView(event:Event):void
 		{
 			var editor:LanguageServerTextEditor = model.activeEditor as LanguageServerTextEditor;
 			if(!editor)
@@ -97,25 +106,37 @@ package actionScripts.plugin.rename
 			this._startChar = TextUtil.startOfWord(lineText, caretIndex);
 			this._endChar = TextUtil.endOfWord(lineText, caretIndex);
 			this._line = editor.editor.model.selectedLineIndex;
-			renameView.oldName = editor.editor.model.selectedLine.text.substr(this._startChar, this._endChar - this._startChar);
-			renameView.addEventListener(CloseEvent.CLOSE, renameView_closeHandler);
-			PopUpManager.addPopUp(renameView, DisplayObject(editor.parentApplication), true);
-			PopUpManager.centerPopUp(renameView);
+			renameSymbolView.existingSymbolName = editor.editor.model.selectedLine.text.substr(this._startChar, this._endChar - this._startChar);
+			PopUpManager.addPopUp(renameSymbolViewWrapper, DisplayObject(editor.parentApplication), true);
+			PopUpManager.centerPopUp(renameSymbolViewWrapper);
+			renameSymbolViewWrapper.assignFocus("top");
+			renameSymbolViewWrapper.stage.addEventListener(Event.RESIZE, renameSymbolView_stage_resizeHandler, false, 0, true);
 		}
 		
-		private function renameView_closeHandler(event:CloseEvent):void
+		private function renameSymbolView_closeHandler(event:Event):void
 		{
 			var editor:LanguageServerTextEditor = model.activeEditor as LanguageServerTextEditor;
-			renameView.removeEventListener(CloseEvent.CLOSE, renameView_closeHandler);
-			if (event.detail !== Alert.OK)
+			
+			if(renameSymbolView.newSymbolName != null)
 			{
-				return;
+				dispatcher.dispatchEvent(new LanguageServerEvent(LanguageServerEvent.EVENT_RENAME,
+					editor.currentFile.fileBridge.url,
+					this._startChar, this._line, this._endChar, this._line,
+					renameSymbolView.newSymbolName));
 			}
 			
-			dispatcher.dispatchEvent(new LanguageServerEvent(LanguageServerEvent.EVENT_RENAME,
-				editor.currentFile.fileBridge.url,
-				this._startChar, this._line, this._endChar, this._line,
-				renameView.newName));
+			renameSymbolViewWrapper.stage.removeEventListener(Event.RESIZE, renameSymbolView_stage_resizeHandler);
+			PopUpManager.removePopUp(renameSymbolViewWrapper);
+		}
+
+		private function renameSymbolView_stage_resizeHandler(event:Event):void
+		{
+			PopUpManager.centerPopUp(renameSymbolViewWrapper);
+		}
+
+		private function renameFileView_stage_resizeHandler(event:Event):void
+		{
+			PopUpManager.centerPopUp(renameFileViewWrapper);
 		}
 		
 		private function handleOpenRenameFileView(event:RenameEvent):void
@@ -124,35 +145,57 @@ package actionScripts.plugin.rename
 			
 			if (!renameFileView)
 			{
-				renameFileView = PopUpManager.createPopUp(FlexGlobals.topLevelApplication as DisplayObject, RenamePopup, true) as RenamePopup;
-				renameFileView.addEventListener(CloseEvent.CLOSE, handleRenamePopupClose);
-				renameFileView.addEventListener(NewFileEvent.EVENT_FILE_RENAMED, onFileRenamedRequest);
-				renameFileView.wrapperOfFolderLocation = event.changes as FileWrapper;
+				renameFileView = new RenameFileView();
+				renameFileView.fileWrapper = event.changes as FileWrapper;
+				renameFileView.addEventListener(Event.CLOSE, handleRenameFileViewClose);
+				renameFileViewWrapper = new FeathersUIWrapper(renameFileView);
+				PopUpManager.addPopUp(renameFileViewWrapper, FlexGlobals.topLevelApplication as DisplayObject, true);
+				PopUpManager.centerPopUp(renameFileViewWrapper);
+				renameFileViewWrapper.assignFocus("top");
+				renameFileViewWrapper.stage.addEventListener(Event.RESIZE, renameFileView_stage_resizeHandler, false, 0, true);
 				
-				PopUpManager.centerPopUp(renameFileView);
+				dispatcher.dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_DISABLE_STATE));
 			}
 		}
 		
-		private function handleRenamePopupClose(event:CloseEvent):void
+		private function handleRenameFileViewClose(event:Event):void
 		{
-			renameFileView.removeEventListener(CloseEvent.CLOSE, handleRenamePopupClose);
-			renameFileView.removeEventListener(NewFileEvent.EVENT_FILE_RENAMED, onFileRenamedRequest);
+			if(renameFileView.newName != null)
+			{
+				onFileRenamedRequest(renameFileView.fileWrapper, renameFileView.newName);
+			}
+
+			dispatcher.dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_ENABLE_STATE));
+
+			renameFileView.removeEventListener(CloseEvent.CLOSE, handleRenameFileViewClose);
 			renameFileView = null;
+
+			renameFileViewWrapper.stage.removeEventListener(Event.RESIZE, renameFileView_stage_resizeHandler);
+			PopUpManager.removePopUp(renameFileViewWrapper);
+			renameFileViewWrapper = null;
 		}
 		
-		private function onFileRenamedRequest(event:NewFileEvent):void
+		private function onFileRenamedRequest(fileWrapper:FileWrapper, newName:String):void
 		{
-			var newFile:FileLocation = event.insideLocation.file.fileBridge.parent.resolvePath(event.fileName);
-			_existingFilePath = event.insideLocation.nativePath;
+			var fileVisualEditor:FileLocation = UtilsCore.getVisualEditorSourceFile(fileWrapper);
+			var newFile:FileLocation = fileWrapper.file.fileBridge.parent.resolvePath(newName);
+			_existingFilePath = fileWrapper.nativePath;
 			
-			event.insideLocation.file.fileBridge.moveTo(newFile, false);
-			event.insideLocation.file = newFile;
-			
+			fileWrapper.file.fileBridge.moveTo(newFile, false);
+			fileWrapper.name = newFile.name;
+			fileWrapper.file = newFile;
+
+			if (fileVisualEditor)
+			{
+				var newVisualEditorFile:FileLocation = fileVisualEditor.fileBridge.parent.resolvePath(newFile.fileBridge.nameWithoutExtension + ".xml");
+				fileVisualEditor.fileBridge.moveTo(newVisualEditorFile, false);
+			}
+
 			// we need to update file location of the (if any) opened instance 
 			// of the file template
 			if (newFile.fileBridge.isDirectory)
 			{
-				updateChildrenPath(event.insideLocation, _existingFilePath + newFile.fileBridge.separator, newFile.fileBridge.nativePath + newFile.fileBridge.separator);
+				updateChildrenPath(fileWrapper, _existingFilePath + newFile.fileBridge.separator, newFile.fileBridge.nativePath + newFile.fileBridge.separator);
 			}
 			else
 			{
@@ -161,17 +204,19 @@ package actionScripts.plugin.rename
 			
 			// updating the tree view
 			var tree:CustomTree = model.mainView.getTreeViewPanel().tree;
-			var tmpParent:FileWrapper = tree.getParentItem(event.insideLocation);
+			var tmpParent:FileWrapper = tree.getParentItem(fileWrapper);
 			
 			var timeoutValue:uint = setTimeout(function():void 
 				{
-					var tmpFileW:FileWrapper = UtilsCore.findFileWrapperAgainstProject(event.insideLocation, null, tmpParent);
+					model.mainView.getTreeViewPanel().sortChildren(fileWrapper);
+					
+					var tmpFileW:FileWrapper = UtilsCore.findFileWrapperAgainstProject(fileWrapper, null, tmpParent);
 					tree.selectedItem = tmpFileW;
 					
 					var indexToItemRenderer:int = tree.getItemIndex(tmpFileW);
 					tree.callLater(tree.scrollToIndex, [indexToItemRenderer]);
 					
-					dispatcher.dispatchEvent(new TreeMenuItemEvent(TreeMenuItemEvent.FILE_RENAMED, null, event.insideLocation));
+					dispatcher.dispatchEvent(new TreeMenuItemEvent(TreeMenuItemEvent.FILE_RENAMED, null, fileWrapper));
 					clearTimeout(timeoutValue);
 				}, 300);
 		}

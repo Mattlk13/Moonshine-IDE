@@ -19,6 +19,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugins.clean
 {
+	import actionScripts.interfaces.IJavaProject;
+	import actionScripts.plugin.java.javaproject.vo.JavaTypes;
+
 	import flash.display.DisplayObject;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
@@ -38,22 +41,24 @@ package actionScripts.plugins.clean
 	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.plugin.core.compiler.ProjectActionEvent;
 	import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
+	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
+	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
 	import actionScripts.plugin.project.ProjectType;
 	import actionScripts.plugins.build.ConsoleBuildPluginBase;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.EnvironmentExecPaths;
 	import actionScripts.valueObjects.ProjectVO;
+	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
 	
-	import components.popup.SelectOpenedFlexProject;
+	import components.popup.SelectOpenedProject;
 	import components.views.project.TreeView;
-	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 
 	public class CleanProject extends ConsoleBuildPluginBase implements IPlugin
 	{
 		private var loader: DataAgent;
-		private var selectProjectPopup:SelectOpenedFlexProject;
+		private var selectProjectPopup:SelectOpenedProject;
 
 		private var currentTargets:Array;
 		private var folderCount:int;
@@ -97,20 +102,23 @@ package actionScripts.plugins.clean
 				if (model.mainView.isProjectViewAdded)
 				{
 					var tmpTreeView:TreeView = model.mainView.getTreeViewPanel();
-					var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
-					if (projectReference)
+					if(tmpTreeView) //might be null if closed by user
 					{
-						cleanActiveProject(projectReference);
-						return;
+						var projectReference:ProjectVO = tmpTreeView.getProjectBySelection();
+						if (projectReference)
+						{
+							cleanActiveProject(projectReference);
+							return;
+						}
 					}
 				}
 				
 				// if above is false open popup for project selection
-				selectProjectPopup = new SelectOpenedFlexProject();
+				selectProjectPopup = new SelectOpenedProject();
 				PopUpManager.addPopUp(selectProjectPopup, FlexGlobals.topLevelApplication as DisplayObject, false);
 				PopUpManager.centerPopUp(selectProjectPopup);
-				selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-				selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);				
+				selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+				selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);				
 			}
 			else
 			{
@@ -128,8 +136,8 @@ package actionScripts.plugins.clean
 			
 			function onProjectSelectionCancelled(event:Event):void
 			{
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-				selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+				selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
 				selectProjectPopup = null;
 			}
 		}
@@ -169,6 +177,11 @@ package actionScripts.plugins.clean
 					currentCleanType = ProjectType.HAXE;
 					cleanHaxeProject(project as HaxeProjectVO);
 				}
+				else if (project is OnDiskProjectVO)
+				{
+					currentCleanType = ProjectType.ONDISK;
+					cleanOnDiskProject(project as OnDiskProjectVO);
+				}
 			}
 		}
 
@@ -178,8 +191,15 @@ package actionScripts.plugins.clean
 			{
 				if (UtilsCore.isGradleAvailable())
 				{
-					dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_STARTED, project.projectName, "Cleaning ", false));
-					start(Vector.<String>([EnvironmentExecPaths.GRADLE_ENVIRON_EXEC_PATH +" clean"]), project.folderLocation);
+					if (isProjectJavaIsAvailable(project))
+					{
+						dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_STARTED, project.projectName, "Cleaning ", false));
+						start(Vector.<String>([EnvironmentExecPaths.GRADLE_ENVIRON_EXEC_PATH +" clean"]), project.folderLocation, getEnvCustomJDKFor(project));
+					}
+					else
+					{
+						error("Error: "+ project.name +" configures to build with JDK version is not present.");
+					}
 				}
 				else
 				{
@@ -208,8 +228,15 @@ package actionScripts.plugins.clean
 		{
 			if (UtilsCore.isGrailsAvailable())
 			{
-				dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_STARTED, project.projectName, "Cleaning ", false));
-				start(Vector.<String>([EnvironmentExecPaths.GRAILS_ENVIRON_EXEC_PATH +" clean"]), project.folderLocation);
+				if (isProjectJavaIsAvailable(project))
+				{
+					dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_STARTED, project.projectName, "Cleaning ", false));
+					start(Vector.<String>([EnvironmentExecPaths.GRAILS_ENVIRON_EXEC_PATH +" clean"]), project.folderLocation, getEnvCustomJDKFor(project));
+				}
+				else
+				{
+					error("Error: "+ project.name +" configures to build with JDK version is not present.");
+				}
 			}
 			else
 			{
@@ -222,6 +249,11 @@ package actionScripts.plugins.clean
 			//TODO: clean haxe project
 		}
 		
+		private function cleanOnDiskProject(ondiskProject:OnDiskProjectVO):void
+		{
+			//TODO: clean ondisk project
+		}
+		
 		override protected function onNativeProcessExit(event:NativeProcessExitEvent):void
 		{
 			super.onNativeProcessExit(event);
@@ -231,7 +263,7 @@ package actionScripts.plugins.clean
 			{
 				if (currentCleanType == ProjectType.JAVA)
 				{
-					dispatcher.dispatchEvent(new ConsoleOutputEvent(ConsoleOutputEvent.CONSOLE_PRINT, "Project cleaned succssfully."));
+					dispatcher.dispatchEvent(new ConsoleOutputEvent(ConsoleOutputEvent.CONSOLE_PRINT, "Project cleaned successfully."));
 				}
 			}
 		}
@@ -360,5 +392,26 @@ package actionScripts.plugins.clean
             event.target.removeEventListener(IOErrorEvent.IO_ERROR, onCleanProjectIOException);
 			error("Cannot delete file or folder: " + event.target.nativePath + "\nError: " + event.text);
         }
+
+		private function isProjectJavaIsAvailable(project:ProjectVO):Boolean
+		{
+			return ConsoleBuildPluginBase.checkRequireJava(project);
+		}
+
+		private function getEnvCustomJDKFor(project:ProjectVO):EnvironmentUtilsCusomSDKsVO
+		{
+			var envCustomJava:EnvironmentUtilsCusomSDKsVO = new EnvironmentUtilsCusomSDKsVO();
+			var javaProject:IJavaProject = (project as IJavaProject);
+			if (javaProject && javaProject.jdkType == JavaTypes.JAVA_8)
+			{
+				envCustomJava.jdkPath = model.java8Path.fileBridge.nativePath;
+			}
+			else
+			{
+				envCustomJava.jdkPath = model.javaPathForTypeAhead.fileBridge.nativePath;
+			}
+
+			return envCustomJava;
+		}
 	}
 }

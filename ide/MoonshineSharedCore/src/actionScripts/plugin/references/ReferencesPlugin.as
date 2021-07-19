@@ -18,46 +18,59 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.references
 {
-	import actionScripts.plugin.projectPanel.events.ProjectPanelPluginEvent;
-
 	import flash.events.Event;
 	
-	import mx.collections.ArrayCollection;
+	import mx.controls.Alert;
 	
 	import actionScripts.events.LanguageServerEvent;
+	import actionScripts.events.OpenLocationEvent;
 	import actionScripts.events.ReferencesEvent;
 	import actionScripts.plugin.PluginBase;
-	import actionScripts.plugin.references.view.ReferencesView;
+	import actionScripts.plugin.projectPanel.events.ProjectPanelPluginEvent;
 	import actionScripts.ui.editor.LanguageServerTextEditor;
+	import actionScripts.ui.feathersWrapper.edit.ReferencesViewWrapper;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.Location;
-
+	
+	import feathers.data.ArrayCollection;
+	
+	import moonshine.plugin.references.view.ReferencesView;
+	
 	public class ReferencesPlugin extends PluginBase
 	{
-		public static const EVENT_OPEN_FIND_REFERENCES_VIEW:String = "openFindReferencesView";
+		public static const EVENT_OPEN_GO_TO_REFERENCES_VIEW:String = "openGoToReferencesView";
 		
 		public function ReferencesPlugin()
 		{
+			referencesView = new ReferencesView();
+			referencesViewWrapper = new ReferencesViewWrapper(this.referencesView);
+			referencesViewWrapper.percentWidth = 100;
+			referencesViewWrapper.percentHeight = 100;
+			referencesViewWrapper.minWidth = 0;
+			referencesViewWrapper.minHeight = 0;
 		}
 
 		override public function get name():String { return "References Plugin"; }
 		override public function get author():String { return ConstantsCoreVO.MOONSHINE_IDE_LABEL +" Project Team"; }
 		override public function get description():String { return "Displays all references for a symbol in the entire workspace."; }
 
-		private var referencesView:ReferencesView = new ReferencesView();
+		private var referencesViewWrapper:ReferencesViewWrapper;
+		private var referencesView:ReferencesView;
 		private var isReferencesViewVisible:Boolean;
 
 		override public function activate():void
 		{
 			super.activate();
-			dispatcher.addEventListener(EVENT_OPEN_FIND_REFERENCES_VIEW, handleOpenFindReferencesView);
+			referencesView.addEventListener(ReferencesView.EVENT_OPEN_SELECTED_REFERENCE, handleOpenSelectedReference);
+			dispatcher.addEventListener(EVENT_OPEN_GO_TO_REFERENCES_VIEW, handleOpenFindReferencesView);
 			dispatcher.addEventListener(ReferencesEvent.EVENT_SHOW_REFERENCES, handleShowReferences);
 		}
 
 		override public function deactivate():void
 		{
 			super.deactivate();
-			dispatcher.removeEventListener(EVENT_OPEN_FIND_REFERENCES_VIEW, handleOpenFindReferencesView);
+			referencesView.removeEventListener(ReferencesView.EVENT_OPEN_SELECTED_REFERENCE, handleOpenSelectedReference);
+			dispatcher.removeEventListener(EVENT_OPEN_GO_TO_REFERENCES_VIEW, handleOpenFindReferencesView);
 			dispatcher.removeEventListener(ReferencesEvent.EVENT_SHOW_REFERENCES, handleShowReferences);
 		}
 
@@ -73,7 +86,7 @@ package actionScripts.plugin.references
 			var startChar:int = editor.editor.startPos;
 			var endLine:int = editor.editor.model.selectedLineIndex;
 			var endChar:int = editor.editor.model.caretIndex;
-			dispatcher.dispatchEvent(new LanguageServerEvent(LanguageServerEvent.EVENT_FIND_REFERENCES,
+			dispatcher.dispatchEvent(new LanguageServerEvent(LanguageServerEvent.EVENT_GO_TO_REFERENCES,
 				editor.currentFile.fileBridge.url, startChar, startLine, endChar, endLine));
 		}
 
@@ -86,18 +99,30 @@ package actionScripts.plugin.references
 			for(var i:int = 0; i < itemCount; i++)
 			{
 				var symbol:Location = references[i];
-				collection.addItem(symbol);
+				collection.add(symbol);
 			}
 			collection.filterFunction = null;
 			collection.refresh();
 
 			if (!isReferencesViewVisible)
 			{
-				dispatcher.dispatchEvent(new ProjectPanelPluginEvent(ProjectPanelPluginEvent.ADD_VIEW_TO_PROJECT_PANEL, referencesView));
+				dispatcher.dispatchEvent(new ProjectPanelPluginEvent(ProjectPanelPluginEvent.ADD_VIEW_TO_PROJECT_PANEL, referencesViewWrapper));
 				isReferencesViewVisible = true;
 
 				referencesView.addEventListener(Event.REMOVED_FROM_STAGE, onReferenceViewRemovedFromStage);
 			}
+		}
+
+		private function handleOpenSelectedReference(event:Event):void {
+			var selectedReference:Location = this.referencesView.selectedReference;
+			if(!selectedReference)
+			{
+				Alert.show("Please select an item to open.");
+				return;
+			}
+
+			dispatcher.dispatchEvent(
+				new OpenLocationEvent(OpenLocationEvent.OPEN_LOCATION, selectedReference));
 		}
 
 		private function onReferenceViewRemovedFromStage(event:Event):void

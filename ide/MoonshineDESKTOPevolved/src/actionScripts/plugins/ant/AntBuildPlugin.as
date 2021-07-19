@@ -42,10 +42,13 @@ package actionScripts.plugins.ant
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.RefreshTreeEvent;
     import actionScripts.events.RunANTScriptEvent;
+    import actionScripts.events.StatusBarEvent;
     import actionScripts.factory.FileLocation;
+    import actionScripts.interfaces.IJavaProject;
     import actionScripts.plugin.IPlugin;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+    import actionScripts.plugin.java.javaproject.vo.JavaTypes;
     import actionScripts.plugin.settings.ISettingsProvider;
     import actionScripts.plugin.settings.vo.AbstractSetting;
     import actionScripts.plugin.settings.vo.ISetting;
@@ -61,10 +64,11 @@ package actionScripts.plugins.ant
     import actionScripts.valueObjects.ComponentTypes;
     import actionScripts.valueObjects.ComponentVO;
     import actionScripts.valueObjects.ConstantsCoreVO;
+    import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
     import actionScripts.valueObjects.Settings;
     
     import components.popup.SelectAntFile;
-    import components.popup.SelectOpenedFlexProject;
+    import components.popup.SelectOpenedProject;
 
     public class AntBuildPlugin extends PluginBase implements IPlugin, ISettingsProvider
     {
@@ -90,10 +94,9 @@ package actionScripts.plugins.ant
         private var shellInfo:NativeProcessStartupInfo;
         private var nativeProcess:NativeProcess;
         private var errors:String = "";
-        private var exiting:Boolean = false;
         private var antPath:String = "ant";
         private var workingDir:FileLocation;
-        private var selectProjectPopup:SelectOpenedFlexProject;
+        private var selectProjectPopup:SelectOpenedProject;
         private var selectAntPopup:SelectAntFile;
         private var antFiles:ArrayCollection = new ArrayCollection();
         private var currentSDK:FileLocation;
@@ -298,11 +301,11 @@ package actionScripts.plugins.ant
                 else
                 {
                     //Popup of project list if there is not any selected project in Project explorer
-                    selectProjectPopup = new SelectOpenedFlexProject();
+                    selectProjectPopup = new SelectOpenedProject();
                     PopUpManager.addPopUp(selectProjectPopup, FlexGlobals.topLevelApplication as DisplayObject, false);
                     PopUpManager.centerPopUp(selectProjectPopup);
-                    selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-                    selectProjectPopup.addEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+                    selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+                    selectProjectPopup.addEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
                 }
             }
         }
@@ -318,8 +321,8 @@ package actionScripts.plugins.ant
 
         private function onProjectSelectionCancelled(event:Event):void
         {
-            selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTED, onProjectSelected);
-            selectProjectPopup.removeEventListener(SelectOpenedFlexProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
+            selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTED, onProjectSelected);
+            selectProjectPopup.removeEventListener(SelectOpenedProject.PROJECT_SELECTION_CANCELLED, onProjectSelectionCancelled);
             selectProjectPopup = null;
         }
 
@@ -492,6 +495,12 @@ package actionScripts.plugins.ant
 
         private function startAntProcess(buildDir:FileLocation):void
         {
+			if (nativeProcess && nativeProcess.running)
+			{
+				Alert.show("Ant build is running. Please wait until it finish.", "Note!");
+				return;
+			}
+			
             var antBatPath:String = getAntBatPath();
 			var sdkPath:String = UtilsCore.convertString(currentSDK.fileBridge.nativePath);
             var buildDirPath:String = buildDir.fileBridge.nativePath;
@@ -533,7 +542,11 @@ package actionScripts.plugins.ant
 				);
             }
 			
-			EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, sdkPath, [compileStr]);
+			dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_STARTED, buildDir.fileBridge.name, "Building ", false));
+			
+			var envCustomSDK:EnvironmentUtilsCusomSDKsVO = new EnvironmentUtilsCusomSDKsVO();
+			envCustomSDK.sdkPath = sdkPath;
+			EnvironmentSetupUtils.getInstance().initCommandGenerationToSetLocalEnvironment(onEnvironmentPrepared, envCustomSDK, [compileStr]);
 
 			/*
 			* @local
@@ -601,13 +614,10 @@ package actionScripts.plugins.ant
         {
             if (nativeProcess)
             {
-                exiting = true;
                 reset();
-            }
-            else
-            {
-                startShell();
-            }
+			}
+			
+            startShell();
         }
 
         private function startShell():void
@@ -673,7 +683,8 @@ package actionScripts.plugins.ant
 
             var syntaxMatch:Array;
             var generalMatch:Array;
-            print(data);
+            var javaOptionsMatch:Array;
+
             syntaxMatch = data.match(/(.*?)\((\d*)\): col: (\d*) Error: (.*).*/);
             if (syntaxMatch)
             {
@@ -694,19 +705,21 @@ package actionScripts.plugins.ant
 
                 errors += HtmlFormatter.sprintf("%s: %s", pathStr, errorStr);
             }
+            else
+            {
+                javaOptionsMatch = data.match(/.*JAVA_TOOL_OPTIONS:*/);
+            }
 
-            debug("%s", data);
+            print(data);
+            if (!javaOptionsMatch)
+            {
+                reset();
+            }
         }
 
         private function shellExit(e:NativeProcessExitEvent):void
         {
             debug("FSCH exit code: %s", e.exitCode);
-            if (exiting)
-            {
-                exiting = false;
-                startShell();
-            }
-
             if (isASuccessBuild && selectedProject)
             {
                 print("Files produced under DEPLOY folder.");
@@ -724,7 +737,8 @@ package actionScripts.plugins.ant
             {
                 nativeProcess.exit();
             }
-
+			
+			dispatcher.dispatchEvent(new StatusBarEvent(StatusBarEvent.PROJECT_BUILD_ENDED));
             nativeProcess.removeEventListener(ProgressEvent.STANDARD_OUTPUT_DATA, shellData);
             nativeProcess.removeEventListener(ProgressEvent.STANDARD_ERROR_DATA, shellError);
             nativeProcess.removeEventListener(NativeProcessExitEvent.EXIT, shellExit);

@@ -18,26 +18,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.ui.editor
 {
-	import actionScripts.ui.editor.text.TextLineModel;
-	import actionScripts.events.LanguageServerEvent;
-	import actionScripts.events.CompletionItemsEvent;
-	import actionScripts.events.SignatureHelpEvent;
-	import actionScripts.events.HoverEvent;
-	import actionScripts.events.GotoDefinitionEvent;
-	import actionScripts.events.DiagnosticsEvent;
 	import flash.events.Event;
-	import flash.geom.Point;
-	import actionScripts.events.ChangeEvent;
 	import flash.events.MouseEvent;
-	import actionScripts.ui.tabview.CloseTabEvent;
-	import actionScripts.events.SaveFileEvent;
+	import flash.geom.Point;
 	import flash.utils.clearTimeout;
 	import flash.utils.setTimeout;
+	
+	import actionScripts.events.ChangeEvent;
 	import actionScripts.events.CodeActionsEvent;
-	import actionScripts.ui.tabview.TabEvent;
+	import actionScripts.events.CompletionItemsEvent;
+	import actionScripts.events.DiagnosticsEvent;
+	import actionScripts.events.GotoDefinitionEvent;
+	import actionScripts.events.HoverEvent;
+	import actionScripts.events.LanguageServerEvent;
 	import actionScripts.events.LanguageServerMenuEvent;
 	import actionScripts.events.MenuEvent;
 	import actionScripts.events.ProjectEvent;
+	import actionScripts.events.SaveFileEvent;
+	import actionScripts.events.SignatureHelpEvent;
+	import actionScripts.ui.editor.text.TextLineModel;
+	import actionScripts.ui.tabview.TabEvent;
+	import actionScripts.utils.SharedObjectUtil;
 	import actionScripts.utils.isUriInProject;
 
 	public class LanguageServerTextEditor extends BasicTextEditor
@@ -48,9 +49,6 @@ package actionScripts.ui.editor
 
 			this._languageID = languageID;
 
-			this.addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
-			this.addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
-			
 			editor.addEventListener(ChangeEvent.TEXT_CHANGE, onTextChange);
 			editor.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
 			editor.addEventListener(MouseEvent.ROLL_OVER, onRollOver);
@@ -67,33 +65,40 @@ package actionScripts.ui.editor
 
 		private var _codeActionTimeoutID:int = -1;
 		private var _completionIncomplete:Boolean = false;
+		private var _hoverTimeoutID:int = -1;
+		private var _definitionTimeoutID:int = -1;
+		private var _previousCharAndLine:Point;
 
-		protected function addGlobalListeners():void
+		override protected function addGlobalListeners():void
 		{
+			super.addGlobalListeners();
+			
 			dispatcher.addEventListener(CompletionItemsEvent.EVENT_SHOW_COMPLETION_LIST, showCompletionListHandler);
 			dispatcher.addEventListener(DiagnosticsEvent.EVENT_SHOW_DIAGNOSTICS, showDiagnosticsHandler);
 			dispatcher.addEventListener(CodeActionsEvent.EVENT_SHOW_CODE_ACTIONS, showCodeActionsHandler);
-			dispatcher.addEventListener(CloseTabEvent.EVENT_CLOSE_TAB, closeTabHandler);
 			dispatcher.addEventListener(SaveFileEvent.FILE_SAVED, fileSavedHandler);
 			dispatcher.addEventListener(CompletionItemsEvent.EVENT_UPDATE_RESOLVED_COMPLETION_ITEM, updateResolvedCompletionItemHandler);
 			dispatcher.addEventListener(SignatureHelpEvent.EVENT_SHOW_SIGNATURE_HELP, showSignatureHelpHandler);
-			dispatcher.addEventListener(TabEvent.EVENT_TAB_SELECT, tabSelectHandler);
 			dispatcher.addEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_DEFINITION, menuGoToDefinitionHandler);
 			dispatcher.addEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_TYPE_DEFINITION, menuGoToTypeDefinitionHandler);
 			dispatcher.addEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_IMPLEMENTATION, menuGoToImplementationHandler);
-			dispatcher.addEventListener(ProjectEvent.LANGUAGE_SERVER_OPENED, languageServerOpenedHandler);
+			// a higher priority ensures that the language server knows about
+			// all open files before we potentially makes other queries to the
+			// language server
+			// example: document symbols in the outline view
+			dispatcher.addEventListener(ProjectEvent.LANGUAGE_SERVER_OPENED, languageServerOpenedHandler, false, 1);
 		}
 
-		protected function removeGlobalListeners():void
+		override protected function removeGlobalListeners():void
 		{
+			super.removeGlobalListeners();
+			
 			dispatcher.removeEventListener(CompletionItemsEvent.EVENT_SHOW_COMPLETION_LIST, showCompletionListHandler);
 			dispatcher.removeEventListener(DiagnosticsEvent.EVENT_SHOW_DIAGNOSTICS, showDiagnosticsHandler);
 			dispatcher.removeEventListener(CodeActionsEvent.EVENT_SHOW_CODE_ACTIONS, showCodeActionsHandler);
-			dispatcher.removeEventListener(CloseTabEvent.EVENT_CLOSE_TAB, closeTabHandler);
 			dispatcher.removeEventListener(SaveFileEvent.FILE_SAVED, fileSavedHandler);
 			dispatcher.removeEventListener(CompletionItemsEvent.EVENT_UPDATE_RESOLVED_COMPLETION_ITEM, updateResolvedCompletionItemHandler);
 			dispatcher.removeEventListener(SignatureHelpEvent.EVENT_SHOW_SIGNATURE_HELP, showSignatureHelpHandler);
-			dispatcher.removeEventListener(TabEvent.EVENT_TAB_SELECT, tabSelectHandler);
 			dispatcher.removeEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_DEFINITION, menuGoToDefinitionHandler);
 			dispatcher.removeEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_TYPE_DEFINITION, menuGoToTypeDefinitionHandler);
 			dispatcher.removeEventListener(LanguageServerMenuEvent.EVENT_MENU_GO_TO_IMPLEMENTATION, menuGoToImplementationHandler);
@@ -103,8 +108,61 @@ package actionScripts.ui.editor
 		protected function closeAllPopups():void
 		{
 			editor.showSignatureHelp(null);
-			editor.showHover(null);
+			clearHover();
+			clearDefinitionLink();
+		}
+
+		protected function startOrResetCodeActionTimer():void
+		{
+			if(_codeActionTimeoutID != -1)
+			{
+				//we want to "debounce" this event, so reset the timer
+				clearTimeout(_codeActionTimeoutID);
+				_codeActionTimeoutID = -1;
+			}
+			_codeActionTimeoutID = setTimeout(dispatchCodeActionEvent, 250);
+		}
+
+		protected function startOrResetHoverTimer(line:int, char:int):void
+		{
+			if(_hoverTimeoutID != -1)
+			{
+				//we want to "debounce" this event, so reset the timer
+				clearTimeout(_hoverTimeoutID);
+				_hoverTimeoutID = -1;
+			}
+			_hoverTimeoutID = setTimeout(dispatchHoverEvent, 250, line, char)
+		}
+
+		protected function startOrResetDefinitionLinkTimer(line:int, char:int):void
+		{
+			if(_definitionTimeoutID != -1)
+			{
+				//we want to "debounce" this event, so reset the timer
+				clearTimeout(_definitionTimeoutID);
+				_definitionTimeoutID = -1;
+			}
+			_definitionTimeoutID = setTimeout(dispatchDefinitionLinkEvent, 250, line, char)
+		}
+
+		private function clearDefinitionLink():void
+		{
 			editor.showDefinitionLink(null, null);
+			if(_definitionTimeoutID != -1)
+			{
+				clearTimeout(_definitionTimeoutID);
+				_definitionTimeoutID = -1;
+			}
+		}
+
+		private function clearHover():void
+		{
+			editor.showHover(null);
+			if(_hoverTimeoutID != -1)
+			{
+				clearTimeout(_hoverTimeoutID);
+				_hoverTimeoutID = -1;
+			}
 		}
 
 		protected function dispatchDidOpenEvent():void
@@ -178,6 +236,7 @@ package actionScripts.ui.editor
 
 		protected function dispatchHoverEvent(line:int, char:int):void
 		{
+			_hoverTimeoutID = -1;
 			if(!currentFile)
 			{
 				return;
@@ -190,6 +249,7 @@ package actionScripts.ui.editor
 
 		protected function dispatchDefinitionLinkEvent(line:int, char:int):void
 		{
+			_definitionTimeoutID = -1;
 			if(!currentFile)
 			{
 				return;
@@ -289,6 +349,7 @@ package actionScripts.ui.editor
 
 		private function onRollOver(event:MouseEvent):void
 		{
+			_previousCharAndLine = null;
 			dispatcher.addEventListener(HoverEvent.EVENT_SHOW_HOVER, showHoverHandler);
 			dispatcher.addEventListener(GotoDefinitionEvent.EVENT_SHOW_DEFINITION_LINK, showDefinitionLinkHandler);
 		}
@@ -297,8 +358,53 @@ package actionScripts.ui.editor
 		{
 			dispatcher.removeEventListener(HoverEvent.EVENT_SHOW_HOVER, showHoverHandler);
 			dispatcher.removeEventListener(GotoDefinitionEvent.EVENT_SHOW_DEFINITION_LINK, showDefinitionLinkHandler);
-			editor.showHover(null);
-			editor.showDefinitionLink(null, null);
+			//don't call showHover(null) here. let the manager handle it.
+			//because the mouse might have moved over the tooltip instead,
+			//and we don't want to clear the hover in that case
+			if(_hoverTimeoutID != -1)
+			{
+				clearTimeout(_hoverTimeoutID);
+				_hoverTimeoutID = -1;
+			}
+			clearDefinitionLink();
+		}
+
+		private function isInsideSameWord(cl1:Point, cl2:Point):Boolean
+		{
+			if(!cl1 || !cl2)
+			{
+				return false;
+			}
+			var line1:Number = cl1.y;
+			var line2:Number = cl2.y;
+			if(line1 != line2)
+			{
+				//can't be the same word on different lines
+				return false;
+			}
+			var char1:Number = cl1.x;
+			var char2:Number = cl2.x;
+			if(char1 == char2)
+			{
+				//must be the same word when the character hasn't changed
+				return true;
+			}
+			var model:TextLineModel = editor.model.lines[line1];
+			var startIndex:int = char1;
+			var endIndex:int = char2;
+			if(startIndex > endIndex)
+			{
+				startIndex = char2;
+				endIndex = char1;
+			}
+			if((endIndex + 1) < model.text.length)
+			{
+				//include the later character when possible
+				endIndex++;
+			}
+			//look for non-word characters between the two
+			var substr:String = model.text.substr(startIndex, endIndex - startIndex);
+			return /^\w+$/g.test(substr);
 		}
 		
 		private function onMouseMove(event:MouseEvent):void
@@ -307,20 +413,28 @@ package actionScripts.ui.editor
 			var charAndLine:Point = editor.getCharAndLineForXY(globalXY, true);
 			if(charAndLine !== null)
 			{
+				if(!isInsideSameWord(charAndLine, _previousCharAndLine))
+				{
+					clearHover();
+					clearDefinitionLink();
+				}
+				_previousCharAndLine = charAndLine.clone();
+
 				if(event.ctrlKey)
 				{
-					dispatchDefinitionLinkEvent(charAndLine.y, charAndLine.x);
+					startOrResetDefinitionLinkTimer(charAndLine.y, charAndLine.x);
 				}
 				else
 				{
-					editor.showDefinitionLink(null, null);
-					dispatchHoverEvent(charAndLine.y, charAndLine.x);
+					clearDefinitionLink();
 				}
+				startOrResetHoverTimer(charAndLine.y, charAndLine.x);
+				
 			}
 			else
 			{
-				editor.showDefinitionLink(null, null);
-				editor.showHover(null);
+				clearDefinitionLink();
+				clearHover();
 			}
 		}
 
@@ -337,13 +451,7 @@ package actionScripts.ui.editor
 
 		private function editorModel_onChange(event:Event):void
 		{
-			if(_codeActionTimeoutID != -1)
-			{
-				//we want to "debounce" this event, so reset the timer
-				clearTimeout(_codeActionTimeoutID);
-				_codeActionTimeoutID = -1;
-			}
-			_codeActionTimeoutID = setTimeout(dispatchCodeActionEvent, 250);
+			startOrResetCodeActionTimer();
 		}
 
 		protected function menuGoToDefinitionHandler(event:MenuEvent):void
@@ -474,13 +582,10 @@ package actionScripts.ui.editor
 			editor.showCodeActions(event.codeActions);
 		}
 
-		protected function closeTabHandler(event:CloseTabEvent):void
+		override protected function closeTabHandler(event:Event):void
 		{
-			var closedTab:LanguageServerTextEditor = event.tab as LanguageServerTextEditor;
-			if(!closedTab || closedTab != this)
-			{
-				return;
-			}
+			super.closeTabHandler(event);
+			
 			dispatchDidCloseEvent();
 		}
 
@@ -502,22 +607,24 @@ package actionScripts.ui.editor
 				currentFile.fileBridge.url));
 		}
 
-		protected function tabSelectHandler(event:TabEvent):void
+		override protected function tabSelectHandler(event:TabEvent):void
 		{
-			if(event.child != this)
+			if (event.child != this)
 			{
 				this.closeAllPopups();
 			}
+			
+			super.tabSelectHandler(event);
 		}
 
-		private function addedToStageHandler(event:Event):void
+		override protected function addedToStageHandler(event:Event):void
 		{
-			this.addGlobalListeners();
+			super.addedToStageHandler(event);
 		}
 
-		private function removedFromStageHandler(event:Event):void
+		override protected function removedFromStageHandler(event:Event):void
 		{
-			this.removeGlobalListeners();
+			super.removedFromStageHandler(event);
 			this.closeAllPopups();
 		}
 	}

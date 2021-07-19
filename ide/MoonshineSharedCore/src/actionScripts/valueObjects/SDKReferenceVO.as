@@ -81,6 +81,15 @@ package actionScripts.valueObjects
 			}
 		}
 		
+		public function get nameUncalculated():String
+		{
+			return _name;
+		}
+		public function set nameUncalculated(value:String):void
+		{
+			_name = value;
+		}
+		
         public function get isJSOnlySdk():Boolean
         {
 			if (outputTargets && outputTargets.length == 1)
@@ -107,6 +116,10 @@ package actionScripts.valueObjects
 		{
 			if (!_type) _type = getType();
 			return _type;
+		}
+		public function set type(value:String):void
+		{
+			_type = value;
 		}
 
 		public function get hasPlayerglobal():Boolean
@@ -199,7 +212,15 @@ package actionScripts.valueObjects
 			if (compilerFile.fileBridge.exists)
 			{
 				if (fileLocation.resolvePath("frameworks/libs/spark.swc").fileBridge.exists || 
-					fileLocation.resolvePath("frameworks/libs/flex.swc").fileBridge.exists) return SDKTypes.FLEX;
+					fileLocation.resolvePath("frameworks/libs/flex.swc").fileBridge.exists)
+				{
+					if (fileLocation.resolvePath("lib/adt.cfg").fileBridge.exists ||
+					fileLocation.resolvePath("lib/adt.lic").fileBridge.exists)
+					{
+						return SDKTypes.FLEX_HARMAN;
+					}
+					return SDKTypes.FLEX;
+				}
 			}
 			
 			// royale
@@ -242,5 +263,5 @@ package actionScripts.valueObjects
 			
 			return null;
 		}
-    }
+	}
 }

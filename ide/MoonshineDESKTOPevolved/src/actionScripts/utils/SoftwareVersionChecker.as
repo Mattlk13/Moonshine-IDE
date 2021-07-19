@@ -20,34 +20,36 @@
 package actionScripts.utils
 {
 	import flash.events.Event;
-	
+
 	import mx.collections.ArrayCollection;
+
 	import mx.utils.UIDUtil;
 	
 	import actionScripts.events.WorkerEvent;
 	import actionScripts.interfaces.IWorkerSubscriber;
-	import actionScripts.locator.IDEModel;
 	import actionScripts.locator.IDEWorker;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugin.help.HelpPlugin;
-	import actionScripts.plugins.git.model.MethodDescriptor;
 	import actionScripts.valueObjects.ComponentTypes;
 	import actionScripts.valueObjects.ComponentVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.WorkerNativeProcessResult;
-	import actionScripts.vo.NativeProcessQueueVO;
+	import actionScripts.valueObjects.NativeProcessQueueVO;
 
 	public class SoftwareVersionChecker extends ConsoleOutputter implements IWorkerSubscriber
 	{
 		private static const QUERY_FLEX_AIR_VERSION:String = "getFlexAIRversion";
 		private static const QUERY_ROYALE_FJS_VERSION:String = "getRoyaleFlexJSversion";
 		private static const QUERY_JDK_VERSION:String = "getJDKVersion";
+		private static const QUERY_JDK_8_VERSION:String = "getJDK8Version";
 		private static const QUERY_ANT_VERSION:String = "getAntVersion";
 		private static const QUERY_MAVEN_VERSION:String = "getMavenVersion";
 		private static const QUERY_SVN_GIT_VERSION:String = "getSVNGitVersion";
 		private static const QUERY_GRADLE_VERSION:String = "getGradleVersion";
 		private static const QUERY_GRAILS_VERSION:String = "getGrailsVersion";
+		private static const QUERY_NODEJS_VERSION:String = "getNodeJSVersion";
+		private static const QUERY_NOTES_VERSION:String = "getHCLNotesVersion";
 		
 		public var pendingProcess:Array /* of MethodDescriptor */ = [];
 		
@@ -55,7 +57,6 @@ package actionScripts.utils
 		
 		private var worker:IDEWorker = IDEWorker.getInstance();
 		private var queue:Vector.<Object> = new Vector.<Object>();
-		private var model:IDEModel = IDEModel.getInstance();
 		private var environmentSetup:EnvironmentSetupUtils = EnvironmentSetupUtils.getInstance();
 		private var components:ArrayCollection;
 		private var lastOutput:String;
@@ -67,8 +68,14 @@ package actionScripts.utils
 		 */
 		public function SoftwareVersionChecker()
 		{
-			if (HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER) subscribeIdToWorker = HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER;
-			else subscribeIdToWorker = HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER = UIDUtil.createUID();
+			if (HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER)
+			{
+				subscribeIdToWorker = HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER;
+			}
+			else
+			{
+				subscribeIdToWorker = HelpPlugin.ABOUT_SUBSCRIBE_ID_TO_WORKER = UIDUtil.createUID();
+			}
 			
 			worker.subscribeAsIndividualComponent(subscribeIdToWorker, this);
 			worker.sendToWorker(WorkerEvent.SET_IS_MACOS, ConstantsCoreVO.IS_MACOS, subscribeIdToWorker);
@@ -99,6 +106,7 @@ package actionScripts.utils
 					switch (itemUnderCursor.type)
 					{
 						case ComponentTypes.TYPE_FLEX:
+						case ComponentTypes.TYPE_FLEX_HARMAN:
 						case ComponentTypes.TYPE_FEATHERS:
 						case ComponentTypes.TYPE_FLEXJS:
 							executable = ConstantsCoreVO.IS_MACOS ? "mxmlc" : "mxmlc.bat";
@@ -113,8 +121,10 @@ package actionScripts.utils
 							itemTypeUnderCursor = QUERY_ROYALE_FJS_VERSION;
 							break;
 						case ComponentTypes.TYPE_OPENJAVA:
+						case ComponentTypes.TYPE_OPENJAVA_V8:
 							commands = '"'+ itemUnderCursor.installToPath+'/bin/java" -version';
-							itemTypeUnderCursor = QUERY_JDK_VERSION;
+							itemTypeUnderCursor = (itemUnderCursor.type == ComponentTypes.TYPE_OPENJAVA_V8) ?
+									QUERY_JDK_8_VERSION : QUERY_JDK_VERSION;
 							break;
 						case ComponentTypes.TYPE_ANT:
 							executable = ConstantsCoreVO.IS_MACOS ? "ant" : "ant.bat";
@@ -145,6 +155,23 @@ package actionScripts.utils
 							executable = ConstantsCoreVO.IS_MACOS ? "grails" : "grails.bat";
 							commands = '"'+ itemUnderCursor.installToPath+'/bin/'+ executable +'" --version';
 							itemTypeUnderCursor = QUERY_GRAILS_VERSION;
+							break;
+						case ComponentTypes.TYPE_NODEJS:
+							executable = ConstantsCoreVO.IS_MACOS ? "node" : "node.exe";
+							if (ConstantsCoreVO.IS_MACOS) commands = '"'+ itemUnderCursor.installToPath+'/bin/'+ executable +'" --version';
+							else commands = '"'+ itemUnderCursor.installToPath+'/'+ executable +'" --version';
+							itemTypeUnderCursor = QUERY_NODEJS_VERSION;
+							break;
+						case ComponentTypes.TYPE_NOTES:
+							if (ConstantsCoreVO.IS_MACOS)
+							{
+								commands = 'defaults read "'+ itemUnderCursor.installToPath+'"/Contents/Info CFBundleShortVersionString';
+							}
+							else
+							{
+								commands = '"'+ itemUnderCursor.installToPath+'/nsd.exe" -version';
+							}
+							itemTypeUnderCursor = QUERY_NOTES_VERSION;
 							break;
 					}
 					
@@ -285,9 +312,10 @@ package actionScripts.utils
 						}
 						break;
 					case QUERY_JDK_VERSION:
+					case QUERY_JDK_8_VERSION:
 					case QUERY_ANT_VERSION:
-					case QUERY_GRAILS_VERSION:
 					case QUERY_SVN_GIT_VERSION:
+					case QUERY_NODEJS_VERSION:
 					{
 						if (!components[int(tmpQueue.extraArguments[0])].version)
 						{
@@ -296,6 +324,29 @@ package actionScripts.utils
 						}
 						break;
 					}
+					case QUERY_GRAILS_VERSION:
+					{
+						match = value.output.match(/Version:/);
+						if (match && !components[int(tmpQueue.extraArguments[0])].version)
+						{
+							components[int(tmpQueue.extraArguments[0])].version = getVersionNumberedTypeLine(value.output);
+						}
+						break;
+					}
+					case QUERY_NOTES_VERSION:
+						if (ConstantsCoreVO.IS_MACOS && !components[int(tmpQueue.extraArguments[0])].version)
+						{
+							components[int(tmpQueue.extraArguments[0])].version = value.output;
+						}
+						else if (!ConstantsCoreVO.IS_MACOS)
+						{
+							match = value.output.match(/Release /);
+							if (match)
+							{
+								components[int(tmpQueue.extraArguments[0])].version = value.output.substring(value.output.indexOf("Release"), value.output.length - 3);
+							}
+						}
+						break;
 					case QUERY_MAVEN_VERSION:
 					case QUERY_GRADLE_VERSION:
 						// in case of 'mvn -version' on OSX the process
