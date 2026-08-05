@@ -1,6 +1,6 @@
 package actionScripts.plugin.tibbo.tibboproject.vo
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.languageServer.LanguageServerProjectVO;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.settings.vo.ISetting;

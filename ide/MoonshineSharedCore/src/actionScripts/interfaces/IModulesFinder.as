@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.interfaces
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public interface IModulesFinder
 	{

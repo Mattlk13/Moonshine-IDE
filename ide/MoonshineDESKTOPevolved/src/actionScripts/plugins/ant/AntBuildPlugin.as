@@ -33,7 +33,7 @@ package actionScripts.plugins.ant
 {
     import actionScripts.utils.FileUtils;
     import actionScripts.valueObjects.FileWrapper;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
 
     import flash.desktop.NativeProcess;
     import flash.desktop.NativeProcessStartupInfo;
@@ -59,7 +59,7 @@ package actionScripts.plugins.ant
     import actionScripts.events.RefreshTreeEvent;
     import actionScripts.events.RunANTScriptEvent;
     import actionScripts.events.StatusBarEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.interfaces.IJavaProject;
     import actionScripts.plugin.IPlugin;
     import actionScripts.plugin.PluginBase;

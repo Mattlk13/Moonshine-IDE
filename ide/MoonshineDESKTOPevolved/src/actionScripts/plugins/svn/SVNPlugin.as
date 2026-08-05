@@ -46,7 +46,7 @@ package actionScripts.plugins.svn
 	
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.SettingsEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.settings.ISettingsProvider;
@@ -66,7 +66,7 @@ package actionScripts.plugins.svn
 	import moonshine.haxeScripts.valueObjects.ComponentTypes;
 	import moonshine.haxeScripts.valueObjects.ComponentVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.RepositoryItemVO;
 	import actionScripts.valueObjects.VersionControlTypes;
 	

@@ -32,8 +32,8 @@
 
 package actionScripts.events;
 
-import actionScripts.factory.FileLocation;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.factory.FileLocation;
+import moonshine.valueObjects.ProjectVO;
 import haxe.Constraints.Function;
 import openfl.events.Event;
 

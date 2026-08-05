@@ -89,7 +89,7 @@ package actionScripts.plugin.settings
     import actionScripts.events.GeneralEvent;
     import actionScripts.events.SettingsEvent;
     import actionScripts.events.StartupHelperEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.IPlugin;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.PluginEvent;

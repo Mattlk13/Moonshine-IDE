@@ -37,7 +37,7 @@ package actionScripts.plugin.java.javaproject
 	import actionScripts.events.MavenBuildEvent;
 	import actionScripts.events.NewProjectEvent;
 	import actionScripts.events.RunJavaProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.build.MavenBuildStatus;
 	import actionScripts.plugin.core.compiler.JavaBuildEvent;
@@ -49,7 +49,7 @@ package actionScripts.plugin.java.javaproject
 	import actionScripts.plugin.IProjectTypePlugin;
 	import actionScripts.plugin.java.javaproject.importer.JavaImporter;
 	import flash.filesystem.File;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.ui.menu.vo.MenuItem;
 	import mx.resources.IResourceManager;
 	import mx.resources.ResourceManager;

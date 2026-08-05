@@ -37,9 +37,9 @@ package actionScripts.plugin.haxe.hxproject
     import actionScripts.plugin.project.ProjectType;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.plugin.IProjectTypePlugin;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.haxe.hxproject.importer.HaxeImporter;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
     import actionScripts.ui.menu.vo.MenuItem;
     import actionScripts.ui.menu.vo.ProjectMenuTypes;

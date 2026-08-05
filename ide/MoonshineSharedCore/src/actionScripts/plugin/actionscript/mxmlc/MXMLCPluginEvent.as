@@ -33,7 +33,7 @@ package actionScripts.plugin.actionscript.mxmlc
 {
 	import flash.events.Event;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;
 	
 	/**

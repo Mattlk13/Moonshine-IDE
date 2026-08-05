@@ -4,7 +4,7 @@ package actionScripts.plugin.tibbo.tibboproject.importer
 	import flash.filesystem.FileMode;
 	import flash.filesystem.FileStream;
 
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.core.importer.FlashDevelopImporterBase;
 	import actionScripts.plugin.tibbo.tibboproject.vo.TibboBasicProjectVO;
 	import actionScripts.utils.SerializeUtil;

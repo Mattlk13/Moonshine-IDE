@@ -42,7 +42,7 @@
 		import actionScripts.events.NewFileEvent;
 		import actionScripts.events.RefreshTreeEvent;
 		import actionScripts.extResources.com.validator.ValidatorType;
-		import actionScripts.factory.FileLocation;
+		import moonshine.factory.FileLocation;
 		import actionScripts.plugin.templating.TemplatingHelper;
 		import actionScripts.utils.SimpleValidator;
 		import actionScripts.valueObjects.ConstantsCoreVO;

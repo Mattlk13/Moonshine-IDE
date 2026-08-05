@@ -48,7 +48,7 @@ package actionScripts.plugin.java.javaproject
 	import actionScripts.events.NewProjectEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.RefreshTreeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.java.javaproject.importer.JavaImporter;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;

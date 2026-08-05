@@ -34,7 +34,7 @@ package actionScripts.plugins.ondiskproj.crud.exporter.pages
 	import actionScripts.plugins.ondiskproj.crud.exporter.components.RoyaleModuleLinkButton;
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
 	import actionScripts.plugins.ondiskproj.crud.exporter.vo.PageImportReferenceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	import view.dominoFormBuilder.vo.DominoFormVO;
 	

@@ -35,7 +35,7 @@ package actionScripts.plugins.visualEditor.domino
 	import actionScripts.plugins.ondiskproj.crud.exporter.vo.PageImportReferenceVO;
 
 	import view.dominoFormBuilder.vo.DominoFormVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class DominoSubFormGenerator extends DominoFormGenerator
 	{

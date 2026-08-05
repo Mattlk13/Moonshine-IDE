@@ -31,9 +31,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.utils;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.valueObjects.FileWrapper;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 
 extern class UtilsCore {
     public static function isNewerVersionSDKThan(olderVersion:Int, sdkPath:String):Bool;

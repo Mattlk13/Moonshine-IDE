@@ -36,7 +36,7 @@ package actionScripts.plugin.settings.providers
 
 	import flash.net.SharedObject;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.vo.ISetting;

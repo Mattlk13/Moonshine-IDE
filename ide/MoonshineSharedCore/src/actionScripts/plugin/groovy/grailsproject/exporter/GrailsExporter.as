@@ -32,7 +32,7 @@
 package actionScripts.plugin.groovy.grailsproject.exporter
 {
     import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.exporter.FlashDevelopExporterBase;
     import actionScripts.utils.SerializeUtil;
 

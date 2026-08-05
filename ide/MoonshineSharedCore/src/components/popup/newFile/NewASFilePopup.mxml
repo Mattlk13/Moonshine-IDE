@@ -41,7 +41,7 @@
 	</fx:Metadata>
 	<fx:Script>
 		<![CDATA[
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 	
 			import elements.skins.DarkButtonSkin;
 	

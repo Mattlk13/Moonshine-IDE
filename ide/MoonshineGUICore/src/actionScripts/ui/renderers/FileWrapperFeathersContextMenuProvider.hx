@@ -42,7 +42,7 @@ import actionScripts.plugin.templating.TemplatingHelper;
 import actionScripts.plugin.templating.TemplatingPlugin;
 import actionScripts.utils.UtilsCore;
 import actionScripts.valueObjects.ConstantsCoreVO;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import components.views.project.ProjectTreeContextMenuItem;
 import feathers.controls.Menu;
 import feathers.controls.TreeView;

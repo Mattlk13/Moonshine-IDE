@@ -46,7 +46,7 @@
 		<![CDATA[
 		import actionScripts.events.FileUploaderEvent;
 		import actionScripts.events.SettingsEvent;
-		import actionScripts.factory.FileLocation;
+		import moonshine.factory.FileLocation;
 		import actionScripts.interfaces.IDeployDominoDatabaseProject;
 		import actionScripts.locator.IDEModel;
 		import actionScripts.plugin.console.ConsoleOutputEvent;

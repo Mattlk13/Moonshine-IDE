@@ -37,7 +37,7 @@ package actionScripts.plugins.git.commands
 	import actionScripts.plugins.git.utils.GitUtils;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.NativeProcessQueueVO;
 
 	public class PushCommand extends GitCommandBase

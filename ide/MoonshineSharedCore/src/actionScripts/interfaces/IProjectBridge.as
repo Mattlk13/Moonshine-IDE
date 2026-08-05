@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.interfaces
 {
-	import actionScripts.valueObjects.ProjectVO;
-	import actionScripts.factory.FileLocation;
+	import moonshine.valueObjects.ProjectVO;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IProjectTypePlugin;
 	import actionScripts.ui.menu.vo.MenuItem;
 

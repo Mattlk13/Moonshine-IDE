@@ -51,7 +51,7 @@
 			import actionScripts.events.GlobalEventDispatcher;
 			import actionScripts.events.NewFileEvent;
 			import actionScripts.extResources.com.validator.ValidatorType;
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.ui.menu.MenuPlugin;
 			import actionScripts.utils.SimpleValidator;
 			import actionScripts.utils.UtilsCore;

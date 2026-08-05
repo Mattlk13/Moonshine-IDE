@@ -50,7 +50,7 @@ package actionScripts.plugins.svn.commands
 	import __AS3__.vec.Vector;
 	
 	import actionScripts.events.StatusBarEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugins.git.GitProcessManager;
 	import actionScripts.plugins.svn.provider.SVNStatus;
 	import actionScripts.plugins.versionControl.VersionControlUtils;

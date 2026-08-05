@@ -106,7 +106,7 @@ package actionScripts.utils
 import mx.collections.ArrayCollection;
 
 import actionScripts.events.GlobalEventDispatcher;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.locator.IDEModel;
 import actionScripts.ui.editor.LanguageServerTextEditor;
 import actionScripts.utils.applyTextEditsToFile;

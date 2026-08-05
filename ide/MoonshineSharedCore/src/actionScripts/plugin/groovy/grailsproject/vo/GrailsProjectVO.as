@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.groovy.grailsproject.vo
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IJavaProject;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.actionscript.as3project.vo.GradleBuildOptions;
@@ -44,7 +44,7 @@ package actionScripts.plugin.groovy.grailsproject.vo
 	import actionScripts.plugin.settings.vo.NameValuePair;
 	import actionScripts.plugin.settings.vo.SettingsWrapper;
 import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 	import actionScripts.languageServer.LanguageServerProjectVO;
 	import actionScripts.valueObjects.IClasspathProject;
 

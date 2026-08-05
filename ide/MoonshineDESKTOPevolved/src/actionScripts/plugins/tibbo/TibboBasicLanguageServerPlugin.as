@@ -5,7 +5,7 @@ package actionScripts.plugins.tibbo
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.tibbo.tibboproject.vo.TibboBasicProjectVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class TibboBasicLanguageServerPlugin extends PluginBase implements ILanguageServerPlugin
 	{

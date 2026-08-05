@@ -36,7 +36,7 @@ package actionScripts.impls
     import actionScripts.plugins.core.ProjectBridgeImplBase;
     import actionScripts.plugins.ui.editor.VisualEditorViewer;
     import actionScripts.ui.editor.BasicTextEditor;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.ui.IContentWindow;
 
     public class IVisualEditorProjectBridgeImpl extends ProjectBridgeImplBase implements IVisualEditorBridge

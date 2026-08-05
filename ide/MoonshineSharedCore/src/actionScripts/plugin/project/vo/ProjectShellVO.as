@@ -34,7 +34,7 @@ package actionScripts.plugin.project.vo
     import flash.events.Event;
     import flash.events.EventDispatcher;
     
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.groovy.grailsproject.importer.GrailsImporter;
     import actionScripts.plugin.java.javaproject.importer.JavaImporter;
@@ -42,7 +42,7 @@ package actionScripts.plugin.project.vo
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.FileWrapper;
     import actionScripts.valueObjects.ProjectReferenceVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.plugin.haxe.hxproject.importer.HaxeImporter;
 
     public dynamic class ProjectShellVO extends EventDispatcher

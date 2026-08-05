@@ -33,7 +33,7 @@ package actionScripts.plugins.ondiskproj.crud.exporter.pages
 {
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
 	import actionScripts.plugins.ondiskproj.crud.exporter.utils.PropertyDeclarationStatement;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import view.dominoFormBuilder.vo.DominoFormFieldVO;
 	import view.dominoFormBuilder.vo.DominoFormVO;

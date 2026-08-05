@@ -46,7 +46,7 @@ package actionScripts.plugin.rename
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.RenameEvent;
     import actionScripts.events.TreeMenuItemEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.recentlyOpened.RecentlyOpenedPlugin;

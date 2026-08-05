@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.languageServer
 {
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import flash.events.IEventDispatcher;
 	import actionScripts.ui.editor.BasicTextEditor;
 

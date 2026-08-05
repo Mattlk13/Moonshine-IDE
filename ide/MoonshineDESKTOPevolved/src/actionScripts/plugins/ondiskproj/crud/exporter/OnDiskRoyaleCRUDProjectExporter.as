@@ -37,13 +37,13 @@ package actionScripts.plugins.ondiskproj.crud.exporter
 	import actionScripts.events.NewProjectEvent;
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.plugins.as3project.CreateProject;
 	import actionScripts.plugin.actionscript.as3project.importer.FlashDevelopImporter;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	public class OnDiskRoyaleCRUDProjectExporter extends CreateProject
 	{

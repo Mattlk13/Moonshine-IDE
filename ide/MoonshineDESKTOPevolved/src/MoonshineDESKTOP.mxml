@@ -53,7 +53,7 @@
 			
 			import actionScripts.events.GlobalEventDispatcher;
 			import actionScripts.events.LayoutEvent;
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.impls.IAboutBridgeImp;
 			import actionScripts.impls.IClipboardBridgeImp;
 			import actionScripts.impls.IContextMenuBridgeImp;

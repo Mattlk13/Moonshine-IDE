@@ -33,7 +33,7 @@ package actionScripts.plugin.java.javaproject.vo
 {
 	import actionScripts.events.ExecuteLanguageServerCommandEvent;
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IJavaProject;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.actionscript.as3project.vo.GradleBuildOptions;
@@ -48,7 +48,7 @@ package actionScripts.plugin.java.javaproject.vo
 	import actionScripts.plugin.settings.vo.ProjectDirectoryPathSetting;
 	import actionScripts.plugin.settings.vo.SettingsWrapper;
 import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 	import actionScripts.languageServer.LanguageServerProjectVO;
 	import actionScripts.valueObjects.IClasspathProject;
 

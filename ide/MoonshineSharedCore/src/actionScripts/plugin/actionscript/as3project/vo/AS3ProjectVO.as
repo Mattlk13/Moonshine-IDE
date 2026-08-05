@@ -43,7 +43,7 @@ import flash.events.Event;
     import mx.controls.LinkButton;
     
     import actionScripts.events.GlobalEventDispatcher;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.interfaces.ICloneable;
     import actionScripts.interfaces.IVisualEditorProjectVO;
     import actionScripts.plugin.actionscript.as3project.AS3ProjectPlugin;

@@ -36,7 +36,7 @@ package actionScripts.plugins.hxcpplauncher
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugins.debugAdapter.IDebugAdapterLauncher;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.desktop.NativeProcessStartupInfo;
 	import flash.filesystem.File;

@@ -34,7 +34,7 @@ package actionScripts.plugins.swflauncher.event
 	import flash.events.Event;
 	import flash.filesystem.File;
 	
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class SWFLaunchEvent extends Event
 	{

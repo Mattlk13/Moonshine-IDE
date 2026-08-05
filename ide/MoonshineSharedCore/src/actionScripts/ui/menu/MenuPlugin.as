@@ -46,7 +46,7 @@ package actionScripts.ui.menu
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.ShortcutEvent;
 	import actionScripts.events.TemplatingEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.factory.NativeMenuItemLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.PluginBase;
@@ -65,7 +65,7 @@ package actionScripts.ui.menu
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.KeyboardShortcut;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.Settings;
 	import mx.controls.Alert;
 	// This class is a singleton

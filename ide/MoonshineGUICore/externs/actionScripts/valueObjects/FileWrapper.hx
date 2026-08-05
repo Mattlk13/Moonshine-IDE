@@ -33,7 +33,7 @@
 package actionScripts.valueObjects;
 
 import actionScripts.plugin.core.sourcecontrol.ISourceControlProvider;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 
 extern class FileWrapper {
 	public function new(file:FileLocation, isRoot:Bool = false,

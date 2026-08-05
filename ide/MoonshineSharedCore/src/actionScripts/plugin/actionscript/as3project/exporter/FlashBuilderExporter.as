@@ -36,7 +36,7 @@ package actionScripts.plugin.actionscript.as3project.exporter
 	import flash.filesystem.FileMode;
 	import flash.filesystem.FileStream;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	
 	public class FlashBuilderExporter

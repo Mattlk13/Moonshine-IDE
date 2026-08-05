@@ -37,7 +37,7 @@ package actionScripts.plugins.svn.commands
 	
 	import actionScripts.ui.menu.MenuPlugin;
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.VersionControlTypes;
 	
 	public class RepositoryTestCommand extends InfoCommand

@@ -51,7 +51,7 @@ package actionScripts.plugin.help
 	import actionScripts.ui.FeathersUIWrapper;
 	import moonshine.plugin.help.events.HelpViewEvent;
 	import actionScripts.events.OpenFileEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.ui.tabview.TabEvent;
 	import actionScripts.ui.editor.BasicTextEditor;
 	import actionScripts.ui.feathersWrapper.help.AboutScreenWrapper;

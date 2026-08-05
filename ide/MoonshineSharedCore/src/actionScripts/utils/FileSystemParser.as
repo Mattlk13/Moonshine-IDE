@@ -39,7 +39,7 @@ package actionScripts.utils
 	
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.WorkerEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IWorkerSubscriber;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.locator.IDEWorker;

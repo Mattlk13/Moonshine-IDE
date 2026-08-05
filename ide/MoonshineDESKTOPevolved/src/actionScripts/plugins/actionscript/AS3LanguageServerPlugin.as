@@ -36,7 +36,7 @@ package actionScripts.plugins.actionscript
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class AS3LanguageServerPlugin extends PluginBase implements ILanguageServerPlugin
 	{

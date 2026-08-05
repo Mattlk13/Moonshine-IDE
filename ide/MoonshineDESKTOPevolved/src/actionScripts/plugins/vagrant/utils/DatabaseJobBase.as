@@ -33,7 +33,7 @@ package actionScripts.plugins.vagrant.utils
 {
 	import actionScripts.controllers.DataAgent;
 	import actionScripts.events.FileUploaderEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.utils.uploadUsingURLLoader.FileUploaderUsingURLLoader;
 

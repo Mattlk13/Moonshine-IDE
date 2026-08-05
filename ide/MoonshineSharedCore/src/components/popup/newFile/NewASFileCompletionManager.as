@@ -47,7 +47,7 @@ package components.popup.newFile
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.ui.codeCompletionList.CodeCompletionList;
     import actionScripts.utils.symbolKindToCompletionItemKind;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.SymbolKind;
 
     import moonshine.lsp.CompletionItem;

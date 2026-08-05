@@ -35,7 +35,7 @@ package actionScripts.plugin.actionscript.as3project.settings
 	
 	import __AS3__.vec.Vector;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.settings.vo.AbstractSetting;
 	
 	public class NewProjectSourcePathListSetting extends AbstractSetting

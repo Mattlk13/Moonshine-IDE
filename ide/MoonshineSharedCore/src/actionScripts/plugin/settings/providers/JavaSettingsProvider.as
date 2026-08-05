@@ -35,7 +35,7 @@ package actionScripts.plugin.settings.providers
 	
 	import actionScripts.events.FilePluginEvent;
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.vo.ISetting;

@@ -32,8 +32,8 @@
 
 package moonshine.data;
 
-import actionScripts.valueObjects.ProjectVO;
-import actionScripts.factory.FileLocation;
+import moonshine.valueObjects.ProjectVO;
+import moonshine.factory.FileLocation;
 import openfl.errors.IOError;
 import openfl.errors.RangeError;
 import feathers.data.IHierarchicalCollection;

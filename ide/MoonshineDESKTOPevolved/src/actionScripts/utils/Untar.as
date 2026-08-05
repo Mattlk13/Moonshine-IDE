@@ -38,7 +38,7 @@ package actionScripts.utils
 	import flash.events.ProgressEvent;
 	import flash.filesystem.File;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public class Untar
 	{

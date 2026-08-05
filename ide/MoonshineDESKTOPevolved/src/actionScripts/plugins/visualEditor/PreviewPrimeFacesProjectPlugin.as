@@ -36,7 +36,7 @@ package actionScripts.plugins.visualEditor
     import actionScripts.events.ProjectEvent;
     import actionScripts.events.SettingsEvent;
     import actionScripts.events.StatusBarEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugins.maven.MavenBuildPlugin;
     import actionScripts.plugin.build.MavenBuildStatus;
     import actionScripts.ui.menu.MenuPlugin;

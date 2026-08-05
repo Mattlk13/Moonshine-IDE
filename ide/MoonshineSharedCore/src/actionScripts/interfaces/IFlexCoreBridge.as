@@ -33,7 +33,7 @@ package actionScripts.interfaces
 {
 	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
 	import actionScripts.ui.IContentWindow;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.display.DisplayObject;
     
@@ -41,7 +41,7 @@ package actionScripts.interfaces
     import mx.core.IFlexDisplayObject;
     
     import actionScripts.events.NewProjectEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.ui.editor.BasicTextEditor;
     import actionScripts.ui.menu.vo.MenuItem;

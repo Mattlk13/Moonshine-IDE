@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.impls
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IProjectBridge;
 	import actionScripts.plugin.IProjectTypePlugin;
 	import actionScripts.plugin.actionscript.as3project.AS3ProjectPlugin;
@@ -52,7 +52,7 @@ package actionScripts.impls
 	import actionScripts.plugins.haxe.HaxeLanguageServerPlugin;
 	import actionScripts.plugins.java.JavaBuildPlugin;
 	import actionScripts.plugins.java.JavaLanguageServerPlugin;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.ui.menu.vo.MenuItem;
 	import actionScripts.plugins.tibbo.TibboBasicLanguageServerPlugin;
 	import actionScripts.plugin.tibbo.tibboproject.TibboBasicProjectPlugin;

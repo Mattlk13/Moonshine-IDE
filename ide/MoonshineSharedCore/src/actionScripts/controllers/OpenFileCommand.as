@@ -42,7 +42,7 @@ package actionScripts.controllers
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.events.OpenFileEvent;
     import actionScripts.events.ProjectEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
@@ -54,7 +54,7 @@ package actionScripts.controllers
     import actionScripts.utils.UtilsCore;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.FileWrapper;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.URLDescriptorVO;
 
 

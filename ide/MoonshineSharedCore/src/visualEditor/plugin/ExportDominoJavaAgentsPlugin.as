@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package visualEditor.plugin
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.valueObjects.FileWrapper;
 
     import actionScripts.events.ExportVisualEditorProjectEvent;

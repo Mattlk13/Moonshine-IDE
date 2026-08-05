@@ -44,7 +44,7 @@ import actionScripts.plugin.settings.vo.PluginSetting;
 import feathers.layout.VerticalLayout;
 import feathers.layout.VerticalLayoutData;
 import moonshine.ui.PluginTitleRenderer;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.interfaces.IViewWithTitle;
 import moonshine.lsp.Location;
 import feathers.controls.LayoutGroup;

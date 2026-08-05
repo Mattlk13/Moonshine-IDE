@@ -47,7 +47,7 @@ package actionScripts.plugins.nativeFiles
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 

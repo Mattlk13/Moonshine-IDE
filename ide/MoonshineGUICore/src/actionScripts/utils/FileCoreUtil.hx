@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.utils;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.locator.IDEModel;
 
 class FileCoreUtil {

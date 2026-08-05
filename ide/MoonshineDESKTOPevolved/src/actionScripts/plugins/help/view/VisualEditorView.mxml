@@ -74,52 +74,46 @@
                   click="onStartPreviewClick(event)"/>
     </s:Group>
     <fx:Script><![CDATA[
-		import mx.events.FlexEvent;
-		
-		import spark.events.IndexChangeEvent;
-		
-		import actionScripts.valueObjects.ProjectVO;
-		import actionScripts.plugins.help.view.events.VisualEditorViewChangeEvent;
+        import mx.events.FlexEvent;
+
+        import spark.events.IndexChangeEvent;
+
+        import moonshine.valueObjects.ProjectVO;
+
+        import actionScripts.plugins.help.view.events.VisualEditorViewChangeEvent;
 
         import utils.VisualEditorType;
+
         import mx.core.IVisualElement;
 
         private var _codeEditor:IVisualElement;
 
-		[Bindable]
+        [Bindable]
         public var visualEditorProject:ProjectVO;
 
-        public function set codeEditor(value:IVisualElement):void
-        {
+        public function set codeEditor(value:IVisualElement):void {
             _codeEditor = value;
         }
 
-        private function onContentGroupCreationComplete(event:FlexEvent):void
-        {
+        private function onContentGroupCreationComplete(event:FlexEvent):void {
             codeContentGroup.addElement(_codeEditor);
         }
 
-        private function onTabBarChange(event:IndexChangeEvent):void
-        {
+        private function onTabBarChange(event:IndexChangeEvent):void {
             //Alert.show(event.newIndex);
-            if (event.newIndex == 1)
-            {
+            if (event.newIndex == 1) {
                 //visualEditor.editingSurface.selectedItem = null;
-				visualEditor.editingSurface.setResizerVisible(false);
+                visualEditor.editingSurface.setResizerVisible(false);
                 dispatchEvent(new VisualEditorViewChangeEvent(VisualEditorViewChangeEvent.CODE_CHANGE));
+            } else {
+                visualEditor.editingSurface.setResizerVisible(true);
             }
-			else
-			{
-				visualEditor.editingSurface.setResizerVisible(true);
-			}
         }
 
-        private function onStartPreviewClick(event:MouseEvent):void
-        {
+        private function onStartPreviewClick(event:MouseEvent):void {
             dispatchEvent(new Event("startPreview"));
         }
-		
-	]]></fx:Script>
+        ]]></fx:Script>
     <fx:Metadata>
         [Event(name="codeChange", type="actionScripts.plugins.help.view.events.VisualEditorViewChangeEvent")]
         [Event(name="startPreview", type="flash.events.Event")]

@@ -32,7 +32,7 @@
 
 package actionScripts.plugins.exportToRoyaleTemplatedApp.utils
 {    
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import flash.filesystem.File;
 	import flash.text.engine.TextLine;
 

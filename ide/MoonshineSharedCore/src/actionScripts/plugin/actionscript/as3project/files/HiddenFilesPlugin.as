@@ -33,7 +33,7 @@ package actionScripts.plugin.actionscript.as3project.files
 {
     import actionScripts.events.HiddenFilesEvent;
     import actionScripts.events.RefreshTreeEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.IPlugin;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;

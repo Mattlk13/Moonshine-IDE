@@ -36,7 +36,7 @@ package actionScripts.plugins.java
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class JavaLanguageServerPlugin extends PluginBase implements ILanguageServerPlugin
 	{

@@ -42,7 +42,7 @@
         import actionScripts.valueObjects.ConstantsCoreVO;
 
         import mx.events.FlexEvent;
-        import actionScripts.factory.FileLocation;
+        import moonshine.factory.FileLocation;
 
         public var templateGroovyClass:FileLocation;
         public var templateGroovyInterface:FileLocation;

@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.ondiskproj.exporter
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.exporter.FlashDevelopExporterBase;
     import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
     import actionScripts.utils.SerializeUtil;

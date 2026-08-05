@@ -53,7 +53,7 @@ package actionScripts.plugins.vagrant
 	import actionScripts.events.OnDiskBuildEvent;
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StatusBarEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.event.RequestSettingByNameEvent;

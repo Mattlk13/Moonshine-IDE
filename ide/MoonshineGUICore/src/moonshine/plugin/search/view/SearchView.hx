@@ -39,7 +39,7 @@ import moonshine.components.events.FileTypesCalloutEvent;
 import moonshine.components.FileTypesCallout;
 import openfl.ui.Keyboard;
 import feathers.layout.AnchorLayoutData;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import feathers.data.ArrayCollection;
 import feathers.controls.Label;
 import feathers.layout.HorizontalLayout;

@@ -32,7 +32,7 @@
 package actionScripts.utils.uploadUsingURLLoader
 {
 	import actionScripts.events.FileUploaderEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	import flash.events.Event;
 	import flash.events.EventDispatcher;

@@ -32,9 +32,9 @@
 
 package actionScripts.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.valueObjects.FileWrapper;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import openfl.events.Event;
 
 class NewFileEvent extends Event {

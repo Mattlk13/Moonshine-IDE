@@ -38,7 +38,7 @@ package actionScripts.plugins.visualEditor.domino
 	import view.dominoFormBuilder.vo.DominoFormFieldVO;
 
 	import view.dominoFormBuilder.vo.DominoFormVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class DominoFormGenerator extends RoyalePageGeneratorBase
 	{

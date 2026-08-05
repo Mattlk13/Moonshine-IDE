@@ -44,182 +44,158 @@
 										   creationComplete="onCreationCompletes(event)">
 	<fx:Script>
 		<![CDATA[
-		import actionScripts.events.SettingsEvent;
-		import actionScripts.locator.IDEModel;
-		import actionScripts.plugins.vagrant.VagrantPlugin;
-		import actionScripts.plugins.vagrant.utils.VagrantUtil;
-		import actionScripts.plugins.vagrant.vo.VagrantInstanceState;
-		import actionScripts.plugins.vagrant.vo.VagrantInstanceVO;
-		import actionScripts.valueObjects.ProjectVO;
+        import actionScripts.events.SettingsEvent;
+        import actionScripts.locator.IDEModel;
+        import actionScripts.plugins.vagrant.VagrantPlugin;
+        import actionScripts.plugins.vagrant.utils.VagrantUtil;
+        import actionScripts.plugins.vagrant.vo.VagrantInstanceState;
+        import actionScripts.plugins.vagrant.vo.VagrantInstanceVO;
 
-		import mx.collections.ArrayCollection;
+        import moonshine.valueObjects.ProjectVO;
 
-		import mx.events.FlexEvent;
+        import mx.collections.ArrayCollection;
 
-		import actionScripts.events.GlobalEventDispatcher;
+        import mx.events.FlexEvent;
 
-		import mx.validators.Validator;
+        import actionScripts.events.GlobalEventDispatcher;
 
-		import spark.components.Alert;
+        import mx.validators.Validator;
 
-		public static const EVENT_START_CONVERSION:String = "eventStartConversion";
+        import spark.components.Alert;
 
-		public var instances:ArrayCollection;
+        public static const EVENT_START_CONVERSION:String = "eventStartConversion";
 
-		[Bindable]
-		private var project:ProjectVO;
-		[Bindable]
-		private var nsfConverterInstances:ArrayCollection;
-		[Bindable]
-		private var targetDatabaseName:String = "";
+        public var instances:ArrayCollection;
 
-		private var dispatcher:GlobalEventDispatcher = GlobalEventDispatcher.getInstance();
-		private var instanceStateCheckCount:int;
-		private var isInvalidSource:Boolean;
+        [Bindable]
+        private var project:ProjectVO;
+        [Bindable]
+        private var nsfConverterInstances:ArrayCollection;
+        [Bindable]
+        private var targetDatabaseName:String = "";
 
-		private var _sourceDirectory:File;
-		public function get sourceDirectory():File
-		{
-			return _sourceDirectory;
-		}
+        private var dispatcher:GlobalEventDispatcher = GlobalEventDispatcher.getInstance();
+        private var instanceStateCheckCount:int;
+        private var isInvalidSource:Boolean;
 
-		private var _uploadRequestReturn:Object;
-		public function get uploadRequestReturn():Object
-		{
-			return _uploadRequestReturn;
-		}
+        private var _sourceDirectory:File;
+        public function get sourceDirectory():File {
+            return _sourceDirectory;
+        }
 
-		public function get targetDatabase():String
-		{
-			return txtTargetDatabase.text.replace(/ /g, "");
-		}
+        private var _uploadRequestReturn:Object;
+        public function get uploadRequestReturn():Object {
+            return _uploadRequestReturn;
+        }
 
-		[Bindable]
-		private var _databaseUrl:String;
+        public function get targetDatabase():String {
+            return txtTargetDatabase.text.replace(/ /g, "");
+        }
 
-		public function get databaseURL():String
-		{
-			return _databaseUrl;
-		}
+        [Bindable]
+        private var _databaseUrl:String;
 
-		public function get selectedInstance():VagrantInstanceVO
-		{
-			return ddlInstances.selectedItem;
-		}
+        public function get databaseURL():String {
+            return _databaseUrl;
+        }
 
-		public function reset():void
-		{
-			enableUI();
-		}
+        public function get selectedInstance():VagrantInstanceVO {
+            return ddlInstances.selectedItem;
+        }
 
-		public function close():void
-		{
-			closeThis();
-		}
+        public function reset():void {
+            enableUI();
+        }
 
-		override protected function closeThis():void
-		{
-			dispatcher.removeEventListener(VagrantUtil.EVENT_INSTANCE_STATE_CHECK_COMPLETES, onIndividualInstanceChecked);
-			super.closeThis();
-		}
+        public function close():void {
+            closeThis();
+        }
 
-		protected function onCreationCompletes(event:FlexEvent):void
-		{
-			project = IDEModel.getInstance().activeProject;
-			targetDatabaseName = project.name;
+        override protected function closeThis():void {
+            dispatcher.removeEventListener(VagrantUtil.EVENT_INSTANCE_STATE_CHECK_COMPLETES, onIndividualInstanceChecked);
+            super.closeThis();
+        }
 
-			disableUI();
-			dispatcher.addEventListener(VagrantUtil.EVENT_INSTANCE_STATE_CHECK_COMPLETES, onIndividualInstanceChecked, false, 0, true);
-			VagrantUtil.checkStates(instances);
+        protected function onCreationCompletes(event:FlexEvent):void {
+            project = IDEModel.getInstance().activeProject;
+            targetDatabaseName = project.name;
 
-			_sourceDirectory = project.folderLocation.resolvePath("bin").fileBridge.getFile as File;
-			if (!_sourceDirectory.exists || (_sourceDirectory.getDirectoryListing().length == 0))
-			{
-				hgError.includeInLayout = hgError.visible = true;
-				isInvalidSource = true;
-			}
+            disableUI();
+            dispatcher.addEventListener(VagrantUtil.EVENT_INSTANCE_STATE_CHECK_COMPLETES, onIndividualInstanceChecked, false, 0, true);
+            VagrantUtil.checkStates(instances);
 
-			refreshDatabaseUrl();
-		}
+            _sourceDirectory = project.folderLocation.resolvePath("bin").fileBridge.getFile as File;
+            if (!_sourceDirectory.exists || (_sourceDirectory.getDirectoryListing().length == 0)) {
+                hgError.includeInLayout = hgError.visible = true;
+                isInvalidSource = true;
+            }
 
-		private function onIndividualInstanceChecked(event:Event):void
-		{
-			instanceStateCheckCount++;
-			if (instances && (instances.length == instanceStateCheckCount))
-			{
-				enableUI();
-				nsfConverterInstances = new ArrayCollection();
-				for each (var instance:VagrantInstanceVO in instances)
-				{
-					if (instance.capabilities && (instance.capabilities.indexOf("upload-html") != -1) &&
-							(instance.state == VagrantInstanceState.READY))
-					{
-						nsfConverterInstances.addItem(instance);
-					}
-				}
-			}
+            refreshDatabaseUrl();
+        }
 
-			refreshDatabaseUrl();
-		}
+        private function onIndividualInstanceChecked(event:Event):void {
+            instanceStateCheckCount++;
+            if (instances && (instances.length == instanceStateCheckCount)) {
+                enableUI();
+                nsfConverterInstances = new ArrayCollection();
+                for each (var instance:VagrantInstanceVO in instances) {
+                    if (instance.capabilities && (instance.capabilities.indexOf("upload-html") != -1) &&
+                            (instance.state == VagrantInstanceState.READY)) {
+                        nsfConverterInstances.addItem(instance);
+                    }
+                }
+            }
 
-		private function onConfigure():void
-		{
-			dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_OPEN_SETTINGS, VagrantPlugin.NAMESPACE));
-		}
+            refreshDatabaseUrl();
+        }
 
-		private function onSubmit():void
-		{
-			// validations
-			var tmpArr:Array = new Array(svDownloadDir);
-			if (Validator.validateAll(tmpArr).length != 0 || isInvalidSource)
-			{
-				return;
-			}
+        private function onConfigure():void {
+            dispatcher.dispatchEvent(new SettingsEvent(SettingsEvent.EVENT_OPEN_SETTINGS, VagrantPlugin.NAMESPACE));
+        }
 
-			Alert.OK_LABEL = "OK";
-			if (!ddlInstances.selectedItem)
-			{
-				Alert.show("A valid Vagrant Instance is missing.", "Error!");
-				return;
-			}
+        private function onSubmit():void {
+            // validations
+            var tmpArr:Array = new Array(svDownloadDir);
+            if (Validator.validateAll(tmpArr).length != 0 || isInvalidSource) {
+                return;
+            }
 
-			disableUI();
-			dispatchEvent(new Event(EVENT_START_CONVERSION));
-		}
+            Alert.OK_LABEL = "OK";
+            if (!ddlInstances.selectedItem) {
+                Alert.show("A valid Vagrant Instance is missing.", "Error!");
+                return;
+            }
 
-		private function onInstanceChange(event:Event):void
-		{
-			refreshDatabaseUrl();
-		}
+            disableUI();
+            dispatchEvent(new Event(EVENT_START_CONVERSION));
+        }
 
-		private function disableUI():void
-		{
-			btnSubmit.enabled = false;
-			ddlInstances.enabled = false;
-		}
+        private function onInstanceChange(event:Event):void {
+            refreshDatabaseUrl();
+        }
 
-		private function enableUI():void
-		{
-			btnSubmit.enabled = true;
-			ddlInstances.enabled = true;
-			txtTargetDatabase.enabled = true;
-			txtEditUrl.enabled = true;
-		}
+        private function disableUI():void {
+            btnSubmit.enabled = false;
+            ddlInstances.enabled = false;
+        }
 
-		private function refreshDatabaseUrl():void
-		{
-			if (selectedInstance && selectedInstance.server &&
-					selectedInstance.server.serverType == "domino")
-			{
-				var server:Object = selectedInstance.server;
-				_databaseUrl = "http://" + server.serverType + "." + server.hostname + "/" + targetDatabaseName + "/js-debug/index.html";
-			}
-			else
-			{
-				_databaseUrl = "http://127.0.0.1:8080/" + targetDatabaseName + "/js-debug/index.html";
-			}
-		}
-		]]>
+        private function enableUI():void {
+            btnSubmit.enabled = true;
+            ddlInstances.enabled = true;
+            txtTargetDatabase.enabled = true;
+            txtEditUrl.enabled = true;
+        }
+
+        private function refreshDatabaseUrl():void {
+            if (selectedInstance && selectedInstance.server &&
+                    selectedInstance.server.serverType == "domino") {
+                var server:Object = selectedInstance.server;
+                _databaseUrl = "http://" + server.serverType + "." + server.hostname + "/" + targetDatabaseName + "/js-debug/index.html";
+            } else {
+                _databaseUrl = "http://127.0.0.1:8080/" + targetDatabaseName + "/js-debug/index.html";
+            }
+        }
+        ]]>
 	</fx:Script>
 	<fx:Declarations>
 		<mx:StringValidator id="svDownloadDir" source="{txtTargetDatabase}" property="text" trigger="{btnSubmit}"/>

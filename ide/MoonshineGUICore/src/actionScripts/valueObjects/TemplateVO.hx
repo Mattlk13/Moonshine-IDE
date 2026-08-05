@@ -32,7 +32,7 @@
 
 package actionScripts.valueObjects;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 
 class TemplateVO {
 	public var title:String;

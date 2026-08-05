@@ -39,7 +39,7 @@ package actionScripts.plugins.visualEditor.domino
 
 	import view.dominoFormBuilder.vo.DominoFormVO;
 	import view.dominoFormBuilder.vo.FormBuilderFieldType;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class DominoVOClassGenerator extends VOClassGenerator
 	{

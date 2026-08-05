@@ -32,7 +32,7 @@
 package actionScripts.plugin
 {
 	import actionScripts.languageServer.ILanguageServerManager;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	/**
 	 * An interface implemented by plugins that launch language servers.

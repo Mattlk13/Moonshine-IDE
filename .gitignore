@@ -6,6 +6,7 @@
 
 ide/FileSystemWatcherWorker/bin/
 ide/MoonshineDESKTOPevolved/bin/
+ide/MoonshineDESKTOPevolved/build/assets/
 ide/MoonshineDESKTOPevolved/bin-debug/
 ide/MoonshineDESKTOPevolved/bin-release/
 ide/MoonshineDESKTOPevolved/build/bin
@@ -23,6 +24,7 @@ ide/MoonshineDESKTOPevolved/obj/MoonshineDESKTOPevolvedConfig.xml
 ide/MoonshineGUICore/bin/**/haxe
 ide/MoonshineGUICore/bin/**/obj
 ide/MoonshineGUICore/bin/flash/
+ide/MoonshineGUICore/bin/air
 ide/MoonshineProjectTree/bin/
 ide/MoonshineSharedCore/MoonshineSharedCore.iml
 ide/MoonshineSharedCore/bin/MoonshineSharedCore.swc
@@ -36,6 +38,8 @@ ide/MoonshineWEBevolved/obj/
 ide/MoonshineWorker/MoonshineWorker.iml
 ide/MoonshineWorker/bin/
 ide/MoonshineWorker/obj/
+
+internal/
 
 language-server-wrappers/moonshine-as3mxml/build/
 language-server-wrappers/moonshine-as3mxml/dist/

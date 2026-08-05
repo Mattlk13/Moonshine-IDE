@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.groovy.grailsproject.importer
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.utils.SerializeUtil;
 
 	import flash.filesystem.File;

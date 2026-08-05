@@ -49,7 +49,7 @@ package actionScripts.plugins.as3project
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.events.ProjectEvent;
     import actionScripts.extResources.deng.fzip.fzip.FZipFile;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.settings.SettingsView;

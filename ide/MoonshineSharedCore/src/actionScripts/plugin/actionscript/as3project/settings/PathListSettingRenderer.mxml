@@ -41,7 +41,7 @@
 		<![CDATA[
 			import mx.events.FlexEvent;
 			
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.locator.IDEModel;
 			import actionScripts.utils.OSXBookmarkerNotifiers;
 			

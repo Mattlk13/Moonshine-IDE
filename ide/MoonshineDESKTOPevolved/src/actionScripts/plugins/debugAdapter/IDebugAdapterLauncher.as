@@ -32,7 +32,7 @@
 package actionScripts.plugins.debugAdapter
 {
 	import flash.desktop.NativeProcessStartupInfo;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public interface IDebugAdapterLauncher
 	{

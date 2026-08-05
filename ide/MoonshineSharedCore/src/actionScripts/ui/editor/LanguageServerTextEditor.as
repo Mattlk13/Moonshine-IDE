@@ -37,7 +37,7 @@ package actionScripts.ui.editor
 	import actionScripts.events.OpenLocationEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.SaveFileEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.languageServer.LanguageServerProjectVO;
 	import actionScripts.ui.tabview.CloseTabEvent;
 	import actionScripts.ui.tabview.TabEvent;

@@ -32,7 +32,7 @@
 
 package moonshine.plugin.search.events;
 
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import openfl.events.Event;
 
 class SearchViewEvent extends Event 

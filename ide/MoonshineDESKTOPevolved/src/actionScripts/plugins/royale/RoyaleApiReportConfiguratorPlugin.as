@@ -39,7 +39,7 @@ package actionScripts.plugins.royale
 	
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.RoyaleApiReportEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
@@ -53,7 +53,7 @@ package actionScripts.plugins.royale
 	import actionScripts.utils.SharedObjectConst;
 	import moonshine.haxeScripts.valueObjects.ComponentTypes;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.RoyaleApiReportVO;
 	import actionScripts.valueObjects.SDKReferenceVO;
 

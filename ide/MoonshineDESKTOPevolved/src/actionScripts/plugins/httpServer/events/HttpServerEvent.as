@@ -32,7 +32,7 @@
 package actionScripts.plugins.httpServer.events
 {
 	import flash.events.Event;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public class HttpServerEvent extends Event
 	{

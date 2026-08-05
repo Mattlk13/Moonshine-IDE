@@ -42,7 +42,7 @@ package actionScripts.plugins.git.commands
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.VersionControlTypes;
 	import actionScripts.valueObjects.NativeProcessQueueVO;
 

@@ -40,42 +40,40 @@
 				   close="closeHandler()" creationComplete="onCreationCompletes(event)" xmlns:view="actionScripts.plugin.findreplace.view.*">
 	<fx:Script>
 		<![CDATA[
-			import mx.events.CloseEvent;
-			import mx.events.FlexEvent;
-			import mx.managers.PopUpManager;
-			
-			import actionScripts.events.NewFileEvent;
-			import actionScripts.locator.IDEModel;
-			import actionScripts.valueObjects.ProjectVO;
-			
-			public var wrapperProject:ProjectVO;
-			
-			[Bindable] private var model:IDEModel = IDEModel.getInstance();
-			
-			protected function closeHandler():void
-			{
-				PopUpManager.removePopUp(this);
-			}
-			
-			protected function onChangeButton(event:MouseEvent):void
-			{
-				// validation check for Enter key
-				if (!btnChange.enabled) return;
-				
-				var tmpEvent:NewFileEvent = new NewFileEvent(NewFileEvent.EVENT_PROJECT_SELECTED, null, null, null);
-				tmpEvent.ofProject = lstResources.selectedItem as ProjectVO;
-				dispatchEvent(tmpEvent);
-				
-				callLater(closeHandler);
-				dispatchEvent(new CloseEvent(CloseEvent.CLOSE, true));
-			}
-			
-			protected function onCreationCompletes(event:FlexEvent):void
-			{
-				lstResources.selectedItem = wrapperProject;
-			}
-			
-		]]>
+        import mx.events.CloseEvent;
+        import mx.events.FlexEvent;
+        import mx.managers.PopUpManager;
+
+        import actionScripts.events.NewFileEvent;
+        import actionScripts.locator.IDEModel;
+
+        import moonshine.valueObjects.ProjectVO;
+
+        public var wrapperProject:ProjectVO;
+
+        [Bindable]
+        private var model:IDEModel = IDEModel.getInstance();
+
+        protected function closeHandler():void {
+            PopUpManager.removePopUp(this);
+        }
+
+        protected function onChangeButton(event:MouseEvent):void {
+            // validation check for Enter key
+            if (!btnChange.enabled) return;
+
+            var tmpEvent:NewFileEvent = new NewFileEvent(NewFileEvent.EVENT_PROJECT_SELECTED, null, null, null);
+            tmpEvent.ofProject = lstResources.selectedItem as ProjectVO;
+            dispatchEvent(tmpEvent);
+
+            callLater(closeHandler);
+            dispatchEvent(new CloseEvent(CloseEvent.CLOSE, true));
+        }
+
+        protected function onCreationCompletes(event:FlexEvent):void {
+            lstResources.selectedItem = wrapperProject;
+        }
+        ]]>
 	</fx:Script>
 	<fx:Declarations>
 	</fx:Declarations>

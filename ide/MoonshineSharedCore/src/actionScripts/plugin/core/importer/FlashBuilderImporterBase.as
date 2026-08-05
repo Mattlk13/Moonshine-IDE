@@ -34,9 +34,9 @@ package actionScripts.plugin.core.importer
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.utils.OSXBookmarkerNotifiers;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	public class FlashBuilderImporterBase extends EventDispatcher
 	{

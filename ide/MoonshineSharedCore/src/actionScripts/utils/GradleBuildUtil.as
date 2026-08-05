@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.utils
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
 
     public class GradleBuildUtil
     {

@@ -44,7 +44,7 @@
 			
 			import spark.events.TextOperationEvent;
 			
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.utils.OSXBookmarkerNotifiers;
 			
 			public static const EVENT_BROWSE_FILE:String = "browseFile"

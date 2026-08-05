@@ -36,7 +36,7 @@ package moonshine.plugin.problems.view;
 import moonshine.theme.MoonshineTheme;
 import openfl.events.Event;
 import feathers.core.IOpenCloseToggle;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import moonshine.plugin.problems.data.DiagnosticHierarchicalCollection.DiagnosticsByUri;
 import moonshine.plugin.problems.vo.MoonshineDiagnostic;
 import feathers.layout.HorizontalLayoutData;

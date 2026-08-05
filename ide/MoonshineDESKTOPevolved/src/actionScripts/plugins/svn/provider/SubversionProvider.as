@@ -35,7 +35,7 @@ package actionScripts.plugins.svn.provider
 	import flash.filesystem.File;
 	
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugins.svn.commands.CheckoutCommand;
 	import actionScripts.plugins.svn.commands.CommitCommand;
@@ -43,7 +43,7 @@ package actionScripts.plugins.svn.provider
 	import actionScripts.plugins.svn.commands.RepositoryTestCommand;
 	import actionScripts.plugins.svn.commands.UpdateCommand;
 	import actionScripts.plugins.svn.event.SVNEvent;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.RepositoryItemVO;
 	
 	public class SubversionProvider extends ConsoleOutputter

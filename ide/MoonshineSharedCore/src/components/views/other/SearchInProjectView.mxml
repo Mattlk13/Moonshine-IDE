@@ -57,521 +57,479 @@
 	</fx:Style>
 	<fx:Script>
 		<![CDATA[
-			import mx.collections.ArrayCollection;
-			import mx.core.FlexGlobals;
-			import mx.events.CloseEvent;
-			import mx.events.CollectionEvent;
-			import mx.events.FlexEvent;
-			import mx.managers.PopUpManager;
-			
-			import actionScripts.events.GeneralEvent;
-			import actionScripts.events.WorkerEvent;
-			import actionScripts.factory.FileLocation;
-			import actionScripts.locator.IDEModel;
-			import actionScripts.locator.IDEWorker;
-			import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
-			import actionScripts.plugin.search.SearchPlugin;
-			import actionScripts.ui.tabview.TabEvent;
-			import actionScripts.valueObjects.ConstantsCoreVO;
-			import actionScripts.valueObjects.ProjectVO;
-			
-			import mx.events.DynamicEvent;
-			import actionScripts.ui.FeathersUIWrapper;
-			import moonshine.plugin.search.view.ProjectSearchReplaceView;
-			import moonshine.plugin.search.view.ProjectSearchReplacePreviewView;
-			import moonshine.plugin.search.view.ProjectSearchReplaceProgressView;
-			import actionScripts.utils.TextUtil;
-			import feathers.data.ArrayCollection;
-			import actionScripts.ui.editor.BasicTextEditor;
-			
-			[Embed("/elements/images/icoTreeFolder_open.png")]
-			private var iconFolderOpen:Class;
-			[Embed("/elements/images/icoTreeFolder_close.png")]
-			private var iconFolderClose:Class;
-			[Embed("/elements/images/icoTreeFile.png")]
-			private var iconFile:Class;
-			
-			[Bindable] public var valueToSearch:String;
-			[Bindable] public var isShowReplaceWhenDone:Boolean;
+        import mx.collections.ArrayCollection;
+        import mx.core.FlexGlobals;
+        import mx.events.CloseEvent;
+        import mx.events.CollectionEvent;
+        import mx.events.FlexEvent;
+        import mx.managers.PopUpManager;
 
-			private var newReplaceValue:String;
-			
-			public var selectedProjectToSearch:ProjectVO;
-			public var patterns:String;
-			public var scope:String;
-			public var isEnclosingProjects:Boolean;
-			public var isMatchCase:Boolean;
-			public var isRegexp:Boolean;
-			public var isEscapeChars:Boolean;
-			private var storedPathsForProbableReplace:feathers.data.ArrayCollection;
-			
-			private var worker:IDEWorker = IDEWorker.getInstance();
-			private var model:IDEModel = IDEModel.getInstance();
-			private var foundCountsDict:Dictionary = new Dictionary();
-			private var currentCount:int;
-			private var filesFoundInCount:int;
-			private var isWorkerReplacing:Boolean = false;
+        import actionScripts.events.GeneralEvent;
+        import actionScripts.events.WorkerEvent;
+        import moonshine.factory.FileLocation;
+        import actionScripts.locator.IDEModel;
+        import actionScripts.locator.IDEWorker;
+        import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+        import actionScripts.plugin.search.SearchPlugin;
+        import actionScripts.ui.tabview.TabEvent;
+        import actionScripts.valueObjects.ConstantsCoreVO;
 
-			private var replacePopup:ProjectSearchReplaceView;
-			private var replacePopupWrapper:FeathersUIWrapper;
+        import moonshine.valueObjects.ProjectVO;
 
-			private var replacePreviewPopup:ProjectSearchReplacePreviewView;
-			private var replacePreviewPopupWrapper:FeathersUIWrapper;
+        import mx.events.DynamicEvent;
 
-			private var replaceProgressPopup:ProjectSearchReplaceProgressView;
-			private var replaceProgressPopupWrapper:FeathersUIWrapper;
-			
-			/**
-			 * IContentWindow Inteface Methods
-			 */
-			public function get longLabel():String {	return label;	}
-			public function isChanged():Boolean	{	return false;	}
-			public function isEmpty():Boolean {	return false;	}
-			public function save():void {	}
-			
-			public function resetSearch():void
-			{
-				txtFoundMessage.includeInLayout = txtFoundMessage.visible = false;
-				pbFiles.includeInLayout = pbFiles.visible = true;
-				pbFiles.setProgress(0, 0);
-				currentCount = filesFoundInCount = 0;
-				tree.dataProvider = null;
-				foundCountsDict = new Dictionary();
-				
-				this.label = "Search /"+ valueToSearch +"/";
-				
-				// re-initiate worker 
-				// remove worker in case less-patience user initiate another
-				// search process even before the current is over
-				worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
-				worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
-				worker.sendToWorker(WorkerEvent.SEARCH_IN_PROJECTS, getSearchObject());
-			}
-			
-			private function onCreationCompletes():void
-			{
-				this.label = "Search /"+ valueToSearch +"/";
-				worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
-				model.projects.addEventListener(CollectionEvent.COLLECTION_CHANGE, handleProjectsChange);
-				
-				// @note
-				// sending over a full-fledged typed 'projectFolder' (FileWrapper)
-				// object having a huge file list (i.e. FlexJS project with its all js-bin folder/files)
-				// to worker thread is very expensive. Sending as BytesArray also very expensive
-				// in such cases when converting a big typed object to BytesArray.
-				// thus sending the paths to the projects and parse the folders again at the
-				// worker side is far more economic. We must remember that sending
-				// objects over worker is copying all the bytes. It's better to balance
-				// between convention and the output
-				worker.sendToWorker(WorkerEvent.SEARCH_IN_PROJECTS, getSearchObject());
-			}
-			
-			private function getSearchObject():Object
-			{
-				var tmpObj:Object = new Object();
-				tmpObj.valueToSearch = valueToSearch;
-				tmpObj.patterns = patterns;
-				tmpObj.isMatchCase = isMatchCase;
-				tmpObj.isRegexp = isRegexp;
-				tmpObj.isEscapeChars = isEscapeChars;
-				tmpObj.isShowReplaceWhenDone = isShowReplaceWhenDone;
-				tmpObj.allRedableExtensions = ConstantsCoreVO.READABLE_FILES;
-				
-				tmpObj.projects = getProjectPaths();
-				
-				return tmpObj;
-			}
-			
-			private function getProjectPaths():Array
-			{
-				var tmpArr:Array = [];
-				switch(scope)
-				{
-					case SearchPlugin.WORKSPACE:
-					{
-						for each (var i:ProjectVO in model.projects)
-						{
-							tmpArr.push(i.folderLocation.fileBridge.nativePath);
-						}
-						break;
-					}
-					default:
-					{
-						tmpArr.push(selectedProjectToSearch.folderLocation.fileBridge.nativePath);
-						if (isEnclosingProjects)
-						{
-							if(selectedProjectToSearch is AS3ProjectVO)
-							{
-								var as3Project:AS3ProjectVO = AS3ProjectVO(selectedProjectToSearch);
-								for each (var j:FileLocation in as3Project.classpaths)
-								{
-									if (as3Project.sourceFolder.fileBridge.nativePath != j.fileBridge.nativePath && j.fileBridge.nativePath.indexOf("{locale}") == -1)
-									{
-										tmpArr.push(j.fileBridge.nativePath);
-									}
-								}
-							}
-						}
-						break;
-					}
-				}
-				
-				return tmpArr;
-			}
-			
-			private function onWorkerValueIncoming(event:GeneralEvent):void
-			{
-				switch (event.value.event)
-				{
-					case WorkerEvent.TOTAL_FILE_COUNT:
-						pbFiles.setProgress(0, event.value.value);
-						break;
-					case WorkerEvent.FILE_PROCESSED_COUNT:
-						if (replaceProgressPopup)
-						{
-							replaceProgressPopup.matchCountProcessed++;
-							updateOpenEditor(event.value.value);
-						}
-						else
-						{
-							pbFiles.setProgress(event.value.value, pbFiles.maximum);
-						}
-						break;
-					case WorkerEvent.FILTERED_FILE_COLLECTION:
-						var tmpObj:Object = event.value.value;
-						generateSearchTree(tmpObj);
-						break;
-					case WorkerEvent.TOTAL_FOUND_COUNT:
-						var tmpArr:Array = event.value.value.split("::");
-						foundCountsDict[tmpArr[0]] = tmpArr[1];
-						break;
-					case WorkerEvent.PROCESS_ENDS:
-						if (replaceProgressPopup)
-						{
-							isWorkerReplacing = false;
-							SearchPlugin.isReplaceActive = false;
-						}
-						else
-						{
-							filesFoundInCount = event.value.value;
-							worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
-							updateLabel();
-							onReplaceRequest();
-						}
-						break;
-					case WorkerEvent.GET_FILE_LIST:
-						storedPathsForProbableReplace = new feathers.data.ArrayCollection(event.value.value);
-						if (replacePreviewPopup != null) {
-							replacePreviewPopup.files = storedPathsForProbableReplace;
-							//hide temporarily while the other window is open
-							replacePopup.visible = false;
-						}
-						worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
-						break;
-				}
-			}
-			
-			private function updateOpenEditor(value:String):void
-			{
-				for each (var item:Object in model.editors)
-				{
-					if (item is BasicTextEditor && BasicTextEditor(item).currentFile.fileBridge.nativePath == value)
-					{
-						var editor:BasicTextEditor = item as BasicTextEditor;
-						var lastScrolledLineIndex:int = editor.editor.lineScrollY;
-						editor.reload();
-						editor.callLater(editor.scrollTo, [lastScrolledLineIndex]);
-						break;
-					}
-				}
-			}
-			
-			private function updateLabel():void
-			{
-				txtFoundMessage.includeInLayout = txtFoundMessage.visible = true;
-				
-				var projectCount:int;
-				for (var i:String in foundCountsDict)
-				{
-					currentCount += int(foundCountsDict[i]);
-					projectCount++;
-				}
-				
-				txtFoundMessage.text = "Found "+ currentCount +" matches across "+ projectCount +" project(s).";
-				pbFiles.includeInLayout = pbFiles.visible = false;
-			}
-			
-			private function onReplaceRequest():void
-			{
-				if (isShowReplaceWhenDone && currentCount != 0)
-				{
-					SearchPlugin.isReplaceActive = true;
+        import actionScripts.ui.FeathersUIWrapper;
 
-					replacePopup = new ProjectSearchReplaceView();
-					replacePopup.textToReplace = valueToSearch;
-					replacePopup.matchCount = currentCount;
-					replacePopup.filesCount = filesFoundInCount;
-					replacePopup.addEventListener(ProjectSearchReplaceView.EVENT_PREVIEW, replacePopup_previewHandler);
-					replacePopup.addEventListener(ProjectSearchReplaceView.EVENT_REPLACE, replacePopup_replaceHandler);
-					replacePopup.addEventListener(Event.CLOSE, replacePopup_closeHandler);
-					replacePopupWrapper = new FeathersUIWrapper(replacePopup);
-					PopUpManager.addPopUp(replacePopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
-					PopUpManager.centerPopUp(replacePopupWrapper);
-					replacePopupWrapper.y = 91;
+        import moonshine.plugin.search.view.ProjectSearchReplaceView;
+        import moonshine.plugin.search.view.ProjectSearchReplacePreviewView;
+        import moonshine.plugin.search.view.ProjectSearchReplaceProgressView;
 
-					replacePopupWrapper.assignFocus("top");
-				}
-			}
-			
-			private function openPreview():void
-			{
-				var searchString:String = isEscapeChars ? TextUtil.escapeRegex(valueToSearch) : valueToSearch;
-				var flags:String = 'g';
-				if (!isMatchCase) flags += 'i';
-				var searchRegExp:EReg = new EReg(searchString, flags);
+        import actionScripts.utils.TextUtil;
 
-				replacePreviewPopup = new ProjectSearchReplacePreviewView();
-				replacePreviewPopup.originalValue = valueToSearch;
-				replacePreviewPopup.replacementValue = newReplaceValue;
-				replacePreviewPopup.search = searchRegExp;
-				replacePreviewPopup.addEventListener(Event.CLOSE, replacePreviewPopup_closeHandler);
-				replacePreviewPopup.addEventListener(ProjectSearchReplacePreviewView.EVENT_REPLACE_SELECTED, replacePreviewPopup_replaceSelectedHandler);
-				replacePreviewPopupWrapper = new FeathersUIWrapper(replacePreviewPopup);
-				replacePreviewPopup.width = screen.width * .6;
-				replacePreviewPopup.height = screen.height * .8;
-				PopUpManager.addPopUp(replacePreviewPopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
-				PopUpManager.centerPopUp(replacePreviewPopupWrapper);
+        import feathers.data.ArrayCollection;
 
-				replacePreviewPopupWrapper.assignFocus("top");
-				replacePreviewPopupWrapper.stage.addEventListener(Event.RESIZE, replacePreviewPopup_stage_resizeHandler, false, 0, true);
+        import actionScripts.ui.editor.BasicTextEditor;
 
-				worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
-				worker.sendToWorker(WorkerEvent.GET_FILE_LIST, null);
-			}
+        [Embed("/elements/images/icoTreeFolder_open.png")]
+        private var iconFolderOpen:Class;
+        [Embed("/elements/images/icoTreeFolder_close.png")]
+        private var iconFolderClose:Class;
+        [Embed("/elements/images/icoTreeFile.png")]
+        private var iconFile:Class;
 
-			private function replacePopup_previewHandler(event:Event):void
-			{
-				newReplaceValue = replacePopup.newText;
-				openPreview();
-			}
-			
-			private function getReplaceObject():Object
-			{
-				return {
-					valueToSearch: valueToSearch,
-					valueToReplace: newReplaceValue,
-					isMatchCase: isMatchCase,
-					isRegexp: isRegexp,
-					isEscapeChars: isEscapeChars
-				};
-			}
+        [Bindable]
+        public var valueToSearch:String;
+        [Bindable]
+        public var isShowReplaceWhenDone:Boolean;
 
-			private function replace():void
-			{
-				replaceProgressPopup = new ProjectSearchReplaceProgressView();
-				replaceProgressPopup.matchCountProcessed = 0;
-				replaceProgressPopup.filesCount = filesFoundInCount;
-				replaceProgressPopup.addEventListener(Event.CLOSE, replaceProgressPopup_closeHandler);
-				replaceProgressPopupWrapper = new FeathersUIWrapper(replaceProgressPopup);
-				PopUpManager.addPopUp(replaceProgressPopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
-				PopUpManager.centerPopUp(replaceProgressPopupWrapper);
-				replaceProgressPopupWrapper.y = 91;
+        private var newReplaceValue:String;
 
-				replaceProgressPopupWrapper.assignFocus("top");
-				
-				isWorkerReplacing = true;
-				worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
-				worker.sendToWorker(WorkerEvent.REPLACE_FILE_WITH_VALUE, getReplaceObject());
-			}
+        public var selectedProjectToSearch:ProjectVO;
+        public var patterns:String;
+        public var scope:String;
+        public var isEnclosingProjects:Boolean;
+        public var isMatchCase:Boolean;
+        public var isRegexp:Boolean;
+        public var isEscapeChars:Boolean;
+        private var storedPathsForProbableReplace:feathers.data.ArrayCollection;
 
-			private function closeReplacePopup():void
-			{
-				PopUpManager.removePopUp(replacePopupWrapper);
-				replacePopup.removeEventListener(ProjectSearchReplaceView.EVENT_PREVIEW, replacePopup_previewHandler);
-				replacePopup.removeEventListener(ProjectSearchReplaceView.EVENT_REPLACE, replacePopup_replaceHandler);
-				replacePopup.removeEventListener(Event.CLOSE, replacePopup_closeHandler);
+        private var worker:IDEWorker = IDEWorker.getInstance();
+        private var model:IDEModel = IDEModel.getInstance();
+        private var foundCountsDict:Dictionary = new Dictionary();
+        private var currentCount:int;
+        private var filesFoundInCount:int;
+        private var isWorkerReplacing:Boolean = false;
 
-				replacePopup = null;
-				replacePopupWrapper = null;
-			}
+        private var replacePopup:ProjectSearchReplaceView;
+        private var replacePopupWrapper:FeathersUIWrapper;
 
-			private function closeReplaceProgressPopup():void
-			{
-				if (isWorkerReplacing)
-				{
-					//wait until finished
-					return;
-				}
+        private var replacePreviewPopup:ProjectSearchReplacePreviewView;
+        private var replacePreviewPopupWrapper:FeathersUIWrapper;
 
-				PopUpManager.removePopUp(replaceProgressPopupWrapper);
-				replaceProgressPopup.removeEventListener(Event.CLOSE, replacePopup_closeHandler);
+        private var replaceProgressPopup:ProjectSearchReplaceProgressView;
+        private var replaceProgressPopupWrapper:FeathersUIWrapper;
 
-				replaceProgressPopup = null;
-				replaceProgressPopupWrapper = null;
-			}
+        /**
+         * IContentWindow Inteface Methods
+         */
+        public function get longLabel():String {
+            return label;
+        }
 
-			private function replacePopup_replaceHandler(event:Event):void
-			{
-				newReplaceValue = replacePopup.newText;
-				closeReplacePopup();
-				replace();
-			}
+        public function isChanged():Boolean {
+            return false;
+        }
 
-			private function replacePopup_closeHandler(event:Event):void
-			{
-				closeReplacePopup();
-			}
+        public function isEmpty():Boolean {
+            return false;
+        }
 
-			private function replacePreviewPopup_replaceSelectedHandler(event:Event):void
-			{
-				var newFilesCount:int = 0;
-				var files:feathers.data.ArrayCollection = replacePreviewPopup.files;
-				for each(var file:Object in files.array)
-				{
-					if (file.isSelected)
-					{
-						newFilesCount++;
-					}
-				}
-				closeReplacePopup();
-				if (newFilesCount == 0) {
-					return;
-				}
+        public function save():void {
+        }
 
-				filesFoundInCount = newFilesCount;
+        public function resetSearch():void {
+            txtFoundMessage.includeInLayout = txtFoundMessage.visible = false;
+            pbFiles.includeInLayout = pbFiles.visible = true;
+            pbFiles.setProgress(0, 0);
+            currentCount = filesFoundInCount = 0;
+            tree.dataProvider = null;
+            foundCountsDict = new Dictionary();
 
-				worker.sendToWorker(WorkerEvent.SET_FILE_LIST, files.array);
+            this.label = "Search /" + valueToSearch + "/";
 
-				replace();
-			}
+            // re-initiate worker
+            // remove worker in case less-patience user initiate another
+            // search process even before the current is over
+            worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
+            worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
+            worker.sendToWorker(WorkerEvent.SEARCH_IN_PROJECTS, getSearchObject());
+        }
 
-			private function replaceProgressPopup_closeHandler(event:Event):void
-			{
-				closeReplaceProgressPopup();
-			}
+        private function onCreationCompletes():void {
+            this.label = "Search /" + valueToSearch + "/";
+            worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
+            model.projects.addEventListener(CollectionEvent.COLLECTION_CHANGE, handleProjectsChange);
 
-			private function replacePreviewPopup_closeHandler(event:Event):void
-			{
-				if (replacePopup)
-				{
-					//stop hiding the replace popup, if it hasn't been closed
-					replacePopup.visible = true;
-				}
+            // @note
+            // sending over a full-fledged typed 'projectFolder' (FileWrapper)
+            // object having a huge file list (i.e. FlexJS project with its all js-bin folder/files)
+            // to worker thread is very expensive. Sending as BytesArray also very expensive
+            // in such cases when converting a big typed object to BytesArray.
+            // thus sending the paths to the projects and parse the folders again at the
+            // worker side is far more economic. We must remember that sending
+            // objects over worker is copying all the bytes. It's better to balance
+            // between convention and the output
+            worker.sendToWorker(WorkerEvent.SEARCH_IN_PROJECTS, getSearchObject());
+        }
 
-				replacePreviewPopupWrapper.stage.removeEventListener(Event.RESIZE, replacePreviewPopup_stage_resizeHandler);
-				PopUpManager.removePopUp(FeathersUIWrapper(replacePreviewPopupWrapper));
+        private function getSearchObject():Object {
+            var tmpObj:Object = new Object();
+            tmpObj.valueToSearch = valueToSearch;
+            tmpObj.patterns = patterns;
+            tmpObj.isMatchCase = isMatchCase;
+            tmpObj.isRegexp = isRegexp;
+            tmpObj.isEscapeChars = isEscapeChars;
+            tmpObj.isShowReplaceWhenDone = isShowReplaceWhenDone;
+            tmpObj.allRedableExtensions = ConstantsCoreVO.READABLE_FILES;
 
-				replacePreviewPopup.removeEventListener(Event.CLOSE, replacePreviewPopup_closeHandler);
+            tmpObj.projects = getProjectPaths();
 
-				replacePreviewPopup = null;
-				replacePreviewPopupWrapper = null;
-			}
+            return tmpObj;
+        }
 
-			private function replacePreviewPopup_stage_resizeHandler(event:Event):void
-			{
-				PopUpManager.centerPopUp(replacePreviewPopupWrapper);
-			}
-			
-			private function generateSearchTree(value:Object):void
-			{
-				// terminate if project with no matches
-				if (value.children.length == 0) 
-				{
-					delete foundCountsDict[value.file.nativePath];
-					return;
-				}
-				
-				if (!tree.dataProvider || mx.collections.ArrayCollection(tree.dataProvider).length == 0) 
-				{
-					tree.dataProvider = value;
-					// lets expand this for the first time only
-					tree.callLater(function():void {	tree.expandItem(value, true);	});
-				}
-				else
-				{
-					mx.collections.ArrayCollection(tree.dataProvider).addItem(value);
-				}
-			}
-			
-			private function getTreeTooltip(item:Object):String 
-			{
-				if (!item.isRoot) return null;
-				return item.file.nativePath;
-			}
-			
-			private function onTreeItemClicked(event:MouseEvent):void
-			{
-				if (!tree.selectedItem) return;
-				
-				var tmpSelectedItem:Object = tree.selectedItem;
-				var tmpFL:FileLocation = new FileLocation(tmpSelectedItem.isShowAsLineNumber ? tmpSelectedItem.fileReference : tmpSelectedItem.file.nativePath);
-				if (tmpFL.fileBridge.isDirectory) return;
+        private function getProjectPaths():Array {
+            var tmpArr:Array = [];
+            switch (scope) {
+                case SearchPlugin.WORKSPACE: {
+                    for each (var i:ProjectVO in model.projects) {
+                        tmpArr.push(i.folderLocation.fileBridge.nativePath);
+                    }
+                    break;
+                }
+                default: {
+                    tmpArr.push(selectedProjectToSearch.folderLocation.fileBridge.nativePath);
+                    if (isEnclosingProjects) {
+                        if (selectedProjectToSearch is AS3ProjectVO) {
+                            var as3Project:AS3ProjectVO = AS3ProjectVO(selectedProjectToSearch);
+                            for each (var j:FileLocation in as3Project.classpaths) {
+                                if (as3Project.sourceFolder.fileBridge.nativePath != j.fileBridge.nativePath && j.fileBridge.nativePath.indexOf("{locale}") == -1) {
+                                    tmpArr.push(j.fileBridge.nativePath);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
 
-				var openResultEvent:DynamicEvent = new DynamicEvent("openResult");
-				openResultEvent.fileLocation = tmpFL;
-				
-				openResultEvent.range = tmpSelectedItem.isShowAsLineNumber ? tmpSelectedItem.lineNumbersWithRange[0] : null;
-				dispatchEvent(openResultEvent);
-			}
-			
-			private function getCountingLabel(item:Object):String
-			{
-				if (item.isRoot)  return item.name +"     ("+item.file.nativePath+")";
-				if (item.isShowAsLineNumber) return (item.lineText);
-				else if (item.file && (item.searchCount != 0)) return item.name +" ("+item.searchCount +" matches)";
-				return (item.name);
-			}
-			
-			private function handleProjectsChange(event:CollectionEvent):void
-			{
-				switch (event.kind)
-				{
-					case 'remove':
-					{
-						var project:ProjectVO = event.items[0] as ProjectVO;
-						for each (var i:Object in tree.dataProvider)
-						{
-							if (i.file.nativePath == project.folderLocation.fileBridge.nativePath)
-							{
-								mx.collections.ArrayCollection(tree.dataProvider).removeItem(i);
-								delete foundCountsDict[i.file.nativePath];
-								updateLabel();
-								i = null;
-								break;
-							}
-						}
-					}
-				}
-			}
-			
-			protected function onTabRemoved(event:FlexEvent):void
-			{
-				worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
-				model.projects.removeEventListener(CollectionEvent.COLLECTION_CHANGE, handleProjectsChange);
-				
-				// to-do - need tabView to dispatch this event against each closing tab
-				// some components already dispatching this event manually while closing to 
-				// owner classes - need to carefully remove them so no duplicate event dispatch occurs  
-				dispatchEvent(new TabEvent(TabEvent.EVENT_TAB_CLOSE, null));
-			}
-			
-			private function searchTreeIconFunction(item:Object):Class 
-			{
-				var iconClass:Class;
-				
-				if (item.file && (item.searchCount != 0))
-				{
-					iconClass = iconFile;
-				}
-				else if (!item.isShowAsLineNumber)
-				{
-					iconClass = tree.isItemOpen(item) ? iconFolderOpen : iconFolderClose;
-				}
-					
-				return iconClass;
-			}
-			
-		]]>
+            return tmpArr;
+        }
+
+        private function onWorkerValueIncoming(event:GeneralEvent):void {
+            switch (event.value.event) {
+                case WorkerEvent.TOTAL_FILE_COUNT:
+                    pbFiles.setProgress(0, event.value.value);
+                    break;
+                case WorkerEvent.FILE_PROCESSED_COUNT:
+                    if (replaceProgressPopup) {
+                        replaceProgressPopup.matchCountProcessed++;
+                        updateOpenEditor(event.value.value);
+                    } else {
+                        pbFiles.setProgress(event.value.value, pbFiles.maximum);
+                    }
+                    break;
+                case WorkerEvent.FILTERED_FILE_COLLECTION:
+                    var tmpObj:Object = event.value.value;
+                    generateSearchTree(tmpObj);
+                    break;
+                case WorkerEvent.TOTAL_FOUND_COUNT:
+                    var tmpArr:Array = event.value.value.split("::");
+                    foundCountsDict[tmpArr[0]] = tmpArr[1];
+                    break;
+                case WorkerEvent.PROCESS_ENDS:
+                    if (replaceProgressPopup) {
+                        isWorkerReplacing = false;
+                        SearchPlugin.isReplaceActive = false;
+                    } else {
+                        filesFoundInCount = event.value.value;
+                        worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
+                        updateLabel();
+                        onReplaceRequest();
+                    }
+                    break;
+                case WorkerEvent.GET_FILE_LIST:
+                    storedPathsForProbableReplace = new feathers.data.ArrayCollection(event.value.value);
+                    if (replacePreviewPopup != null) {
+                        replacePreviewPopup.files = storedPathsForProbableReplace;
+                        //hide temporarily while the other window is open
+                        replacePopup.visible = false;
+                    }
+                    worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
+                    break;
+            }
+        }
+
+        private function updateOpenEditor(value:String):void {
+            for each (var item:Object in model.editors) {
+                if (item is BasicTextEditor && BasicTextEditor(item).currentFile.fileBridge.nativePath == value) {
+                    var editor:BasicTextEditor = item as BasicTextEditor;
+                    var lastScrolledLineIndex:int = editor.editor.lineScrollY;
+                    editor.reload();
+                    editor.callLater(editor.scrollTo, [lastScrolledLineIndex]);
+                    break;
+                }
+            }
+        }
+
+        private function updateLabel():void {
+            txtFoundMessage.includeInLayout = txtFoundMessage.visible = true;
+
+            var projectCount:int;
+            for (var i:String in foundCountsDict) {
+                currentCount += int(foundCountsDict[i]);
+                projectCount++;
+            }
+
+            txtFoundMessage.text = "Found " + currentCount + " matches across " + projectCount + " project(s).";
+            pbFiles.includeInLayout = pbFiles.visible = false;
+        }
+
+        private function onReplaceRequest():void {
+            if (isShowReplaceWhenDone && currentCount != 0) {
+                SearchPlugin.isReplaceActive = true;
+
+                replacePopup = new ProjectSearchReplaceView();
+                replacePopup.textToReplace = valueToSearch;
+                replacePopup.matchCount = currentCount;
+                replacePopup.filesCount = filesFoundInCount;
+                replacePopup.addEventListener(ProjectSearchReplaceView.EVENT_PREVIEW, replacePopup_previewHandler);
+                replacePopup.addEventListener(ProjectSearchReplaceView.EVENT_REPLACE, replacePopup_replaceHandler);
+                replacePopup.addEventListener(Event.CLOSE, replacePopup_closeHandler);
+                replacePopupWrapper = new FeathersUIWrapper(replacePopup);
+                PopUpManager.addPopUp(replacePopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
+                PopUpManager.centerPopUp(replacePopupWrapper);
+                replacePopupWrapper.y = 91;
+
+                replacePopupWrapper.assignFocus("top");
+            }
+        }
+
+        private function openPreview():void {
+            var searchString:String = isEscapeChars ? TextUtil.escapeRegex(valueToSearch) : valueToSearch;
+            var flags:String = 'g';
+            if (!isMatchCase) flags += 'i';
+            var searchRegExp:EReg = new EReg(searchString, flags);
+
+            replacePreviewPopup = new ProjectSearchReplacePreviewView();
+            replacePreviewPopup.originalValue = valueToSearch;
+            replacePreviewPopup.replacementValue = newReplaceValue;
+            replacePreviewPopup.search = searchRegExp;
+            replacePreviewPopup.addEventListener(Event.CLOSE, replacePreviewPopup_closeHandler);
+            replacePreviewPopup.addEventListener(ProjectSearchReplacePreviewView.EVENT_REPLACE_SELECTED, replacePreviewPopup_replaceSelectedHandler);
+            replacePreviewPopupWrapper = new FeathersUIWrapper(replacePreviewPopup);
+            replacePreviewPopup.width = screen.width * .6;
+            replacePreviewPopup.height = screen.height * .8;
+            PopUpManager.addPopUp(replacePreviewPopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
+            PopUpManager.centerPopUp(replacePreviewPopupWrapper);
+
+            replacePreviewPopupWrapper.assignFocus("top");
+            replacePreviewPopupWrapper.stage.addEventListener(Event.RESIZE, replacePreviewPopup_stage_resizeHandler, false, 0, true);
+
+            worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
+            worker.sendToWorker(WorkerEvent.GET_FILE_LIST, null);
+        }
+
+        private function replacePopup_previewHandler(event:Event):void {
+            newReplaceValue = replacePopup.newText;
+            openPreview();
+        }
+
+        private function getReplaceObject():Object {
+            return {
+                valueToSearch: valueToSearch,
+                valueToReplace: newReplaceValue,
+                isMatchCase: isMatchCase,
+                isRegexp: isRegexp,
+                isEscapeChars: isEscapeChars
+            };
+        }
+
+        private function replace():void {
+            replaceProgressPopup = new ProjectSearchReplaceProgressView();
+            replaceProgressPopup.matchCountProcessed = 0;
+            replaceProgressPopup.filesCount = filesFoundInCount;
+            replaceProgressPopup.addEventListener(Event.CLOSE, replaceProgressPopup_closeHandler);
+            replaceProgressPopupWrapper = new FeathersUIWrapper(replaceProgressPopup);
+            PopUpManager.addPopUp(replaceProgressPopupWrapper, DisplayObject(FlexGlobals.topLevelApplication), true);
+            PopUpManager.centerPopUp(replaceProgressPopupWrapper);
+            replaceProgressPopupWrapper.y = 91;
+
+            replaceProgressPopupWrapper.assignFocus("top");
+
+            isWorkerReplacing = true;
+            worker.addEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming, false, 0, true);
+            worker.sendToWorker(WorkerEvent.REPLACE_FILE_WITH_VALUE, getReplaceObject());
+        }
+
+        private function closeReplacePopup():void {
+            PopUpManager.removePopUp(replacePopupWrapper);
+            replacePopup.removeEventListener(ProjectSearchReplaceView.EVENT_PREVIEW, replacePopup_previewHandler);
+            replacePopup.removeEventListener(ProjectSearchReplaceView.EVENT_REPLACE, replacePopup_replaceHandler);
+            replacePopup.removeEventListener(Event.CLOSE, replacePopup_closeHandler);
+
+            replacePopup = null;
+            replacePopupWrapper = null;
+        }
+
+        private function closeReplaceProgressPopup():void {
+            if (isWorkerReplacing) {
+                //wait until finished
+                return;
+            }
+
+            PopUpManager.removePopUp(replaceProgressPopupWrapper);
+            replaceProgressPopup.removeEventListener(Event.CLOSE, replacePopup_closeHandler);
+
+            replaceProgressPopup = null;
+            replaceProgressPopupWrapper = null;
+        }
+
+        private function replacePopup_replaceHandler(event:Event):void {
+            newReplaceValue = replacePopup.newText;
+            closeReplacePopup();
+            replace();
+        }
+
+        private function replacePopup_closeHandler(event:Event):void {
+            closeReplacePopup();
+        }
+
+        private function replacePreviewPopup_replaceSelectedHandler(event:Event):void {
+            var newFilesCount:int = 0;
+            var files:feathers.data.ArrayCollection = replacePreviewPopup.files;
+            for each(var file:Object in files.array) {
+                if (file.isSelected) {
+                    newFilesCount++;
+                }
+            }
+            closeReplacePopup();
+            if (newFilesCount == 0) {
+                return;
+            }
+
+            filesFoundInCount = newFilesCount;
+
+            worker.sendToWorker(WorkerEvent.SET_FILE_LIST, files.array);
+
+            replace();
+        }
+
+        private function replaceProgressPopup_closeHandler(event:Event):void {
+            closeReplaceProgressPopup();
+        }
+
+        private function replacePreviewPopup_closeHandler(event:Event):void {
+            if (replacePopup) {
+                //stop hiding the replace popup, if it hasn't been closed
+                replacePopup.visible = true;
+            }
+
+            replacePreviewPopupWrapper.stage.removeEventListener(Event.RESIZE, replacePreviewPopup_stage_resizeHandler);
+            PopUpManager.removePopUp(FeathersUIWrapper(replacePreviewPopupWrapper));
+
+            replacePreviewPopup.removeEventListener(Event.CLOSE, replacePreviewPopup_closeHandler);
+
+            replacePreviewPopup = null;
+            replacePreviewPopupWrapper = null;
+        }
+
+        private function replacePreviewPopup_stage_resizeHandler(event:Event):void {
+            PopUpManager.centerPopUp(replacePreviewPopupWrapper);
+        }
+
+        private function generateSearchTree(value:Object):void {
+            // terminate if project with no matches
+            if (value.children.length == 0) {
+                delete foundCountsDict[value.file.nativePath];
+                return;
+            }
+
+            if (!tree.dataProvider || mx.collections.ArrayCollection(tree.dataProvider).length == 0) {
+                tree.dataProvider = value;
+                // lets expand this for the first time only
+                tree.callLater(function ():void {
+                    tree.expandItem(value, true);
+                });
+            } else {
+                mx.collections.ArrayCollection(tree.dataProvider).addItem(value);
+            }
+        }
+
+        private function getTreeTooltip(item:Object):String {
+            if (!item.isRoot) return null;
+            return item.file.nativePath;
+        }
+
+        private function onTreeItemClicked(event:MouseEvent):void {
+            if (!tree.selectedItem) return;
+
+            var tmpSelectedItem:Object = tree.selectedItem;
+            var tmpFL:FileLocation = new FileLocation(tmpSelectedItem.isShowAsLineNumber ? tmpSelectedItem.fileReference : tmpSelectedItem.file.nativePath);
+            if (tmpFL.fileBridge.isDirectory) return;
+
+            var openResultEvent:DynamicEvent = new DynamicEvent("openResult");
+            openResultEvent.fileLocation = tmpFL;
+
+            openResultEvent.range = tmpSelectedItem.isShowAsLineNumber ? tmpSelectedItem.lineNumbersWithRange[0] : null;
+            dispatchEvent(openResultEvent);
+        }
+
+        private function getCountingLabel(item:Object):String {
+            if (item.isRoot) return item.name + "     (" + item.file.nativePath + ")";
+            if (item.isShowAsLineNumber) return (item.lineText);
+            else if (item.file && (item.searchCount != 0)) return item.name + " (" + item.searchCount + " matches)";
+            return (item.name);
+        }
+
+        private function handleProjectsChange(event:CollectionEvent):void {
+            switch (event.kind) {
+                case 'remove': {
+                    var project:ProjectVO = event.items[0] as ProjectVO;
+                    for each (var i:Object in tree.dataProvider) {
+                        if (i.file.nativePath == project.folderLocation.fileBridge.nativePath) {
+                            mx.collections.ArrayCollection(tree.dataProvider).removeItem(i);
+                            delete foundCountsDict[i.file.nativePath];
+                            updateLabel();
+                            i = null;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        protected function onTabRemoved(event:FlexEvent):void {
+            worker.removeEventListener(IDEWorker.WORKER_VALUE_INCOMING, onWorkerValueIncoming);
+            model.projects.removeEventListener(CollectionEvent.COLLECTION_CHANGE, handleProjectsChange);
+
+            // to-do - need tabView to dispatch this event against each closing tab
+            // some components already dispatching this event manually while closing to
+            // owner classes - need to carefully remove them so no duplicate event dispatch occurs
+            dispatchEvent(new TabEvent(TabEvent.EVENT_TAB_CLOSE, null));
+        }
+
+        private function searchTreeIconFunction(item:Object):Class {
+            var iconClass:Class;
+
+            if (item.file && (item.searchCount != 0)) {
+                iconClass = iconFile;
+            } else if (!item.isShowAsLineNumber) {
+                iconClass = tree.isItemOpen(item) ? iconFolderOpen : iconFolderClose;
+            }
+
+            return iconClass;
+        }
+        ]]>
 	</fx:Script>
 	
 	<s:VGroup id="vgContent" 

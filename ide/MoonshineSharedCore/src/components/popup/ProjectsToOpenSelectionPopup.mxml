@@ -60,7 +60,7 @@
 			import actionScripts.plugin.workspace.WorkspacePlugin;
 			import actionScripts.valueObjects.ConstantsCoreVO;
 			import actionScripts.valueObjects.GenericSelectableObject;
-			import actionScripts.valueObjects.WorkspaceVO;
+			import moonshine.valueObjects.WorkspaceVO;
 			
 			import moonshine.plugin.workspace.events.WorkspaceEvent;
 
@@ -85,7 +85,7 @@
 			
 			private function onCreationCompletes():void
 			{
-				registerClassAlias("actionScripts.valueObjects.WorkspaceVO", WorkspaceVO);
+				registerClassAlias("moonshine.valueObjects.WorkspaceVO", WorkspaceVO);
 				workspaces = ObjectUtil.copy(WorkspacePlugin.workspacesForViews) as ArrayList;
 				
 				// add two custom objects to function

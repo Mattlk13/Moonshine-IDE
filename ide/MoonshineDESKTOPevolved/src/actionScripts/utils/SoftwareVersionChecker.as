@@ -53,7 +53,7 @@ import com.adobe.utils.StringUtil;
 	import moonshine.haxeScripts.valueObjects.ComponentVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.NativeProcessQueueVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.WorkerNativeProcessResult;
 
 	public class SoftwareVersionChecker extends ConsoleBuildPluginBase implements IWorkerSubscriber

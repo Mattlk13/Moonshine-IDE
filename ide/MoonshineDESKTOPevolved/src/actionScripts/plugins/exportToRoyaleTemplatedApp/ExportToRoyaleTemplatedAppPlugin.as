@@ -33,11 +33,11 @@ package actionScripts.plugins.exportToRoyaleTemplatedApp
 {
     import actionScripts.events.AddTabEvent;
     import actionScripts.events.ProjectEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.ui.tabview.CloseTabEvent;
     import actionScripts.utils.SharedObjectConst;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.locator.IDEWorker;

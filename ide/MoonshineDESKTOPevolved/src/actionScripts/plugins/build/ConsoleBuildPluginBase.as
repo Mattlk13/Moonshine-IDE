@@ -35,7 +35,7 @@ package actionScripts.plugins.build
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaTypes;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.desktop.NativeProcess;
     import flash.desktop.NativeProcessStartupInfo;
@@ -46,7 +46,7 @@ package actionScripts.plugins.build
     import flash.filesystem.File;
     import flash.utils.IDataInput;
     
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.utils.EnvironmentSetupUtils;
     import actionScripts.utils.UtilsCore;
     import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;

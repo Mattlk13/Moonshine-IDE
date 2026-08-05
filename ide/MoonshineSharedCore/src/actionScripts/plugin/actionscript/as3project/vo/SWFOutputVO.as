@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.actionscript.as3project.vo
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.utils.SDKUtils;
 	import actionScripts.utils.SerializeUtil;

@@ -41,7 +41,7 @@ package actionScripts.plugins.swflauncher.launchers
 	
 	import mx.controls.Alert;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 

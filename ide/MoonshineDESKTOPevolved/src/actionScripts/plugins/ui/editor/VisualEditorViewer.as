@@ -42,7 +42,7 @@ package actionScripts.plugins.ui.editor
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.PreviewPluginEvent;
 	import actionScripts.events.TreeMenuItemEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.impls.IVisualEditorLibraryBridgeImp;
 	import actionScripts.interfaces.IVisualEditorProjectVO;
 	import actionScripts.interfaces.IVisualEditorViewer;
@@ -58,7 +58,7 @@ package actionScripts.plugins.ui.editor
 	import actionScripts.ui.tabview.TabEvent;
 	import actionScripts.utils.MavenPomUtil;
 	import actionScripts.utils.SharedObjectUtil;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import moonshine.editor.text.TextEditor;
 	import moonshine.editor.text.events.TextEditorChangeEvent;

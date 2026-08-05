@@ -46,7 +46,7 @@ package actionScripts.plugin.recentlyOpened
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.StartupHelperEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IMenuPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
@@ -64,7 +64,7 @@ package actionScripts.plugin.recentlyOpened
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.MobileDeviceVO;
 	import actionScripts.valueObjects.ProjectReferenceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.SDKReferenceVO;
 	import moonshine.ui.project.ProjectTreeView;
 

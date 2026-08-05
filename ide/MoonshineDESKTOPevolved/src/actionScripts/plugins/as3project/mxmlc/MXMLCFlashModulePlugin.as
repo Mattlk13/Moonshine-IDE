@@ -33,11 +33,11 @@ package actionScripts.plugins.as3project.mxmlc
 {
 	import flash.events.Event;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.core.compiler.FlashModuleBuildEvent;
 	import actionScripts.valueObjects.FlashModuleVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class MXMLCFlashModulePlugin extends MXMLCPlugin
 	{

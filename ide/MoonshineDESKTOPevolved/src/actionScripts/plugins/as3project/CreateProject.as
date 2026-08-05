@@ -32,7 +32,7 @@
 package actionScripts.plugins.as3project
 {
 	import actionScripts.plugin.java.javaproject.vo.JavaTypes;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.display.DisplayObject;
 	import flash.events.Event;
@@ -51,7 +51,7 @@ package actionScripts.plugins.as3project
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.RefreshTreeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.settings.NewLibraryProjectSetting;
 	import actionScripts.plugin.actionscript.as3project.settings.NewProjectSourcePathListSetting;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;

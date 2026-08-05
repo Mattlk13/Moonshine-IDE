@@ -33,7 +33,7 @@ package actionScripts.plugin.haxe.hxproject.vo
 {
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.OpenFileEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.haxe.hxproject.exporter.HaxeExporter;
 	import actionScripts.plugin.haxe.hxproject.utils.getHaxeProjectOutputFileExtension;
@@ -47,7 +47,7 @@ package actionScripts.plugin.haxe.hxproject.vo
 	import actionScripts.plugin.settings.vo.StringListSetting;
 	import actionScripts.plugin.settings.vo.StringSetting;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.errors.IllegalOperationError;
 	import flash.events.Event;

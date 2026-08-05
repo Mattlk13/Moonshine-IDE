@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.interfaces
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 
     public interface IHaxeBridge extends IProject

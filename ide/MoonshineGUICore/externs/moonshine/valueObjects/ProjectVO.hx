@@ -30,36 +30,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-package actionScripts.interfaces;
+package moonshine.valueObjects;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
+import actionScripts.valueObjects.FileWrapper;
 
-extern interface IFileBridge {
-	@:flash.property
-	public var nativePath(get, set):String;
-
-	@:flash.property
-	public var name(get, set):String;
-
-	@:flash.property
-	public var parent(get, never):FileLocation;
-
-	@:flash.property
-	public var exists(get, never):Bool;
-
-	@:flash.property
-	public var isDirectory(get, never):Bool;
-
-	@:flash.property
-	public var isHidden(get, never):Bool;
-
-	@:flash.property
-	public var extension(get, never):String;
-
-	@:flash.property
-	public var separator(get, never):String;
-
-	function getDirectoryListing():Array<Dynamic>;
-
-	function getDirectoryListingAsync(successHandler:(output:Array<FileLocation>) -> Void, ?errorHandler:(error:String) -> Void):Void;
+extern class ProjectVO {
+	public var name:String;
+	public var folderLocation:FileLocation;
+	public var projectFolder:FileWrapper;
+	public var sourceFolder:FileLocation;
+	public var menuType:String;
+	public var folderPath:String;
+	
+	public function new(folder:FileLocation, ?projectName:String=null, ?updateToTreeView:Bool=true);
 }

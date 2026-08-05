@@ -32,7 +32,7 @@
 package actionScripts.plugins.genesis.utils {
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.utils.FileDownloader;

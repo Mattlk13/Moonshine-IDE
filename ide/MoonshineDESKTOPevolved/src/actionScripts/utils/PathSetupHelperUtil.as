@@ -40,7 +40,7 @@ package actionScripts.utils
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.SettingsEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.settings.event.SetSettingsEvent;
 	import actionScripts.plugin.settings.providers.Java8SettingsProvider;

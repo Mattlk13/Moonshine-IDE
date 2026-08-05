@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-package actionScripts.valueObjects;
+package moonshine.valueObjects;
 
 import openfl.events.Event;
 import openfl.events.EventDispatcher;

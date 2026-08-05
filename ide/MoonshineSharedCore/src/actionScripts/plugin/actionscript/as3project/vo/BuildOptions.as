@@ -33,7 +33,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 {
     import mx.utils.StringUtil;
     
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.utils.SerializeUtil;
     import actionScripts.utils.UtilsCore;
     import actionScripts.valueObjects.MobileDeviceVO;

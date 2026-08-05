@@ -35,7 +35,7 @@ package actionScripts.plugins.ondiskproj.crud.exporter.pages
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
 	import actionScripts.plugins.ondiskproj.crud.exporter.utils.RoyaleCRUDUtils;
 	import actionScripts.plugins.ondiskproj.crud.exporter.vo.PageImportReferenceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.events.Event;
 

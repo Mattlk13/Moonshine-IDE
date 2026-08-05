@@ -30,11 +30,36 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+package moonshine.interfaces;
 
-package actionScripts.valueObjects;
+import moonshine.factory.FileLocation;
 
-import openfl.events.EventDispatcher;
+extern interface IFileBridge {
+	@:flash.property
+	public var nativePath(get, set):String;
 
-extern class WorkspaceVO extends EventDispatcher {
-    @:flash.property public var label(get, set):String;
+	@:flash.property
+	public var name(get, set):String;
+
+	@:flash.property
+	public var parent(get, never):FileLocation;
+
+	@:flash.property
+	public var exists(get, never):Bool;
+
+	@:flash.property
+	public var isDirectory(get, never):Bool;
+
+	@:flash.property
+	public var isHidden(get, never):Bool;
+
+	@:flash.property
+	public var extension(get, never):String;
+
+	@:flash.property
+	public var separator(get, never):String;
+
+	function getDirectoryListing():Array<Dynamic>;
+
+	function getDirectoryListingAsync(successHandler:(output:Array<FileLocation>) -> Void, ?errorHandler:(error:String) -> Void):Void;
 }

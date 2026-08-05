@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.actionscript.as3project.settings
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	[Bindable]
 	public class PathListItemVO

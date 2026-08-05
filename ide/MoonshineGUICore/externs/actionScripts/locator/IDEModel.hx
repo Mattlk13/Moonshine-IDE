@@ -32,11 +32,11 @@
 package actionScripts.locator;
 
 import actionScripts.interfaces.IFlexCoreBridge;
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import actionScripts.interfaces.IContextMenuBridge;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.interfaces.IClipboardBridge;
-import actionScripts.interfaces.IFileBridge;
+import moonshine.interfaces.IFileBridge;
 import actionScripts.ui.IContentWindow;
 import mx.collections.ArrayCollection;
 

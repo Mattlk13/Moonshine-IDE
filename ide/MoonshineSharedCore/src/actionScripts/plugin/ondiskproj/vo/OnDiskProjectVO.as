@@ -37,7 +37,7 @@ import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
 
 import mx.collections.ArrayCollection;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IJavaProject;
 	import actionScripts.interfaces.IVisualEditorProjectVO;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
@@ -51,7 +51,7 @@ import mx.collections.ArrayCollection;
 	import actionScripts.plugin.settings.vo.PathSetting;
 	import actionScripts.plugin.settings.vo.ProjectDirectoryPathSetting;
 	import actionScripts.plugin.settings.vo.SettingsWrapper;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.IClasspathProject;
 
 	public class OnDiskProjectVO extends ProjectVO implements IVisualEditorProjectVO, IJavaProject, IDeployDominoDatabaseProject, IClasspathProject

@@ -32,7 +32,7 @@
 
 package actionScripts.valueObjects;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.utils.UtilsCore;
 import actionScripts.valueObjects.RoyaleOutputTarget;
 

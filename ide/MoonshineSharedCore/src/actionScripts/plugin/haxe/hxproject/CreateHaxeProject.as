@@ -45,7 +45,7 @@ package actionScripts.plugin.haxe.hxproject
 	import actionScripts.events.NewProjectEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.RefreshTreeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugin.haxe.hxproject.exporter.HaxeExporter;

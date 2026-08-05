@@ -45,74 +45,73 @@
 	</fx:Metadata>
 	<fx:Script>
 		<![CDATA[
-			import mx.events.FlexEvent;
-			import mx.events.ListEvent;
-			
-			import actionScripts.events.NewFileEvent;
-			import actionScripts.factory.FileLocation;
-			import actionScripts.locator.IDEModel;
-			import actionScripts.utils.UtilsCore;
-			import actionScripts.valueObjects.ConstantsCoreVO;
-			import actionScripts.valueObjects.FileWrapper;
-			import actionScripts.valueObjects.ProjectVO;
-			
-			[Bindable] public var wrapperBelongToProject:Object;
-			[Bindable] public var isInterfaceDialog:Boolean;
-			
-			[Bindable] public var wrapperOfFolderLocation:FileWrapper;
-			public var folderLocation:FileLocation;
-			
-			[Bindable] private var model:IDEModel = IDEModel.getInstance();
-			
-			protected function onCreateButton(event:MouseEvent):void
-			{
-				// double check when double-clicked by tree
-				if (!btnCreate.enabled) return;
-				
-				var tmpEvent:NewFileEvent = new NewFileEvent(NewFileEvent.EVENT_FILE_SELECTED, null, null, wrapperOfFolderLocation);
-				dispatchEvent(tmpEvent);
-				
-				super.closeThis();
-			}
-			
-			protected function onCreationCompletes(event:FlexEvent):void
-			{
-				minHeight = height;
-				title = "Main source folder";
-				txtDestination.text = wrapperBelongToProject.folderLocation.fileBridge.name;
-				btnCreate.enabled = false;
-				
-				var timeoutValue:uint = setTimeout(function():void
-				{
-					wrapperOfFolderLocation = wrapperBelongToProject.projectFolder;
-					
-					// since we're not updating children list at the time of
-					// project creation dialog - we need to do that now do
-					// display children list
-					wrapperOfFolderLocation.isRoot = wrapperOfFolderLocation.shallUpdateChildren = true;
-					wrapperOfFolderLocation.updateChildren();
-					
-					tree.dataProvider = wrapperBelongToProject.projectFolder;
-					tree.callLater(parseFolders);
-					clearTimeout(timeoutValue);
-				}, 1000);
-			}
-			
-			protected function parseFolders():void
-			{
-				tree.expandItem(wrapperOfFolderLocation, true);
-				tree.selectedItem = wrapperOfFolderLocation;
-			}
-			
-			protected function onTreeItemClicked(event:ListEvent):void
-			{
-				txtDestination.text = UtilsCore.getPackageReferenceByProjectPath(
-						Vector.<FileLocation>([wrapperBelongToProject.folderLocation]),
-						tree.selectedItem.nativePath);
-				wrapperOfFolderLocation = tree.selectedItem as FileWrapper;
-			}
-			
-		]]>
+        import mx.events.FlexEvent;
+        import mx.events.ListEvent;
+
+        import actionScripts.events.NewFileEvent;
+        import moonshine.factory.FileLocation;
+        import actionScripts.locator.IDEModel;
+        import actionScripts.utils.UtilsCore;
+        import actionScripts.valueObjects.ConstantsCoreVO;
+        import actionScripts.valueObjects.FileWrapper;
+
+        import moonshine.valueObjects.ProjectVO;
+
+        [Bindable]
+        public var wrapperBelongToProject:Object;
+        [Bindable]
+        public var isInterfaceDialog:Boolean;
+
+        [Bindable]
+        public var wrapperOfFolderLocation:FileWrapper;
+        public var folderLocation:FileLocation;
+
+        [Bindable]
+        private var model:IDEModel = IDEModel.getInstance();
+
+        protected function onCreateButton(event:MouseEvent):void {
+            // double check when double-clicked by tree
+            if (!btnCreate.enabled) return;
+
+            var tmpEvent:NewFileEvent = new NewFileEvent(NewFileEvent.EVENT_FILE_SELECTED, null, null, wrapperOfFolderLocation);
+            dispatchEvent(tmpEvent);
+
+            super.closeThis();
+        }
+
+        protected function onCreationCompletes(event:FlexEvent):void {
+            minHeight = height;
+            title = "Main source folder";
+            txtDestination.text = wrapperBelongToProject.folderLocation.fileBridge.name;
+            btnCreate.enabled = false;
+
+            var timeoutValue:uint = setTimeout(function ():void {
+                wrapperOfFolderLocation = wrapperBelongToProject.projectFolder;
+
+                // since we're not updating children list at the time of
+                // project creation dialog - we need to do that now do
+                // display children list
+                wrapperOfFolderLocation.isRoot = wrapperOfFolderLocation.shallUpdateChildren = true;
+                wrapperOfFolderLocation.updateChildren();
+
+                tree.dataProvider = wrapperBelongToProject.projectFolder;
+                tree.callLater(parseFolders);
+                clearTimeout(timeoutValue);
+            }, 1000);
+        }
+
+        protected function parseFolders():void {
+            tree.expandItem(wrapperOfFolderLocation, true);
+            tree.selectedItem = wrapperOfFolderLocation;
+        }
+
+        protected function onTreeItemClicked(event:ListEvent):void {
+            txtDestination.text = UtilsCore.getPackageReferenceByProjectPath(
+                    Vector.<FileLocation>([wrapperBelongToProject.folderLocation]),
+                    tree.selectedItem.nativePath);
+            wrapperOfFolderLocation = tree.selectedItem as FileWrapper;
+        }
+        ]]>
 	</fx:Script>
 	<fx:Declarations>
 		<mx:StringValidator id="sValidator" property="text"/>

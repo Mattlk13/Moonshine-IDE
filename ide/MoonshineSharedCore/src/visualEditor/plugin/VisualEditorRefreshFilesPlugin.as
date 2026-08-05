@@ -34,7 +34,7 @@ package visualEditor.plugin
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.RefreshTreeEvent;
     import actionScripts.events.RefreshVisualEditorSourcesEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.valueObjects.ConstantsCoreVO;

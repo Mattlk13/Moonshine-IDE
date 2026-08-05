@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.java.javaproject.vo;
 
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 
 extern class JavaProjectVO extends ProjectVO {
 	public function hasGradleBuild():Bool;

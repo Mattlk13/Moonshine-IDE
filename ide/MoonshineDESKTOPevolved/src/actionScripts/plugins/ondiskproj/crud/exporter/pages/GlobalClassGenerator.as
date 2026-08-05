@@ -34,7 +34,7 @@ package actionScripts.plugins.ondiskproj.crud.exporter.pages
 	import actionScripts.interfaces.IDeployDominoDatabaseProject;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class GlobalClassGenerator extends RoyalePageGeneratorBase
 	{

@@ -42,12 +42,12 @@ package actionScripts.plugins.fswatcher
 	import actionScripts.events.ApplicationEvent;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.WatchedFileChangeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class FSWatcherPlugin extends PluginBase implements IPlugin
 	{

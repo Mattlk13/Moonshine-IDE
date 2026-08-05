@@ -19,7 +19,7 @@ import actionScripts.events.SdkEvent;
 import actionScripts.events.SettingsEvent;
 import actionScripts.events.StatusBarEvent;
 import actionScripts.events.WatchedFileChangeEvent;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.locator.IDEModel;
 import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 import actionScripts.plugin.actionscript.as3project.vo.BuildOptions;

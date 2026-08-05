@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugins.visualEditor.domino
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.templating.TemplatingHelper;
     import actionScripts.utils.TextUtil;
     import actionScripts.valueObjects.FileWrapper;
@@ -43,7 +43,7 @@ package actionScripts.plugins.visualEditor.domino
     import converter.DominoConverter;
     import surface.SurfaceMockup;
     import lookup.Lookup;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
 
     import view.dominoFormBuilder.vo.DominoFormVO;
 

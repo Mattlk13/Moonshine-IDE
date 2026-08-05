@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package moonshine.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import openfl.events.Event;
 import openfl.events.EventType;
 

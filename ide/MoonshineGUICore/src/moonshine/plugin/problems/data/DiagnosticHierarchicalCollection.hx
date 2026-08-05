@@ -33,7 +33,7 @@
 
 package moonshine.plugin.problems.data;
 
-import actionScripts.valueObjects.ProjectVO;
+import moonshine.valueObjects.ProjectVO;
 import feathers.data.IHierarchicalCollection;
 import feathers.events.HierarchicalCollectionEvent;
 import moonshine.plugin.problems.vo.MoonshineDiagnostic;

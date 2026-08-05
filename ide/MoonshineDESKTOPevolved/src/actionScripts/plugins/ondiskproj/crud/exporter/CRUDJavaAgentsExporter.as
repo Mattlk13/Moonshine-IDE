@@ -35,8 +35,8 @@ package actionScripts.plugins.ondiskproj.crud.exporter
 	import actionScripts.events.MenuEvent;
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IDeployDominoDatabaseProject;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
@@ -49,7 +49,7 @@ package actionScripts.plugins.ondiskproj.crud.exporter
 
 	import flash.events.Event;
 	import flash.filesystem.File;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import flash.filesystem.FileMode;
 	import flash.filesystem.FileStream;

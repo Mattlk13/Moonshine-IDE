@@ -32,7 +32,7 @@
 
 package actionScripts.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import openfl.events.Event;
 
 class FilePluginEvent extends Event {

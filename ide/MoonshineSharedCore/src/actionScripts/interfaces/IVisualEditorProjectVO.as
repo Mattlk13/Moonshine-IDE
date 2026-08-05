@@ -33,7 +33,7 @@ package actionScripts.interfaces
 {
 	import mx.collections.ArrayCollection;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
     public interface IVisualEditorProjectVO
     {

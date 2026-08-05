@@ -53,7 +53,7 @@ package actionScripts.plugins.groovy
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StatusBarEvent;
 	import actionScripts.events.WatchedFileChangeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IJavaProject;
 	import actionScripts.languageServer.ILanguageServerManager;
 	import actionScripts.languageServer.LanguageClientUtil;
@@ -74,7 +74,7 @@ package actionScripts.plugins.groovy
 	import actionScripts.utils.isUriInProject;
 	import actionScripts.valueObjects.EnvironmentExecPaths;
 	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.Settings;
 	
 	import moonshine.lsp.LanguageClient;

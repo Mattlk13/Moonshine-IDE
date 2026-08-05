@@ -32,7 +32,7 @@
 package actionScripts.utils
 {
 	import actionScripts.locator.IDEModel;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public function getProjectForUri(uri:String):ProjectVO
 	{

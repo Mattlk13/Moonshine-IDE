@@ -41,7 +41,7 @@ package actionScripts.utils
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.valueObjects.KeyboardShortcut;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.events.DebugActionEvent;
 
 	public class KeyboardShortcutManager

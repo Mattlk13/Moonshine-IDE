@@ -48,7 +48,7 @@ package actionScripts.plugins.haxe
     import actionScripts.events.SdkEvent;
     import actionScripts.events.SettingsEvent;
     import actionScripts.events.StatusBarEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;
     import actionScripts.plugin.core.compiler.HaxeBuildEvent;
     import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
@@ -66,7 +66,7 @@ package actionScripts.plugins.haxe
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.EnvironmentExecPaths;
     import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.Settings;
     import actionScripts.valueObjects.WebBrowserVO;
     import actionScripts.plugin.console.ConsoleEvent;

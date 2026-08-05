@@ -31,9 +31,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.languageServer
 {
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import moonshine.lsp.LanguageClient;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public class LanguageServerProjectVO extends ProjectVO
 	{

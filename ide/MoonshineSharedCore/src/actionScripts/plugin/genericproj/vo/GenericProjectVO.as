@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.genericproj.vo
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.actionscript.as3project.vo.GradleBuildOptions;
 	import actionScripts.plugin.actionscript.as3project.vo.MavenBuildOptions;
@@ -42,7 +42,7 @@ package actionScripts.plugin.genericproj.vo
 	import actionScripts.plugin.settings.vo.ProjectDirectoryPathSetting;
 	import actionScripts.plugin.settings.vo.SettingsWrapper;
 	import actionScripts.plugin.settings.vo.StringSetting;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import mx.collections.ArrayCollection;
 

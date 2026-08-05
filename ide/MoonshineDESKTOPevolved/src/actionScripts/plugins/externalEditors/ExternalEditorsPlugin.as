@@ -49,7 +49,7 @@ package actionScripts.plugins.externalEditors
 	
 	import actionScripts.events.FilePluginEvent;
 	import actionScripts.events.SettingsEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.settings.ISettingsProvider;
 	import actionScripts.plugin.settings.event.LinkOnlySettingsEvent;
 	import actionScripts.plugin.settings.vo.AbstractSetting;

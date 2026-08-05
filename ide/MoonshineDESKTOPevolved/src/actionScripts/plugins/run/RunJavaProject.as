@@ -36,7 +36,7 @@ package actionScripts.plugins.run
     
     import actionScripts.events.RunJavaProjectEvent;
     import actionScripts.events.StatusBarEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
     import actionScripts.plugins.build.ConsoleBuildPluginBase;
     import actionScripts.utils.MavenPomUtil;

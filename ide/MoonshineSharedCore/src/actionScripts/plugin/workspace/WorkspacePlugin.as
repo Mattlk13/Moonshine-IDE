@@ -55,7 +55,7 @@ import flash.display.DisplayObject;
 	import mx.utils.ObjectUtil;
 	
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.ui.FeathersUIWrapper;
@@ -63,8 +63,8 @@ import flash.display.DisplayObject;
 	import actionScripts.utils.SharedObjectConst;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
-	import actionScripts.valueObjects.WorkspaceVO;
+	import moonshine.valueObjects.ProjectVO;
+	import moonshine.valueObjects.WorkspaceVO;
 	
 	import feathers.data.ArrayCollection;
 	

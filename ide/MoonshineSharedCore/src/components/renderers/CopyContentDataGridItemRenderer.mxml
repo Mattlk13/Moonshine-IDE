@@ -43,7 +43,7 @@
              verticalCenter="0" buttonMode="true" visible="false" includeInLayout="false"
              click="onImageClick(event)"/>
     <fx:Script><![CDATA[
-        import actionScripts.factory.FileLocation;
+        import moonshine.factory.FileLocation;
         import actionScripts.locator.IDEModel;
         import mx.controls.DataGrid;
         import mx.controls.dataGridClasses.DataGridColumn;

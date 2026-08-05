@@ -32,7 +32,7 @@
 package actionScripts.plugin.haxe.hxproject.exporter
 {
     import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.exporter.FlashDevelopExporterBase;
     import actionScripts.utils.SerializeUtil;
 

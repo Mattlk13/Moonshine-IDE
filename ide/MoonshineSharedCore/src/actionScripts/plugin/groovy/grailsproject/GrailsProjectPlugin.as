@@ -36,8 +36,8 @@ package actionScripts.plugin.groovy.grailsproject
     import actionScripts.plugin.project.ProjectTemplateType;
     import actionScripts.plugin.project.ProjectType;
     import actionScripts.valueObjects.ConstantsCoreVO;
-    import actionScripts.factory.FileLocation;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.factory.FileLocation;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.plugin.groovy.grailsproject.importer.GrailsImporter;
     import actionScripts.plugin.IProjectTypePlugin;
     import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;

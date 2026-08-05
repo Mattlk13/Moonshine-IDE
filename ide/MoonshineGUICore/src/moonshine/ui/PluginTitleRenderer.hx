@@ -40,7 +40,7 @@ import feathers.layout.VerticalLayout;
 import actionScripts.plugin.settings.vo.PluginSetting;
 import feathers.controls.TextArea;
 import feathers.controls.Label;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.interfaces.IViewWithTitle;
 import moonshine.lsp.Location;
 import feathers.controls.LayoutGroup;

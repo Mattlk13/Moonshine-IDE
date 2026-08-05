@@ -44,7 +44,7 @@
 			
 			import spark.events.TextOperationEvent;
 			
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.plugin.settings.vo.StringListItemVO;
 			import actionScripts.plugin.settings.renderers.StringListRenderer;
 			

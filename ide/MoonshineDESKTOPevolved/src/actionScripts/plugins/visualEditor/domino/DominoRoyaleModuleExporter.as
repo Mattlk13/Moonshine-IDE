@@ -39,8 +39,8 @@ package actionScripts.plugins.visualEditor.domino
 	import view.dominoFormBuilder.vo.DominoFormFieldVO;
 
 	import view.dominoFormBuilder.vo.DominoFormVO;
-	import actionScripts.factory.FileLocation;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.factory.FileLocation;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.templating.TemplatingHelper;
 

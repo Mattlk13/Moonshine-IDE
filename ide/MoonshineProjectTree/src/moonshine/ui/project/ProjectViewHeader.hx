@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package moonshine.ui.project;
 
-import actionScripts.valueObjects.WorkspaceVO;
+import moonshine.valueObjects.WorkspaceVO;
 import moonshine.events.ProjectTreeViewEvent;
 import feathers.controls.Button;
 import feathers.controls.LayoutGroup;

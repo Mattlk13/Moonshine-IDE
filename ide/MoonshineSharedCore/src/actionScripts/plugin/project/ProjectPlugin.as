@@ -71,7 +71,7 @@ package actionScripts.plugin.project
 	import actionScripts.events.ShowSettingsEvent;
 	import actionScripts.events.TreeMenuItemEvent;
 	import actionScripts.events.WatchedFileChangeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
@@ -94,9 +94,9 @@ package actionScripts.plugin.project
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.FileWrapper;
 	import actionScripts.valueObjects.ProjectReferenceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.URLDescriptorVO;
-	import actionScripts.valueObjects.WorkspaceVO;
+	import moonshine.valueObjects.WorkspaceVO;
 
 	import components.popup.NewFolderPopup;
 	import components.popup.RunCommandPopup;

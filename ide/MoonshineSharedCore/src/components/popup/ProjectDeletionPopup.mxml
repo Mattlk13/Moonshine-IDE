@@ -43,184 +43,163 @@
 	</fx:Metadata>
 	<fx:Script>
 		<![CDATA[
-		import actionScripts.factory.FileLocation;
+        import moonshine.factory.FileLocation;
 
-		import flash.utils.clearTimeout;
-			import flash.utils.setTimeout;
-			
-			import mx.events.FlexEvent;
-			
-			import actionScripts.events.DeleteFileEvent;
-			import actionScripts.events.GlobalEventDispatcher;
-			import actionScripts.factory.FileLocation;
-			import actionScripts.locator.IDEModel;
-			import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
-			import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
-			import actionScripts.ui.menu.MenuPlugin;
-			import actionScripts.utils.UtilsCore;
-			import actionScripts.valueObjects.FileWrapper;
-			import actionScripts.valueObjects.ProjectVO;
-			import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
-			import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
-			
-			[Bindable] public var wrapperBelongToProject:FileWrapper;
-			
-			[Bindable] private var filesBelongsToProject:FileWrapper;
-			[Bindable] private var model:IDEModel = IDEModel.getInstance();
-	
-			private var project:ProjectVO;
-	
-			override protected function closeByCrossSign(event:Event):void
-			{
-				doBeforeExit();
-				super.closeByCrossSign(event);
-			}
-	
-			override protected function onResizeKeyDownEvent(event:KeyboardEvent):void
-			{
-				doBeforeExit();
-				super.onResizeKeyDownEvent(event);
-			}
-	
-			protected function doBeforeExit():void
-			{
-				GlobalEventDispatcher.getInstance().dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_ENABLE_STATE));
-			}
-	
-			protected function onDeleteButton(event:MouseEvent):void
-			{
-				closeByCrossSign(event);
-				dispatchEvent(new DeleteFileEvent(null, [filesBelongsToProject]));
-			}
-	
-			protected function onCreationCompletes(event:FlexEvent):void
-			{
-				GlobalEventDispatcher.getInstance().dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_DISABLE_STATE));
-				var timeoutId:uint = setTimeout(function():void
-				{
-					parseFolders();
-					clearTimeout(timeoutId);
-				}, 300);
-			}
-	
-			protected function parseFolders():void
-			{
-				project = UtilsCore.getProjectFromProjectFolder(wrapperBelongToProject);
-				
-				// generate collection with files/folders those only
-				// permitted to delete while project deletion call
-				filesBelongsToProject = new FileWrapper(project.folderLocation, true, project.projectFolder.projectReference, false);
-				filesBelongsToProject.children = [];
-				
-				var acceptableLocation:FileLocation;
-				var tmpPathsAdded:Dictionary = new Dictionary();
-				var filesList:Array = [, project.folderLocation.fileBridge.resolvePath(".git"),
-					project.projectFile]; // either FileLocation or Vector.<FileLocation>
-				
-				var projectFilesList:Array = project.getProjectFilesToDelete();
-				if (projectFilesList)
-				{
-					filesList.push.apply(filesList, projectFilesList);
-				}
-				
-				for (var i:int; i < filesList.length; i++)
-				{
-					if (filesList[i] is FileLocation) checkFileLists(null, filesList[i]);
-					else checkFileLists(filesList[i]);
-				}
-				
-				tree.callLater(function():void
-				{
-					lblWorking.includeInLayout = lblWorking.visible = false;
-					btnDelete.enabled = true;
-					tree.expandItem(filesBelongsToProject, true);
-					
-					focusManager.showFocusIndicator = true;
-					focusManager.setFocus(btnCancel);
-					focusManager.showFocus();
-				});
-				
-				/*
-				 * @local
-				 */
-				function checkFileLists(list:Vector.<FileLocation>=null, singleFile:FileLocation=null):void
-				{
-					if (list)
-					{
-						for each (var file:FileLocation in list)
-						{
-							checkByFile(file);
-						}
-					}
-					else if (singleFile)
-					{
-						checkByFile(singleFile);
-					}
+        import flash.utils.clearTimeout;
+        import flash.utils.setTimeout;
 
-					function checkByFile(file:FileLocation):void
-					{
-						// make sure not to add same location multiple times
-						if ((acceptableLocation = isProjectRelativePath(file)) && (tmpPathsAdded[acceptableLocation.fileBridge.nativePath] == undefined) && !checkIfRedundantRelativePath(acceptableLocation))
-						{
-							filesBelongsToProject.children.push(new FileWrapper(acceptableLocation, false, project.projectFolder.projectReference));
-							tmpPathsAdded[acceptableLocation.fileBridge.nativePath] = true;
-						}
-					}
-					
-					function checkIfRedundantRelativePath(file:FileLocation):Boolean
-					{
-						// this is particularly useful in case of Visual Editor type of project
-						for each (var wrapper:FileWrapper in filesBelongsToProject.children)
-						{
-							if (file.fileBridge.nativePath.indexOf(wrapper.file.fileBridge.nativePath + file.fileBridge.separator) != -1) return true;
-						}
-						
-						return false;
-					}
-				}
-			}
-			
-			private function isProjectRelativePath(value:FileLocation):FileLocation
-			{
-				// probable termination
-				if (!value || !value.fileBridge.exists) return null;
-				
-				// sometime we want to get a file's parent directory
-				// and sometime not specially like a file .as3proj 
-				if (!value.fileBridge.isDirectory) 
-				{
-					if (value.fileBridge.parent.fileBridge.nativePath != project.folderLocation.fileBridge.nativePath)
-							value = value.fileBridge.parent;
-				}
-				
-				// in two condition we don't add items to the list
-				// 1. item is located off-project-path
-				// 2. item is located inside project's source folder - because project source
-				// will be added as individual item
-				if (project is AS3ProjectVO)
-				{
-					var as3Project:AS3ProjectVO = AS3ProjectVO(project);
-					if (value.fileBridge.nativePath.indexOf(project.folderLocation.fileBridge.nativePath + project.folderLocation.fileBridge.separator) != -1 &&
-						value.fileBridge.nativePath.indexOf(as3Project.sourceFolder.fileBridge.nativePath + project.folderLocation.fileBridge.separator) == -1)
-							return value;
-				}
-				else
-				{
-					if (value.fileBridge.nativePath.indexOf(project.folderLocation.fileBridge.nativePath + project.folderLocation.fileBridge.separator) != -1)
-						return value;
-				}
-				
-				return null;
-			}
-			
-			private function getDirectoryName(item:Object):String
-			{
-				if (item.file) return item.file.fileBridge.name;
-				else if (item.projectRef && item.projectRef.name) return item.projectRef.name;
-				return "NO INFORMATION"; 
-			}
-			
-		]]>
+        import mx.events.FlexEvent;
+
+        import actionScripts.events.DeleteFileEvent;
+        import actionScripts.events.GlobalEventDispatcher;
+        import moonshine.factory.FileLocation;
+        import actionScripts.locator.IDEModel;
+        import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
+        import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
+        import actionScripts.ui.menu.MenuPlugin;
+        import actionScripts.utils.UtilsCore;
+        import actionScripts.valueObjects.FileWrapper;
+
+        import moonshine.valueObjects.ProjectVO;
+
+        import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
+        import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
+
+        [Bindable]
+        public var wrapperBelongToProject:FileWrapper;
+
+        [Bindable]
+        private var filesBelongsToProject:FileWrapper;
+        [Bindable]
+        private var model:IDEModel = IDEModel.getInstance();
+
+        private var project:ProjectVO;
+
+        override protected function closeByCrossSign(event:Event):void {
+            doBeforeExit();
+            super.closeByCrossSign(event);
+        }
+
+        override protected function onResizeKeyDownEvent(event:KeyboardEvent):void {
+            doBeforeExit();
+            super.onResizeKeyDownEvent(event);
+        }
+
+        protected function doBeforeExit():void {
+            GlobalEventDispatcher.getInstance().dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_ENABLE_STATE));
+        }
+
+        protected function onDeleteButton(event:MouseEvent):void {
+            closeByCrossSign(event);
+            dispatchEvent(new DeleteFileEvent(null, [filesBelongsToProject]));
+        }
+
+        protected function onCreationCompletes(event:FlexEvent):void {
+            GlobalEventDispatcher.getInstance().dispatchEvent(new Event(MenuPlugin.CHANGE_MENU_MAC_DISABLE_STATE));
+            var timeoutId:uint = setTimeout(function ():void {
+                parseFolders();
+                clearTimeout(timeoutId);
+            }, 300);
+        }
+
+        protected function parseFolders():void {
+            project = UtilsCore.getProjectFromProjectFolder(wrapperBelongToProject);
+
+            // generate collection with files/folders those only
+            // permitted to delete while project deletion call
+            filesBelongsToProject = new FileWrapper(project.folderLocation, true, project.projectFolder.projectReference, false);
+            filesBelongsToProject.children = [];
+
+            var acceptableLocation:FileLocation;
+            var tmpPathsAdded:Dictionary = new Dictionary();
+            var filesList:Array = [, project.folderLocation.fileBridge.resolvePath(".git"),
+                project.projectFile]; // either FileLocation or Vector.<FileLocation>
+
+            var projectFilesList:Array = project.getProjectFilesToDelete();
+            if (projectFilesList) {
+                filesList.push.apply(filesList, projectFilesList);
+            }
+
+            for (var i:int; i < filesList.length; i++) {
+                if (filesList[i] is FileLocation) checkFileLists(null, filesList[i]);
+                else checkFileLists(filesList[i]);
+            }
+
+            tree.callLater(function ():void {
+                lblWorking.includeInLayout = lblWorking.visible = false;
+                btnDelete.enabled = true;
+                tree.expandItem(filesBelongsToProject, true);
+
+                focusManager.showFocusIndicator = true;
+                focusManager.setFocus(btnCancel);
+                focusManager.showFocus();
+            });
+
+            /*
+             * @local
+             */
+            function checkFileLists(list:Vector.<FileLocation> = null, singleFile:FileLocation = null):void {
+                if (list) {
+                    for each (var file:FileLocation in list) {
+                        checkByFile(file);
+                    }
+                } else if (singleFile) {
+                    checkByFile(singleFile);
+                }
+
+                function checkByFile(file:FileLocation):void {
+                    // make sure not to add same location multiple times
+                    if ((acceptableLocation = isProjectRelativePath(file)) && (tmpPathsAdded[acceptableLocation.fileBridge.nativePath] == undefined) && !checkIfRedundantRelativePath(acceptableLocation)) {
+                        filesBelongsToProject.children.push(new FileWrapper(acceptableLocation, false, project.projectFolder.projectReference));
+                        tmpPathsAdded[acceptableLocation.fileBridge.nativePath] = true;
+                    }
+                }
+
+                function checkIfRedundantRelativePath(file:FileLocation):Boolean {
+                    // this is particularly useful in case of Visual Editor type of project
+                    for each (var wrapper:FileWrapper in filesBelongsToProject.children) {
+                        if (file.fileBridge.nativePath.indexOf(wrapper.file.fileBridge.nativePath + file.fileBridge.separator) != -1) return true;
+                    }
+
+                    return false;
+                }
+            }
+        }
+
+        private function isProjectRelativePath(value:FileLocation):FileLocation {
+            // probable termination
+            if (!value || !value.fileBridge.exists) return null;
+
+            // sometime we want to get a file's parent directory
+            // and sometime not specially like a file .as3proj
+            if (!value.fileBridge.isDirectory) {
+                if (value.fileBridge.parent.fileBridge.nativePath != project.folderLocation.fileBridge.nativePath)
+                    value = value.fileBridge.parent;
+            }
+
+            // in two condition we don't add items to the list
+            // 1. item is located off-project-path
+            // 2. item is located inside project's source folder - because project source
+            // will be added as individual item
+            if (project is AS3ProjectVO) {
+                var as3Project:AS3ProjectVO = AS3ProjectVO(project);
+                if (value.fileBridge.nativePath.indexOf(project.folderLocation.fileBridge.nativePath + project.folderLocation.fileBridge.separator) != -1 &&
+                        value.fileBridge.nativePath.indexOf(as3Project.sourceFolder.fileBridge.nativePath + project.folderLocation.fileBridge.separator) == -1)
+                    return value;
+            } else {
+                if (value.fileBridge.nativePath.indexOf(project.folderLocation.fileBridge.nativePath + project.folderLocation.fileBridge.separator) != -1)
+                    return value;
+            }
+
+            return null;
+        }
+
+        private function getDirectoryName(item:Object):String {
+            if (item.file) return item.file.fileBridge.name;
+            else if (item.projectRef && item.projectRef.name) return item.projectRef.name;
+            return "NO INFORMATION";
+        }
+        ]]>
 	</fx:Script>
 	<fx:Declarations>
 		<mx:StringValidator id="sValidator" property="text"/>

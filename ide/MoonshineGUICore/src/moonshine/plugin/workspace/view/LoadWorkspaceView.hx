@@ -44,7 +44,7 @@ import feathers.core.InvalidationFlag;
 import openfl.events.Event;
 import feathers.events.TriggerEvent;
 import moonshine.plugin.workspace.events.WorkspaceEvent;
-import actionScripts.valueObjects.WorkspaceVO;
+import moonshine.valueObjects.WorkspaceVO;
 import actionScripts.events.GlobalEventDispatcher;
 
 class LoadWorkspaceView extends ResizableTitleWindow {

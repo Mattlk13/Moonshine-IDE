@@ -50,7 +50,7 @@ package actionScripts.ui.tabview
     import actionScripts.ui.tabNavigator.CloseTabButton;
     import actionScripts.utils.SharedObjectUtil;
     import actionScripts.valueObjects.ConstantsCoreVO;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
 
 	public class TabViewTab extends UIComponent
 	{	

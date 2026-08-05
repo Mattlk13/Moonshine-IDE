@@ -42,12 +42,12 @@ package actionScripts.plugins.ondiskproj.crud.exporter
 
 	import mx.collections.ArrayCollection;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.templating.TemplatingHelper;
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
 	import actionScripts.utils.UtilsCore;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.ResourceVO;
 
 	import utils.MoonshineBridgeUtils;

@@ -33,7 +33,7 @@
 package actionScripts.plugins.exportToRoyaleTemplatedApp.utils
 {
     
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 
 	public class ExportContext

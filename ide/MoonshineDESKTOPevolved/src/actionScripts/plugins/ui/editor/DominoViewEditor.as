@@ -33,7 +33,7 @@ package actionScripts.plugins.ui.editor
 {
     import actionScripts.ui.editor.BasicTextEditor;
     import actionScripts.plugins.help.view.DominoViewVisualEditor;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
 	
 	import view.suportClasses.events.PropertyEditorChangeEvent;
     

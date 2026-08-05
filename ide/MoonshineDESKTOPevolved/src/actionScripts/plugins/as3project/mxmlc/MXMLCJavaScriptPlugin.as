@@ -55,7 +55,7 @@ package actionScripts.plugins.as3project.mxmlc
 	
 	import actionScripts.events.RefreshTreeEvent;
 	import actionScripts.events.StatusBarEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.HelperModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.actionscript.mxmlc.MXMLCPluginEvent;
@@ -78,7 +78,7 @@ package actionScripts.plugins.as3project.mxmlc
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.SDKReferenceVO;
 	import actionScripts.valueObjects.Settings;
 	import actionScripts.valueObjects.WebBrowserVO;

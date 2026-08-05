@@ -32,7 +32,7 @@
 
 package actionScripts.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 import openfl.events.Event;
 

@@ -31,10 +31,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugins.java
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.plugins.build.ConsoleBuildPluginBase;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class JavaBuildPluginBase extends ConsoleBuildPluginBase
 	{

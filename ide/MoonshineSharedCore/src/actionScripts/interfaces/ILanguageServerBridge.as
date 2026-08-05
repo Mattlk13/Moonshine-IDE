@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.interfaces
 {
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.ui.editor.BasicTextEditor;
 	import actionScripts.plugin.ILanguageServerPlugin;
 

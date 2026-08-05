@@ -53,7 +53,7 @@ package actionScripts.plugins.swflauncher
 	import actionScripts.utils.FindAndCopyApplicationDescriptor;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.MobileDeviceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.Settings;
 	import flash.errors.IllegalOperationError;
 	import actionScripts.events.DebugActionEvent;

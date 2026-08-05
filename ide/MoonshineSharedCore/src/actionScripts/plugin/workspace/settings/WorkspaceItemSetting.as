@@ -32,7 +32,7 @@
 package actionScripts.plugin.workspace.settings
 {
 	import actionScripts.plugin.workspace.settings.renderer.WorkspaceItemSettingsRenderer;
-	import actionScripts.valueObjects.WorkspaceVO;
+	import moonshine.valueObjects.WorkspaceVO;
 
 	import mx.core.IVisualElement;
 	

@@ -41,7 +41,7 @@
         import actionScripts.valueObjects.AS3ClassAttributes;
 
         import mx.events.FlexEvent;
-        import actionScripts.factory.FileLocation;
+        import moonshine.factory.FileLocation;
 
         public var templateHaxeClass:FileLocation;
         public var templateHaxeInterface:FileLocation;

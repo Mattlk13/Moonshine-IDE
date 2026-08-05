@@ -42,7 +42,7 @@ package actionScripts.impls
 	import actionScripts.plugin.genericproj.vo.GenericProjectVO;
 	import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
 	import actionScripts.ui.editor.BasicTextEditor;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class ILanguageServerBridgeImp implements ILanguageServerBridge
 	{

@@ -32,7 +32,7 @@
 
 package actionScripts.plugin.core.sourcecontrol;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 
 interface ISourceControlProvider {
 	var systemNameShort(get, never):String;

@@ -51,13 +51,13 @@ package actionScripts.plugin.search
     import actionScripts.ui.IContentWindow;
     import actionScripts.ui.tabview.TabEvent;
     import actionScripts.valueObjects.ConstantsCoreVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
 
     import components.views.other.SearchInProjectView;
 	import feathers.data.ArrayCollection;
 	import mx.events.DynamicEvent;
 	import actionScripts.events.OpenFileEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.utils.TextUtil;
 	import flash.utils.setTimeout;
 	import flash.utils.clearTimeout;

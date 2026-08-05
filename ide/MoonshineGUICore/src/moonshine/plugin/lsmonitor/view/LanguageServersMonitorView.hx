@@ -36,7 +36,7 @@ package moonshine.plugin.lsmonitor.view;
 import moonshine.plugin.lsmonitor.vo.LanguageServerInstanceVO;
 import feathers.events.GridViewEvent;
 import moonshine.plugin.problems.vo.MoonshineDiagnostic;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.interfaces.IViewWithTitle;
 import feathers.controls.GridView;
 import feathers.controls.GridViewColumn;

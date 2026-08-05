@@ -36,7 +36,7 @@ package actionScripts.plugins.haxe
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class HaxeLanguageServerPlugin extends PluginBase implements ILanguageServerPlugin
 	{

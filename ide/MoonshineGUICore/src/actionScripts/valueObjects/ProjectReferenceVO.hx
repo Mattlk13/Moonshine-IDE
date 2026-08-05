@@ -35,7 +35,7 @@ package actionScripts.valueObjects;
 
 import flash.filesystem.File;
 import actionScripts.utils.FileUtils;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.locator.IDEModel;
 import haxe.DynamicAccess;
 #if flash

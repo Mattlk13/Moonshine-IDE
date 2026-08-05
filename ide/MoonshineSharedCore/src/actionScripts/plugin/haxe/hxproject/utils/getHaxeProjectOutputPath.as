@@ -32,7 +32,7 @@
 package actionScripts.plugin.haxe.hxproject.utils
 {
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public function getHaxeProjectOutputPath(project:HaxeProjectVO):String
 	{

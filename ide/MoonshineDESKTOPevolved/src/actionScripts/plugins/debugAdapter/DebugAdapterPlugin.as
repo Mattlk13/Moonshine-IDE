@@ -58,7 +58,7 @@ package actionScripts.plugins.debugAdapter
     import moonshine.dsp.DebugAdapterClient;
     import feathers.data.ArrayCollection;
     import actionScripts.events.OpenFileEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.ui.FeathersUIWrapper;
     import moonshine.plugin.debugadapter.view.DebugAdapterView;
 	import moonshine.plugin.debugadapter.data.CallStackHierarchicalCollection;

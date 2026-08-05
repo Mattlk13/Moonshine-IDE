@@ -41,7 +41,7 @@ package actionScripts.plugins.svn.commands
 	import flash.filesystem.File;
 	
 	import actionScripts.events.RefreshTreeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugins.svn.provider.SVNStatus;
 	
 	public class UpdateStatusCommand extends SVNCommandBase

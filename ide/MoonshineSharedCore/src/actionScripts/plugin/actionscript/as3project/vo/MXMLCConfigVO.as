@@ -33,7 +33,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 {
 	import __AS3__.vec.Vector;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.utils.SDKUtils;
 	import actionScripts.valueObjects.ConstantsCoreVO;

@@ -39,8 +39,8 @@ package actionScripts.impls
 	import flash.filesystem.FileStream;
 	import flash.net.FileFilter;
 	
-	import actionScripts.factory.FileLocation;
-	import actionScripts.interfaces.IFileBridge;
+	import moonshine.factory.FileLocation;
+	import moonshine.interfaces.IFileBridge;
 	import actionScripts.utils.TextUtil;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 

@@ -39,75 +39,70 @@
 		 horizontalCenter="0" verticalCenter="0">
 	<fx:Script>
 		<![CDATA[
-			import mx.core.UIComponent;
-			import mx.events.FlexEvent;
-			
-			import spark.utils.TextFlowUtil;
-			
-			import actionScripts.locator.IDEModel;
-			import actionScripts.valueObjects.ProjectVO;
-			
-			public var isAccepted:Boolean;
-			public var project:ProjectVO;
-			public var gitRootLocation:File;
-			
-			private function onJavaPathSetupPopupCreationComplete(event:FlexEvent):void
-			{
-				var closeButtonUIC:UIComponent = new UIComponent();
-				closeButtonUIC.width = closeButtonUIC.height = 27;
-				closeButtonUIC.right = 0;
-				
-				var closeButton:Sprite = new Sprite();
-				// Circle
-				closeButton.graphics.lineStyle(1, 0xFFFFFF, 0.8);
-				closeButton.graphics.beginFill(0x0, 0);
-				closeButton.graphics.drawCircle(14, 12, 6);
-				closeButton.graphics.endFill();
-				// X (\)
-				closeButton.graphics.lineStyle(2, 0xFFFFFF, 0.8, true);
-				closeButton.graphics.moveTo(12, 10);
-				closeButton.graphics.lineTo(16, 14);
-				// X (/)
-				closeButton.graphics.moveTo(16, 10);
-				closeButton.graphics.lineTo(12, 14);
-				// Hit area
-				closeButton.graphics.lineStyle(0, 0x0, 0);
-				closeButton.graphics.beginFill(0x0, 0);
-				closeButton.graphics.drawRect(0, 0, 27, 25);
-				closeButton.graphics.endFill();
-				
-				closeButton.addEventListener(MouseEvent.CLICK, closeButtonClickedRequest, false, 0, true);
-				closeButtonUIC.addChild(closeButton);
-				
-				addElement(closeButtonUIC);
-				
-				retUserMessage.textFlow = TextFlowUtil.importFromString("<p>Moonshine has detected that the project "+ project.name +" is part of a Git repository. However, the Apple Sandbox has blocked access to the root directory of this project, so Moonshine will not be able to erform any Git actions.<br/><br/>To enable the Git menu actions for this project, click <span fontWeight='bold'>Allow Access</span> below. Browse to the directory listed below and click \"Open\".<br/><br/><span fontWeight='bold'>"+ gitRootLocation.nativePath +"</span></p>");
-			}
-			
-			private function closeButtonClickedRequest(event:MouseEvent):void
-			{
-				closeButtonClicked(event);
-			}
-			
-			private function closeButtonClicked(event:MouseEvent):void
-			{
-				if (event) event.target.removeEventListener(MouseEvent.CLICK, closeButtonClicked);
-				dispatchEvent(new Event(Event.CLOSE));
-			}
-			
-			private function onAllowAccess(event:MouseEvent):void
-			{
-				var model:IDEModel = IDEModel.getInstance();
-				model.fileCore.browseForDirectory("Select Directory", onXCodeDirectorySelected, null, gitRootLocation.nativePath);
-			}
-			
-			private function onXCodeDirectorySelected(dir:Object):void
-			{
-				isAccepted = true;
-				closeButtonClicked(null);
-			}
+        import mx.core.UIComponent;
+        import mx.events.FlexEvent;
 
-		]]>
+        import spark.utils.TextFlowUtil;
+
+        import actionScripts.locator.IDEModel;
+
+        import moonshine.valueObjects.ProjectVO;
+
+        public var isAccepted:Boolean;
+        public var project:ProjectVO;
+        public var gitRootLocation:File;
+
+        private function onJavaPathSetupPopupCreationComplete(event:FlexEvent):void {
+            var closeButtonUIC:UIComponent = new UIComponent();
+            closeButtonUIC.width = closeButtonUIC.height = 27;
+            closeButtonUIC.right = 0;
+
+            var closeButton:Sprite = new Sprite();
+            // Circle
+            closeButton.graphics.lineStyle(1, 0xFFFFFF, 0.8);
+            closeButton.graphics.beginFill(0x0, 0);
+            closeButton.graphics.drawCircle(14, 12, 6);
+            closeButton.graphics.endFill();
+            // X (\)
+            closeButton.graphics.lineStyle(2, 0xFFFFFF, 0.8, true);
+            closeButton.graphics.moveTo(12, 10);
+            closeButton.graphics.lineTo(16, 14);
+            // X (/)
+            closeButton.graphics.moveTo(16, 10);
+            closeButton.graphics.lineTo(12, 14);
+            // Hit area
+            closeButton.graphics.lineStyle(0, 0x0, 0);
+            closeButton.graphics.beginFill(0x0, 0);
+            closeButton.graphics.drawRect(0, 0, 27, 25);
+            closeButton.graphics.endFill();
+
+            closeButton.addEventListener(MouseEvent.CLICK, closeButtonClickedRequest, false, 0, true);
+            closeButtonUIC.addChild(closeButton);
+
+            addElement(closeButtonUIC);
+
+            retUserMessage.textFlow = TextFlowUtil.importFromString("<p>Moonshine has detected that the project " + project.name + " is part of a Git repository. However, the Apple Sandbox has blocked access to the root directory of this project, so Moonshine will not be able to erform any Git actions.<br/><br/>To enable the Git menu actions for this project, click <span fontWeight='bold'>Allow Access</span> below. Browse to the directory listed below and click \"Open\".<br/><br/><span fontWeight='bold'>" + gitRootLocation.nativePath + "</span></p>");
+        }
+
+        private function closeButtonClickedRequest(event:MouseEvent):void {
+            closeButtonClicked(event);
+        }
+
+        private function closeButtonClicked(event:MouseEvent):void {
+            if (event) event.target.removeEventListener(MouseEvent.CLICK, closeButtonClicked);
+            dispatchEvent(new Event(Event.CLOSE));
+        }
+
+        private function onAllowAccess(event:MouseEvent):void {
+            var model:IDEModel = IDEModel.getInstance();
+            model.fileCore.browseForDirectory("Select Directory", onXCodeDirectorySelected, null, gitRootLocation.nativePath);
+        }
+
+        private function onXCodeDirectorySelected(dir:Object):void {
+            isAccepted = true;
+            closeButtonClicked(null);
+        }
+        ]]>
 	</fx:Script>
 	
 	<s:BorderContainer id="body" 

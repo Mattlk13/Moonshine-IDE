@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.java.javaproject.importer
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.core.importer.FlashDevelopImporterBase;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.utils.MavenPomUtil;

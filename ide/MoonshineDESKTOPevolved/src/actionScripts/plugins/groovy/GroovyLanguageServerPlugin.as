@@ -36,7 +36,7 @@ package actionScripts.plugins.groovy
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.groovy.grailsproject.vo.GrailsProjectVO;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class GroovyLanguageServerPlugin extends PluginBase implements ILanguageServerPlugin
 	{

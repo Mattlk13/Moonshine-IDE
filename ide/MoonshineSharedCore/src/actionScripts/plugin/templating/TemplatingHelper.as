@@ -34,7 +34,7 @@ package actionScripts.plugin.templating
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.TreeMenuItemEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.ui.menu.vo.ProjectMenuTypes;
 	import actionScripts.utils.TextUtil;

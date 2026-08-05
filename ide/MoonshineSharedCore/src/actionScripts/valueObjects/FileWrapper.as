@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.valueObjects
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.sourcecontrol.ISourceControlProvider;
 
 	//TODO: Take care of Bindable

@@ -51,7 +51,7 @@
 		import mx.managers.PopUpManager;
 
 		import actionScripts.events.NewFileEvent;
-		import actionScripts.factory.FileLocation;
+		import moonshine.factory.FileLocation;
 
 		import components.popup.NewProjectFilePathPopup;
 		import components.popup.NewProjectSourcePathPopup;

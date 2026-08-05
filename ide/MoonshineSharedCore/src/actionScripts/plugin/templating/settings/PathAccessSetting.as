@@ -33,10 +33,10 @@ package actionScripts.plugin.templating.settings
 {
 	import mx.core.IVisualElement;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.settings.vo.AbstractSetting;
 	import actionScripts.plugin.templating.settings.renderer.PathAccessRenderer;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	public class PathAccessSetting extends AbstractSetting
 	{

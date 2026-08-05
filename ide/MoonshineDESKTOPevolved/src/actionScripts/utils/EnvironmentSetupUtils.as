@@ -43,7 +43,7 @@ package actionScripts.utils
 	
 	import actionScripts.events.ApplicationEvent;
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import moonshine.haxeScripts.valueObjects.ComponentTypes;
 	import actionScripts.valueObjects.ConstantsCoreVO;

@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.valueObjects
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public interface IClasspathProject
 	{

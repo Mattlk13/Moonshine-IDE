@@ -42,7 +42,7 @@
 	</fx:Metadata>
 	<fx:Script>
 		<![CDATA[
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.locator.IDEModel;
 			import actionScripts.valueObjects.ConstantsCoreVO;
 			

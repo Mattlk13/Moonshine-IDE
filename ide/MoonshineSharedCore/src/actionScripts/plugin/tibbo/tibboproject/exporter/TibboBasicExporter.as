@@ -1,7 +1,7 @@
 package actionScripts.plugin.tibbo.tibboproject.exporter
 {
     import actionScripts.plugin.tibbo.tibboproject.vo.TibboBasicProjectVO;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.core.exporter.FlashDevelopExporterBase;
     import actionScripts.utils.SerializeUtil;
 

@@ -32,9 +32,9 @@
 
 package moonshine.ui.project;
 
-import actionScripts.factory.FileLocation;
-import actionScripts.valueObjects.ProjectVO;
-import actionScripts.valueObjects.WorkspaceVO;
+import moonshine.factory.FileLocation;
+import moonshine.valueObjects.ProjectVO;
+import moonshine.valueObjects.WorkspaceVO;
 import moonshine.data.ProjectTreeViewCollection;
 import moonshine.events.ProjectTreeViewCollectionEvent;
 import moonshine.events.ProjectTreeViewEvent;

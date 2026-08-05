@@ -35,7 +35,7 @@ package actionScripts.plugin.haxe.hxproject.importer
 	import flash.filesystem.FileMode;
 	import flash.filesystem.FileStream;
 
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.core.importer.FlashDevelopImporterBase;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeOutputVO;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;

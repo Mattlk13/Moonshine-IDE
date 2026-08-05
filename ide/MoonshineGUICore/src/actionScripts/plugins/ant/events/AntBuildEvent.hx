@@ -32,7 +32,7 @@
 
 package actionScripts.plugins.ant.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import openfl.events.Event;
 
 class AntBuildEvent extends Event {

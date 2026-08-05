@@ -32,7 +32,7 @@
 package actionScripts.plugins.debugAdapter.events
 {
 	import flash.events.Event;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class DebugAdapterEvent extends Event
 	{

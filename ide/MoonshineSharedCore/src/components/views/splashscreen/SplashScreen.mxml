@@ -61,7 +61,7 @@
 			import actionScripts.events.ProjectEvent;
 			import actionScripts.events.SdkEvent;
 			import actionScripts.events.SettingsEvent;
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.locator.IDEModel;
 			import actionScripts.plugin.actionscript.as3project.vo.MXMLProjectVO;
 			import actionScripts.plugin.recentlyOpened.RecentlyOpenedPlugin;

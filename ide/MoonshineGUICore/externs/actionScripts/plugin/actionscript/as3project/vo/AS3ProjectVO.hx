@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.actionscript.as3project.vo;
 
-import actionScripts.valueObjects.ProjectVO;
-import actionScripts.factory.FileLocation;
+import moonshine.valueObjects.ProjectVO;
+import moonshine.factory.FileLocation;
 import openfl.Vector;
 
 extern class AS3ProjectVO extends ProjectVO {

@@ -33,7 +33,7 @@
 package moonshine.plugin.workspace.events;
 
 import openfl.events.Event;
-import actionScripts.valueObjects.WorkspaceVO;
+import moonshine.valueObjects.WorkspaceVO;
 
 class WorkspaceEvent extends Event 
 {

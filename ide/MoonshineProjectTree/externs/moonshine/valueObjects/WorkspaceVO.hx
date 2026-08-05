@@ -30,14 +30,11 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-package actionScripts.valueObjects;
 
-import actionScripts.factory.FileLocation;
+package moonshine.valueObjects;
 
-extern class ProjectVO {
-	public var folderLocation:FileLocation;
-	public var folderPath:String;
-	public var sourceFolder:FileLocation;
-	
-	public function new(folder:FileLocation, ?projectName:String=null, ?updateToTreeView:Bool=true);
+import openfl.events.EventDispatcher;
+
+extern class WorkspaceVO extends EventDispatcher {
+    @:flash.property public var label(get, set):String;
 }

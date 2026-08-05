@@ -33,7 +33,7 @@ package actionScripts.ui.editor
 {
 	import mx.containers.Canvas;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.ui.IContentWindow;
 	import actionScripts.valueObjects.ConstantsCoreVO;

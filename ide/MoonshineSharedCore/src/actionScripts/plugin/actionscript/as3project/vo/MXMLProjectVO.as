@@ -33,7 +33,7 @@ package actionScripts.plugin.actionscript.as3project.vo
 {
 	import __AS3__.vec.Vector;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.settings.PathListSetting;
 	import actionScripts.plugin.settings.vo.BooleanSetting;
 	import actionScripts.plugin.settings.vo.ColorSetting;

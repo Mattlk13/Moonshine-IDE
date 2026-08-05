@@ -43,7 +43,7 @@ package actionScripts.utils
 	
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.settings.vo.ISetting;
 	import actionScripts.plugin.settings.vo.StaticLabelSetting;
@@ -51,7 +51,7 @@ package actionScripts.utils
 	import actionScripts.ui.IContentWindow;
 	import actionScripts.ui.tabview.CloseTabEvent;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	import components.popup.DefineWorkspacePopup;
 

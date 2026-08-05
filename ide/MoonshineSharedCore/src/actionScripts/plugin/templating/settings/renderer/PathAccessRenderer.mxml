@@ -51,7 +51,7 @@
 			import mx.events.ResizeEvent;
 			import mx.events.ToolTipEvent;
 			
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.locator.IDEModel;
 			import actionScripts.plugin.templating.settings.PathAccessSetting;
 			import actionScripts.utils.UtilsCore;

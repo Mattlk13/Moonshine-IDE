@@ -32,7 +32,7 @@
 package actionScripts.ui.editor;
 
 import moonshine.editor.text.TextEditor;
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 
 extern class BasicTextEditor {
 

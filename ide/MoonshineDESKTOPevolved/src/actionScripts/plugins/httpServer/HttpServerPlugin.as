@@ -32,12 +32,12 @@
 package actionScripts.plugins.httpServer
 {
 	import actionScripts.events.SettingsEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugins.build.ConsoleBuildPluginBase;
 	import actionScripts.plugins.httpServer.events.HttpServerEvent;
 	import actionScripts.utils.UtilsCore;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.desktop.NativeProcess;
 	import flash.desktop.NativeProcessStartupInfo;

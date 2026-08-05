@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.templating;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.plugin.settings.ISettingsProvider;
 
 extern class TemplatingPlugin extends PluginBase implements ISettingsProvider implements IMenuPlugin {

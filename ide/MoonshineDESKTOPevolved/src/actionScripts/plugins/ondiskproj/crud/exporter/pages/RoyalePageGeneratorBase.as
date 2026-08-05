@@ -37,10 +37,10 @@ package actionScripts.plugins.ondiskproj.crud.exporter.pages
 	import flash.events.EventDispatcher;
 	import flash.filesystem.File;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
 	import actionScripts.utils.FileUtils;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.net.registerClassAlias;
 

@@ -36,11 +36,11 @@ package actionScripts.locator
 	import mx.collections.ArrayCollection;
 	import mx.core.IFlexDisplayObject;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IAboutBridge;
 	import actionScripts.interfaces.IClipboardBridge;
 	import actionScripts.interfaces.IContextMenuBridge;
-	import actionScripts.interfaces.IFileBridge;
+	import moonshine.interfaces.IFileBridge;
 	import actionScripts.interfaces.IFlexCoreBridge;
 	import actionScripts.interfaces.ILanguageServerBridge;
 	import actionScripts.interfaces.IOSXBookmarkerBridge;
@@ -49,7 +49,7 @@ package actionScripts.locator
 	import actionScripts.ui.IContentWindow;
 	import actionScripts.ui.MainView;
 	import actionScripts.utils.NoSDKNotifier;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	[Bindable] public class IDEModel
 	{

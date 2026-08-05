@@ -50,7 +50,7 @@ package actionScripts.plugin.genericproj
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.NewProjectEvent;
     import actionScripts.events.OnDiskBuildEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.project.ProjectTemplateType;
     import actionScripts.plugin.project.ProjectType;
@@ -62,7 +62,7 @@ package actionScripts.plugin.genericproj
     import components.popup.newFile.NewOnDiskFilePopup;
     import actionScripts.plugin.IProjectTypePlugin;
     import actionScripts.plugin.genericproj.importer.GenericProjectImporter;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.ui.menu.vo.MenuItem;
     import mx.resources.ResourceManager;
     import mx.resources.IResourceManager;

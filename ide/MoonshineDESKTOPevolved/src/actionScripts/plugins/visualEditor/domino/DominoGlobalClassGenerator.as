@@ -2,7 +2,7 @@ package actionScripts.plugins.visualEditor.domino
 {
 	import actionScripts.plugins.ondiskproj.crud.exporter.pages.GlobalClassGenerator;
 	import actionScripts.plugins.ondiskproj.crud.exporter.settings.RoyaleCRUDClassReferenceSettings;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class DominoGlobalClassGenerator extends GlobalClassGenerator
 	{

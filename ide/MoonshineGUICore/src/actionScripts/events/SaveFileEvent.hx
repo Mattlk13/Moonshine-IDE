@@ -32,7 +32,7 @@
 
 package actionScripts.events;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.ui.editor.BasicTextEditor;
 import openfl.events.Event;
 

@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.utils
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	import flash.events.Event;
     import flash.events.EventDispatcher;
@@ -43,7 +43,7 @@ package actionScripts.utils
     import actionScripts.events.GlobalEventDispatcher;
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.ProjectEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.RoyaleOutputTarget;

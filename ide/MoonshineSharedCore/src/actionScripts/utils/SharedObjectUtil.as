@@ -39,14 +39,14 @@ package actionScripts.utils
     import mx.collections.SortField;
     import mx.utils.ObjectUtil;
     
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.ui.IContentWindow;
     import actionScripts.ui.IFileContentWindow;
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.FileWrapper;
     import actionScripts.valueObjects.ProjectReferenceVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.RepositoryItemVO;
     import actionScripts.valueObjects.VersionControlTypes;
 

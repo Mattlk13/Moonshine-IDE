@@ -46,7 +46,7 @@ package actionScripts.plugins.startup
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.SdkEvent;
 	import actionScripts.events.StartupHelperEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.impls.IHelperMoonshineBridgeImp;
 	import actionScripts.managers.InstallerItemsManager;
 	import actionScripts.plugin.IPlugin;

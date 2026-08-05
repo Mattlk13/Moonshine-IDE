@@ -31,8 +31,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.core.exporter
 {
-	import actionScripts.factory.FileLocation;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.factory.FileLocation;
+	import moonshine.valueObjects.ProjectVO;
 	
 	public class FlashDevelopExporterBase
 	{

@@ -49,7 +49,7 @@ package actionScripts.ui.editor
     import actionScripts.events.RefreshTreeEvent;
     import actionScripts.events.SaveFileEvent;
     import actionScripts.events.UpdateTabEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.locator.IDEModel;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.console.ConsoleOutputEvent;
@@ -65,7 +65,7 @@ package actionScripts.ui.editor
     import actionScripts.ui.tabview.TabEvent;
     import actionScripts.utils.SharedObjectUtil;
     import actionScripts.valueObjects.ConstantsCoreVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.Settings;
     import actionScripts.valueObjects.URLDescriptorVO;
 

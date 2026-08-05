@@ -34,7 +34,7 @@ package actionScripts.plugins.royale
 	import actionScripts.events.RefreshTreeEvent;
 	import actionScripts.events.RoyaleApiReportEvent;
 	import actionScripts.events.WorkerEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IWorkerSubscriber;
 	import actionScripts.locator.IDEWorker;
 	import actionScripts.plugin.IPlugin;

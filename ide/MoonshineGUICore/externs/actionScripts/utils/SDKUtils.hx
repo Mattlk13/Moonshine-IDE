@@ -32,7 +32,7 @@
 
 package actionScripts.utils;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.valueObjects.SDKReferenceVO;
 
 extern class SDKUtils {

@@ -30,11 +30,58 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-package actionScripts.factory;
+package moonshine.interfaces;
 
-import actionScripts.interfaces.IFileBridge;
-import openfl.events.EventDispatcher;
+import moonshine.factory.FileLocation;
 
-extern class FileLocation extends EventDispatcher {
-	public var fileBridge:IFileBridge;
+extern interface IFileBridge {
+	@:flash.property
+	public var url(get, set):String;
+
+	@:flash.property
+	public var nativeURL(get, set):String;
+
+	@:flash.property
+	public var nativePath(get, set):String;
+
+	@:flash.property
+	public var extension(get, never):String;
+
+	@:flash.property
+	public var name(get, never):String;
+
+	@:flash.property
+	public var nameWithoutExtension(get, never):String;
+
+	@:flash.property
+	public var parent(get, never):FileLocation;
+
+	@:flash.property
+	public var exists(get, never):Bool;
+
+	@:flash.property
+	public var isDirectory(get, never):Bool;
+
+	@:flash.property
+	public var isHidden(get, never):Bool;
+
+	@:flash.property
+	public var separator(get, never):String;
+
+	public function read():Dynamic;
+
+	public function canonicalize():Void;
+
+	public function resolvePath(path:String, toRelativePath:String = null):FileLocation;
+
+	public function browseForDirectory(title:String, selectListener:(file:Any) -> Void, ?cancelListener:() -> Void, ?startFromLocation:String):Void;
+
+	public function getRelativePath(ref:FileLocation, useDotDot:Bool = false):String;
+
+	public function isPathExists(value:String):Bool;
+
+	public function openWithDefaultApplication():Void;
+
+	function getDirectoryListingAsync(successHandler:(output:Array<FileLocation>) -> Void, ?errorHandler:(error:String) -> Void):Void;
+
 }

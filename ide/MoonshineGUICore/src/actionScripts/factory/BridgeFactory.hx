@@ -36,7 +36,7 @@ import actionScripts.impls.INativeMenuItemBridgeImp;
 import actionScripts.interfaces.IAboutBridge;
 import actionScripts.interfaces.IClipboardBridge;
 import actionScripts.interfaces.IContextMenuBridge;
-import actionScripts.interfaces.IFileBridge;
+import moonshine.interfaces.IFileBridge;
 import actionScripts.interfaces.IFlexCoreBridge;
 import actionScripts.interfaces.IProjectBridge;
 import actionScripts.interfaces.ILanguageServerBridge;

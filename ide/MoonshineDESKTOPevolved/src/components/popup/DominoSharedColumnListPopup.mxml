@@ -46,17 +46,17 @@
 	<fx:Script>
 		<![CDATA[
         import actionScripts.events.SettingsEvent;
-		import actionScripts.locator.IDEModel;
+        import actionScripts.locator.IDEModel;
         import actionScripts.plugins.vagrant.VagrantPlugin;
         import actionScripts.plugins.vagrant.utils.VagrantUtil;
         import actionScripts.plugins.vagrant.vo.VagrantInstanceState;
         import actionScripts.plugins.vagrant.vo.VagrantInstanceVO;
         import actionScripts.utils.FileUtils;
         import actionScripts.valueObjects.FileWrapper;
-        import actionScripts.factory.FileLocation;
+        import moonshine.factory.FileLocation;
         import actionScripts.utils.UtilsCore;
 
-		import mx.collections.ArrayCollection;
+        import mx.collections.ArrayCollection;
 
         import mx.events.FlexEvent;
         import mx.events.ListEvent;
@@ -66,130 +66,124 @@
         import mx.validators.Validator;
 
         import spark.components.Alert;
+
         import mx.collections.ArrayCollection;
 
-        import actionScripts.valueObjects.ProjectVO;
+        import moonshine.valueObjects.ProjectVO;
+
         import view.suportClasses.events.DominoViewSharedColumnAppendEvent;
-        
+
         import actionScripts.utils.TextUtil;
+
         import utils.GenericUtils;
-        
+
         public static const EVENT_COLUMN_INSERT:String = "sharedColumnInster";
-        [Bindable] private var sharedColumnCollection:ArrayCollection = new ArrayCollection();
+        [Bindable]
+        private var sharedColumnCollection:ArrayCollection = new ArrayCollection();
 
 
         [Bindable]
-		public var wrapperBelongToProject:ProjectVO;
-        private var  isSubmitButtonEnabled:Boolean = false;
-        private var  isDominoValid:Boolean = false;
+        public var wrapperBelongToProject:ProjectVO;
+        private var isSubmitButtonEnabled:Boolean = false;
+        private var isDominoValid:Boolean = false;
         public var wrapperOfSelectedSharedColumn:FileWrapper;
         public var selectedSharedColumnNativePath:String;
         [Bindable]
         protected var model:IDEModel = IDEModel.getInstance();
-       
-        private  var dominosharedColumnFolderPath:String ;
-        private  var dominosharedColumnFolderFileLocation:FileLocation;
-        private  var dominosharedColumnFolderFileWraper:FileWrapper ;
-        private  var warningMessage:String="";
+
+        private var dominosharedColumnFolderPath:String;
+        private var dominosharedColumnFolderFileLocation:FileLocation;
+        private var dominosharedColumnFolderFileWraper:FileWrapper;
+        private var warningMessage:String = "";
         // public function DominoSharedColumnListPopup(fw:FileWrapper):ResizableTitleWindow
         // {
-            
+
         // }
-       public function initializeColumnList(file:File):void
-       {
-        var viewFilePath:String="Views"+model.fileCore.separator+file.name;
-        var sharedColumnFilePath:String="SharedElements"+model.fileCore.separator+"Columns"+model.fileCore.separator+file.name;
-        var parentPath:String
-        if(file.nativePath.indexOf(viewFilePath)>0){
-            parentPath =file.nativePath.replace(viewFilePath,"");
-        }else{
-            parentPath =file.nativePath.replace(sharedColumnFilePath,"");
-        }
-        
-        dominosharedColumnFolderPath=parentPath+"SharedElements"+model.fileCore.separator+"Columns";
-        dominosharedColumnFolderFileLocation= new FileLocation(dominosharedColumnFolderPath);
-        dominosharedColumnFolderFileWraper = new FileWrapper(dominosharedColumnFolderFileLocation, true, null, false);
-        var dominosharedColumnFile:File=new File(dominosharedColumnFolderPath);
-
-        var directory:Array = dominosharedColumnFile.getDirectoryListing();
-
-        for each (var f:File in directory)
-        {
-            if(UtilsCore.endsWith(f.nativePath,"column")){
-                var childFileLocation:FileLocation = new FileLocation(f.nativePath);
-                var childFileWraper:FileWrapper = new FileWrapper(childFileLocation);
-                var n:String=TextUtil.toDominoViewNormalName(childFileWraper.name);
-                n=n.substring(0,n.length-7) ;
-                childFileWraper.defaultName=n;
-
-                
-               
-                sharedColumnCollection.addItem(childFileWraper);
+        public function initializeColumnList(file:File):void {
+            var viewFilePath:String = "Views" + model.fileCore.separator + file.name;
+            var sharedColumnFilePath:String = "SharedElements" + model.fileCore.separator + "Columns" + model.fileCore.separator + file.name;
+            var parentPath:String
+            if (file.nativePath.indexOf(viewFilePath) > 0) {
+                parentPath = file.nativePath.replace(viewFilePath, "");
+            } else {
+                parentPath = file.nativePath.replace(sharedColumnFilePath, "");
             }
+
+            dominosharedColumnFolderPath = parentPath + "SharedElements" + model.fileCore.separator + "Columns";
+            dominosharedColumnFolderFileLocation = new FileLocation(dominosharedColumnFolderPath);
+            dominosharedColumnFolderFileWraper = new FileWrapper(dominosharedColumnFolderFileLocation, true, null, false);
+            var dominosharedColumnFile:File = new File(dominosharedColumnFolderPath);
+
+            var directory:Array = dominosharedColumnFile.getDirectoryListing();
+
+            for each (var f:File in directory) {
+                if (UtilsCore.endsWith(f.nativePath, "column")) {
+                    var childFileLocation:FileLocation = new FileLocation(f.nativePath);
+                    var childFileWraper:FileWrapper = new FileWrapper(childFileLocation);
+                    var n:String = TextUtil.toDominoViewNormalName(childFileWraper.name);
+                    n = n.substring(0, n.length - 7);
+                    childFileWraper.defaultName = n;
+
+
+                    sharedColumnCollection.addItem(childFileWraper);
+                }
+            }
+
+            sharedColumnCollection = GenericUtils.arrayCollectionSort(sharedColumnCollection, "defaultName", false);
+
+
         }
 
-        sharedColumnCollection=GenericUtils.arrayCollectionSort(sharedColumnCollection,"defaultName",false);
-
-      					
-        
-       }
-        protected function onCreationCompletes(event:FlexEvent):void
-        {
-           tree.callLater(parseFolders);
+        protected function onCreationCompletes(event:FlexEvent):void {
+            tree.callLater(parseFolders);
         }
 
-        protected function parseFolders():void
-        {
+        protected function parseFolders():void {
             tree.expandItem(dominosharedColumnFolderFileWraper, true);
             UtilsCore.wrappersFoundThroughFindingAWrapper = new Vector.<FileWrapper>();
-			UtilsCore.findFileWrapperInDepth(dominosharedColumnFolderFileWraper, dominosharedColumnFolderFileWraper.nativePath);
+            UtilsCore.findFileWrapperInDepth(dominosharedColumnFolderFileWraper, dominosharedColumnFolderFileWraper.nativePath);
             //treeScrollToCorrectPostion();
         }
 
 
-        private function treeScrollToCorrectPostion():void 
-        {
+        private function treeScrollToCorrectPostion():void {
             var wrappers:Vector.<FileWrapper> = UtilsCore.wrappersFoundThroughFindingAWrapper;
 
 
-                tree.callLater(function ():void
-                {
-                
-                    
-                    for (var j:int = 0; j < (wrappers.length - 1); j++)
-                    {
-                        tree.expandItem(wrappers[j], true);
-                    }
-    
-                  
-                });
+            tree.callLater(function ():void {
+
+
+                for (var j:int = 0; j < (wrappers.length - 1); j++) {
+                    tree.expandItem(wrappers[j], true);
+                }
+
+
+            });
         }
 
-        protected function onTreeItemClicked(event:ListEvent):void
-        {
-            
+        protected function onTreeItemClicked(event:ListEvent):void {
+
             //get the domino project form folder value:
-           if( tree.selectedItem){
-            var currentPath:String = tree.selectedItem.nativePath;
-            txtDestination.text = tree.selectedItem.defaultName;
-            isSubmitButtonEnabled=true;
-            btnSubmit.enabled=true;
-           }else{
-             isSubmitButtonEnabled=false;
-             btnSubmit.enabled=false;
-           }
+            if (tree.selectedItem) {
+                var currentPath:String = tree.selectedItem.nativePath;
+                txtDestination.text = tree.selectedItem.defaultName;
+                isSubmitButtonEnabled = true;
+                btnSubmit.enabled = true;
+            } else {
+                isSubmitButtonEnabled = false;
+                btnSubmit.enabled = false;
+            }
             wrapperOfSelectedSharedColumn = tree.selectedItem as FileWrapper;
-            selectedSharedColumnNativePath=tree.selectedItem.nativePath;
-            
-            
+            selectedSharedColumnNativePath = tree.selectedItem.nativePath;
+
+
         }
 
-        private function onInsert():void 
-        {
-             var tmpEvent:DominoViewSharedColumnAppendEvent = new DominoViewSharedColumnAppendEvent(DominoViewSharedColumnAppendEvent.SHARED_COLUMN_APPEND, selectedSharedColumnNativePath, true,true);
-                dispatchEvent(tmpEvent);
-                super.closeThis();
-            
+        private function onInsert():void {
+            var tmpEvent:DominoViewSharedColumnAppendEvent = new DominoViewSharedColumnAppendEvent(DominoViewSharedColumnAppendEvent.SHARED_COLUMN_APPEND, selectedSharedColumnNativePath, true, true);
+            dispatchEvent(tmpEvent);
+            super.closeThis();
+
         }
         ]]>
 	</fx:Script>

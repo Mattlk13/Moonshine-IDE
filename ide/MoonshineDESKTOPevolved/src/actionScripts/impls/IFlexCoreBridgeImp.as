@@ -49,7 +49,7 @@ package actionScripts.impls
 	import actionScripts.ui.IContentWindow;
 import actionScripts.utils.PathSetupHelperUtil;
 import actionScripts.valueObjects.HelperConstants;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import flash.desktop.NativeApplication;
 	import flash.display.DisplayObject;
@@ -73,7 +73,7 @@ import actionScripts.valueObjects.HelperConstants;
 	import actionScripts.events.RenameEvent;
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StartupHelperEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IFlexCoreBridge;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.interfaces.IModulesFinder;

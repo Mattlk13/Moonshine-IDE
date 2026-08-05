@@ -38,12 +38,12 @@ package actionScripts.plugin.findResources
 	import mx.managers.PopUpManager;
 	
 	import actionScripts.events.OpenFileEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.ui.FeathersUIWrapper;
 	import actionScripts.utils.FileSystemParser;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	import feathers.data.ArrayCollection;
 	

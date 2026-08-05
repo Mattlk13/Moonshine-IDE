@@ -51,7 +51,7 @@ package actionScripts.plugins.domino
 	
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StatusBarEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.actionscript.as3project.settings.SimpleInformationOnlySetting;
 	import actionScripts.plugin.ondiskproj.exporter.OnDiskMavenSettingsExporter;
 	import actionScripts.plugin.settings.ISettingsProvider;

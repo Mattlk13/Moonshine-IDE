@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.utils
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	import moonshine.editor.text.TextEditor;
 	import moonshine.editor.text.changes.TextEditorChange;

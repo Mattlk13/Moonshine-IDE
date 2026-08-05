@@ -37,7 +37,7 @@ package actionScripts.plugin.organizeImports
 	import actionScripts.events.LanguageServerMenuEvent;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.valueObjects.ConstantsCoreVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.utils.getProjectForUri;
 	import actionScripts.ui.editor.LanguageServerTextEditor;
 

@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.java.javaproject.exporter
 {
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.build.vo.BuildActionVO;
     import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
     import actionScripts.utils.MavenPomUtil;

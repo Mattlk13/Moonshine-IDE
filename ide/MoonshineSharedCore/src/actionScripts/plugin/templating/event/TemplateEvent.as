@@ -33,7 +33,7 @@ package actionScripts.plugin.templating.event
 {
 	import flash.events.Event;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	
 	public class TemplateEvent extends Event
 	{

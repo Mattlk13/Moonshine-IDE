@@ -50,7 +50,7 @@ import flash.display.DisplayObject;
 	import actionScripts.events.ProjectEvent;
 	import actionScripts.events.StatusBarEvent;
 	import actionScripts.events.WorkerEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEWorker;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
@@ -63,7 +63,7 @@ import flash.display.DisplayObject;
 	import actionScripts.utils.FileCoreUtil;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.GenericSelectableObject;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	import components.popup.NativeExtensionMessagePopup;
 	import components.popup.OpenFlexProject;

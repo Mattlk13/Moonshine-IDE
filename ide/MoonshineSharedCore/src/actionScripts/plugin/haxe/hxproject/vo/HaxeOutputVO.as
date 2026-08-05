@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.haxe.hxproject.vo
 {
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.utils.SerializeUtil;
 	import actionScripts.utils.TextUtil;
 	import actionScripts.utils.UtilsCore;

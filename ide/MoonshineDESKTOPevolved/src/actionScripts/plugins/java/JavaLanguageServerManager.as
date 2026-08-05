@@ -66,7 +66,7 @@ package actionScripts.plugins.java
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StatusBarEvent;
 	import actionScripts.events.WatchedFileChangeEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.languageServer.ILanguageServerManager;
 	import actionScripts.languageServer.LanguageClientUtil;
 	import actionScripts.languageServer.LanguageServerGlobals;
@@ -87,7 +87,7 @@ package actionScripts.plugins.java
 	import actionScripts.utils.isUriInProject;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.EnvironmentExecPaths;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.Settings;
 
 	import com.adobe.utils.StringUtil;

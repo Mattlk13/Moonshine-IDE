@@ -35,7 +35,7 @@ package actionScripts.events
 
     import flash.events.Event;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 
 	public class NewProjectEvent extends Event
 	{

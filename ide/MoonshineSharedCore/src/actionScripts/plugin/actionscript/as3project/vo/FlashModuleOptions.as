@@ -37,7 +37,7 @@ package actionScripts.plugin.actionscript.as3project.vo
     
     import actionScripts.events.ASModulesEvent;
     import actionScripts.events.GlobalEventDispatcher;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.interfaces.IModulesFinder;
     import actionScripts.locator.IDEModel;
     import actionScripts.plugin.actionscript.as3project.settings.ModuleListSetting;

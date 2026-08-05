@@ -33,14 +33,14 @@ package actionScripts.plugins.build
 {
 	import flash.filesystem.File;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.haxe.hxproject.vo.HaxeProjectVO;
 	import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;
 	import actionScripts.utils.OSXBookmarkerNotifiers;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class CompilerPluginBase extends PluginBase implements IPlugin
 	{

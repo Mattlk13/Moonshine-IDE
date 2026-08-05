@@ -42,7 +42,7 @@ package actionScripts.plugin.actionscript.as3project.files
 	
 	import actionScripts.events.GeneralEvent;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.core.compiler.ActionScriptBuildEvent;

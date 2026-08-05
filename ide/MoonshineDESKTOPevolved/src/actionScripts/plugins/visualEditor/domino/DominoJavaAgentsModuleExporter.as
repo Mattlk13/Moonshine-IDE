@@ -36,7 +36,7 @@ package actionScripts.plugins.visualEditor.domino
 	import flash.filesystem.File;
 	import interfaces.ISurface;
 
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import view.dominoFormBuilder.utils.FormBuilderCodeUtils;
 

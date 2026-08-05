@@ -31,7 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 package actionScripts.plugin.templating;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 
 extern class TemplatingHelper {
     public static function getTemplateLabel(template:FileLocation):String;

@@ -41,7 +41,7 @@ package actionScripts.plugins.ui.editor.dominoFormBuilder
 	import spark.components.Group;
 	
 	import actionScripts.events.GlobalEventDispatcher;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.impls.IDominoFormBuilderLibraryBridgeImp;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.console.ConsoleOutputEvent;

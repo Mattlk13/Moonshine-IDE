@@ -32,7 +32,7 @@
 
 package actionScripts.valueObjects;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 #if flash
 import flash.Vector;
 #else

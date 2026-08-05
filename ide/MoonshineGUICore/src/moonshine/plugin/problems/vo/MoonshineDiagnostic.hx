@@ -33,8 +33,8 @@
 
 package moonshine.plugin.problems.vo;
 
-import actionScripts.valueObjects.ProjectVO;
-import actionScripts.factory.FileLocation;
+import moonshine.valueObjects.ProjectVO;
+import moonshine.factory.FileLocation;
 import moonshine.lsp.Diagnostic;
 
 class MoonshineDiagnostic extends Diagnostic {

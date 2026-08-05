@@ -33,8 +33,8 @@ package actionScripts.plugins.as3project.mxmlc
 {
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugins.build.CompilerPluginBase;
-	import actionScripts.factory.FileLocation;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.factory.FileLocation;
+	import moonshine.valueObjects.ProjectVO;
 
 	public class MXMLCPluginBase extends CompilerPluginBase
 	{

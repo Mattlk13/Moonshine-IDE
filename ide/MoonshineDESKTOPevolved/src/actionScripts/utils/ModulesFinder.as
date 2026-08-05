@@ -35,7 +35,7 @@ package actionScripts.utils
 	import flash.events.NativeProcessExitEvent;
 	import flash.events.ProgressEvent;
 	
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.IModulesFinder;
 	import actionScripts.plugins.build.ConsoleBuildPluginBase;
 	import actionScripts.valueObjects.ConstantsCoreVO;

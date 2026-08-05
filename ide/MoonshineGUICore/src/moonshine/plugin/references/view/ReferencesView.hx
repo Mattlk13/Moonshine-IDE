@@ -33,7 +33,7 @@
 
 package moonshine.plugin.references.view;
 
-import actionScripts.factory.FileLocation;
+import moonshine.factory.FileLocation;
 import actionScripts.interfaces.IViewWithTitle;
 import feathers.controls.LayoutGroup;
 import feathers.controls.ListView;

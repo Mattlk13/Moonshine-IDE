@@ -35,7 +35,7 @@ package actionScripts.utils
 	import mx.controls.Alert;
 	import mx.utils.StringUtil;
 	import actionScripts.locator.IDEModel;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import mx.utils.Base64Encoder;
     import mx.utils.Base64Decoder;
     import flash.utils.ByteArray;

@@ -37,12 +37,12 @@ package actionScripts.controllers
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.OpenFileEvent;
 	import actionScripts.events.OpenLocationEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.interfaces.ILanguageServerBridge;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.ui.editor.BasicTextEditor;
 	import moonshine.editor.text.TextEditor;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 
 	import moonshine.lsp.Location;
 	import moonshine.lsp.LocationLink;

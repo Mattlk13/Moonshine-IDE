@@ -53,7 +53,7 @@ import feathers.layout.AnchorLayoutData;
 import feathers.controls.LayoutGroup;
 import moonshine.ui.ResizableTitleWindow;
 import openfl.events.Event;
-import actionScripts.valueObjects.WorkspaceVO;
+import moonshine.valueObjects.WorkspaceVO;
 import feathers.events.TriggerEvent;
 import moonshine.theme.assets.ExclamationRedIcon;
 import actionScripts.events.GlobalEventDispatcher;

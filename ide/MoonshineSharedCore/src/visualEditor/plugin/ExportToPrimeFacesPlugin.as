@@ -36,7 +36,7 @@ package visualEditor.plugin
     
     import actionScripts.events.AddTabEvent;
     import actionScripts.events.ExportVisualEditorProjectEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
     import actionScripts.plugin.settings.SettingsView;

@@ -47,7 +47,7 @@ package actionScripts.plugins.grails
     import actionScripts.events.SettingsEvent;
     import actionScripts.events.ShowSettingsEvent;
     import actionScripts.events.StatusBarEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.interfaces.ICustomCommandRunProvider;
     import actionScripts.plugin.actionscript.as3project.vo.GradleBuildOptions;
     import actionScripts.plugin.actionscript.as3project.vo.GrailsBuildOptions;
@@ -67,7 +67,7 @@ package actionScripts.plugins.grails
     import actionScripts.valueObjects.ConstantsCoreVO;
     import actionScripts.valueObjects.EnvironmentExecPaths;
     import actionScripts.valueObjects.EnvironmentUtilsCusomSDKsVO;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.valueObjects.Settings;
     import actionScripts.plugin.console.ConsoleEvent;
     import actionScripts.plugin.java.javaproject.vo.JavaProjectVO;

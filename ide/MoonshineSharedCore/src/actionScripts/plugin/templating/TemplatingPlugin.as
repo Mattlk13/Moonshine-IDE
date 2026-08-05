@@ -60,7 +60,7 @@ package actionScripts.plugin.templating
 	import actionScripts.events.RenameApplicationEvent;
 	import actionScripts.events.TemplatingEvent;
 	import actionScripts.events.TreeMenuItemEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IMenuPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
@@ -83,7 +83,7 @@ package actionScripts.plugin.templating
 	import actionScripts.valueObjects.AS3ClassAttributes;
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.FileWrapper;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.TemplateVO;
 	
 	import components.popup.newFile.NewASFilePopup;

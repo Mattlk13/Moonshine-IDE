@@ -106,7 +106,7 @@
 					<s:ItemRenderer minHeight="25">
 						<fx:Script>
 							<![CDATA[
-								import actionScripts.factory.FileLocation;
+								import moonshine.factory.FileLocation;
 								import actionScripts.plugin.settings.SettingsView;
 								override public function set data(value:Object):void
 								{

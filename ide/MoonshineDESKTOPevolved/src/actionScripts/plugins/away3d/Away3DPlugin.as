@@ -47,7 +47,7 @@ package actionScripts.plugins.away3d
 	
 	import actionScripts.events.AddTabEvent;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.IPlugin;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.settings.ISettingsProvider;

@@ -32,7 +32,7 @@
 package actionScripts.interfaces
 {
     import actionScripts.ui.editor.BasicTextEditor;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.ui.IContentWindow;
 
     public interface IVisualEditorBridge extends IProject

@@ -42,7 +42,7 @@ package actionScripts.plugins.versionControl
 	import mx.managers.PopUpManager;
 	
 	import actionScripts.events.SettingsEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.plugin.PluginBase;
 	import actionScripts.plugin.console.ConsoleOutputEvent;
 	import actionScripts.plugin.settings.ISettingsProvider;

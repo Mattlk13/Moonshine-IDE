@@ -34,7 +34,7 @@ package actionScripts.plugins.svn.event
 	import flash.events.Event;
 	import flash.filesystem.File;
 	
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	import actionScripts.valueObjects.RepositoryItemVO;
 
 	public class SVNEvent extends Event

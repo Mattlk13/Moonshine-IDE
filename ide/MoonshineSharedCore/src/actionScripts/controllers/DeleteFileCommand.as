@@ -44,7 +44,7 @@ package actionScripts.controllers
 	import actionScripts.events.DeleteFileEvent;
 	import actionScripts.events.GlobalEventDispatcher;
 	import actionScripts.events.ProjectEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.actionscript.as3project.vo.AS3ProjectVO;
 	import actionScripts.plugin.recentlyOpened.RecentlyOpenedPlugin;
@@ -56,7 +56,7 @@ package actionScripts.controllers
 	import actionScripts.valueObjects.ConstantsCoreVO;
 	import actionScripts.valueObjects.FileWrapper;
 	import actionScripts.valueObjects.ProjectReferenceVO;
-	import actionScripts.valueObjects.ProjectVO;
+	import moonshine.valueObjects.ProjectVO;
 	
 	import components.popup.ProjectDeletionPopup;
 

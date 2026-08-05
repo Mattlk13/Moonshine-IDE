@@ -41,7 +41,7 @@ package actionScripts.plugin.ondiskproj
     import actionScripts.events.NewFileEvent;
     import actionScripts.events.NewProjectEvent;
     import actionScripts.events.OnDiskBuildEvent;
-    import actionScripts.factory.FileLocation;
+    import moonshine.factory.FileLocation;
     import actionScripts.plugin.PluginBase;
     import actionScripts.plugin.project.ProjectTemplateType;
     import actionScripts.plugin.project.ProjectType;
@@ -53,7 +53,7 @@ package actionScripts.plugin.ondiskproj
     import components.popup.newFile.NewOnDiskFilePopup;
     import actionScripts.plugin.IProjectTypePlugin;
     import actionScripts.plugin.ondiskproj.importer.OnDiskImporter;
-    import actionScripts.valueObjects.ProjectVO;
+    import moonshine.valueObjects.ProjectVO;
     import actionScripts.events.StatusBarEvent;
     import actionScripts.plugin.ondiskproj.vo.OnDiskProjectVO;
     import actionScripts.events.SettingsEvent;

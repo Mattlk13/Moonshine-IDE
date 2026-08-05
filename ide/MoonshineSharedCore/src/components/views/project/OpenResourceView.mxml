@@ -46,7 +46,7 @@
 			
 			import actionScripts.events.GlobalEventDispatcher;
 			import actionScripts.events.OpenFileEvent;
-			import actionScripts.factory.FileLocation;
+			import moonshine.factory.FileLocation;
 			import actionScripts.plugin.project.ProjectPlugin;
 			import actionScripts.valueObjects.FileWrapper;
 

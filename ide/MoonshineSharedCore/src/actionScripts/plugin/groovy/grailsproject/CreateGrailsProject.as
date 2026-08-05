@@ -55,7 +55,7 @@ package actionScripts.plugin.groovy.grailsproject
 	import actionScripts.events.RefreshTreeEvent;
 	import actionScripts.events.SettingsEvent;
 	import actionScripts.events.StatusBarEvent;
-	import actionScripts.factory.FileLocation;
+	import moonshine.factory.FileLocation;
 	import actionScripts.locator.IDEModel;
 	import actionScripts.plugin.console.ConsoleOutputter;
 	import actionScripts.plugin.groovy.grailsproject.exporter.GrailsExporter;
