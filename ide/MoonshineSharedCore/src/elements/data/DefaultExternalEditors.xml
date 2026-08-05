@@ -5,13 +5,13 @@
 			<title>VIM</title>
 			<defaultLocation>
 				<windows>$programFiles/Vim/vim82/gvim.exe</windows>
-				<macos>/Applications/MacVim.app</macos>
+				<mac>/Applications/MacVim.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
 <!-- 			<defaultArguments> -->
 <!-- 				<windows>-R</windows> -->
-<!-- 				<macos/> -->
+<!-- 				<mac/> -->
 <!-- 			</defaultArguments> -->
 			<website>https://www.vim.org/download.php</website>
 		</editor>
@@ -19,7 +19,7 @@
 			<title>SublimeText</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/Sublime Text.app</macos>
+				<mac>/Applications/Sublime Text.app</mac>
 				<linux>/usr/bin/subl</linux>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -29,7 +29,7 @@
 			<title>TextMate</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/TextMate.app</macos>
+				<mac>/Applications/TextMate.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -39,7 +39,7 @@
 			<title>Visual Studio Code</title>
 			<defaultLocation>
 				<windows>$userDirectory/AppData/Local/Programs/Microsoft VS Code/Code.exe</windows>
-				<macos>/Applications/Visual Studio Code.app</macos>
+				<mac>/Applications/Visual Studio Code.app</mac>
 				<linux>/usr/bin/code</linux>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -49,7 +49,7 @@
 			<title>IAWriter</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/iA Writer.app</macos>
+				<mac>/Applications/iA Writer.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -59,7 +59,7 @@
 			<title>Emacs</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/MacPorts/Emacs.app</macos>
+				<mac>/Applications/MacPorts/Emacs.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -69,7 +69,7 @@
 			<title>BBEdit</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/BBEdit.app</macos>
+				<mac>/Applications/BBEdit.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -79,7 +79,7 @@
 			<title>NotePad++</title>
 			<defaultLocation>
 				<windows>$programFiles/Notepad++/notepad++.exe</windows>
-				<macos/>
+				<mac/>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -89,7 +89,7 @@
 			<title>UltraEdit</title>
 			<defaultLocation>
 				<windows>$programFiles/IDM Computer Solutions/UltraEdit/uedit64.exe</windows>
-				<macos/>
+				<mac/>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -99,7 +99,7 @@
 			<title>Eclipse</title>
 			<defaultLocation>
 				<windows>$userDirectory/eclipse/java-2020-03/eclipse/eclipse.exe</windows>
-				<macos>$userDirectory/Documents/eclipse/java-2020-03/Eclipse.app</macos>
+				<mac>$userDirectory/Documents/eclipse/java-2020-03/Eclipse.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -109,7 +109,7 @@
 			<title>CodeRunner</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/CodeRunner.app</macos>
+				<mac>/Applications/CodeRunner.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -119,7 +119,7 @@
 			<title>Komodo Edit</title>
 			<defaultLocation>
 				<windows>$programFiles/ActiveState Komodo IDE 12/komodo.exe</windows>
-				<macos>/Applications/Komodo IDE 12.app</macos>
+				<mac>/Applications/Komodo IDE 12.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -129,7 +129,7 @@
 			<title>Atom</title>
 			<defaultLocation>
 				<windows>$userDirectory/AppData/Local/atom/atom.exe</windows>
-				<macos>/Applications/Atom.app</macos>
+				<mac>/Applications/Atom.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -139,7 +139,7 @@
 			<title>IntelliJ IDEA</title>
 			<defaultLocation>
 				<windows>$programFiles/JetBrains/IntelliJ IDEA/bin/idea64.exe</windows>
-				<macos>/Applications/IntelliJ IDEA.app</macos>
+				<mac>/Applications/IntelliJ IDEA.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -149,7 +149,7 @@
 			<title>MyEclipse</title>
 			<defaultLocation>
 				<windows>$userDirectory/AppData/Local/MyEclipse/myeclipse.exe</windows>
-				<macos>/Applications/MyEclipse/MyEclipse.app</macos>
+				<mac>/Applications/MyEclipse/MyEclipse.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -159,7 +159,7 @@
 			<title>Balsamiq Wireframes</title>
 			<defaultLocation>
 				<windows>$userDirectory/AppData/Local/Programs/Balsamiq/Balsamiq Wireframes/BalsamiqWireframes.exe</windows>
-				<macos>/Applications/Balsamiq Mockups 3.app</macos>
+				<mac>/Applications/Balsamiq Mockups 3.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes>bmpr</fileTypes>
@@ -169,7 +169,7 @@
 			<title>BlueJ</title>
 			<defaultLocation>
 				<windows>$programFiles/BlueJ/BlueJ.exe</windows>
-				<macos>/Applications/BlueJ.app</macos>
+				<mac>/Applications/BlueJ.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes>bluej</fileTypes>
@@ -179,7 +179,7 @@
 			<title>jGRASP</title>
 			<defaultLocation>
 				<windows>$programFiles/jGRASP/bin/jgrasp.exe</windows>
-				<macos>/Applications/jGRASP.app</macos>
+				<mac>/Applications/jGRASP.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -189,7 +189,7 @@
 			<title>Jarzilla</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/Jarzilla.app</macos>
+				<mac>/Applications/Jarzilla.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes>jar</fileTypes>
@@ -199,7 +199,7 @@
 			<title>Brackets</title>
 			<defaultLocation>
 				<windows>$programFiles/Brackets/Brackets.exe</windows>
-				<macos>/Applications/Brackets.app</macos>
+				<mac>/Applications/Brackets.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -209,7 +209,7 @@
 			<title>Java Decompiler</title>
 			<defaultLocation>
 				<windows>$programFiles/JavaDecompiler/jd-gui.exe</windows>
-				<macos>/Applications/JD-GUI.app</macos>
+				<mac>/Applications/JD-GUI.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes>jar,class</fileTypes>
@@ -219,7 +219,7 @@
 			<title>Apache NetBeans</title>
 			<defaultLocation>
 				<windows>$programFiles/NetBeans-13/netbeans/bin/netbeans64.exe</windows>
-				<macos>/Applications/NetBeans/Apache NetBeans 13.app</macos>
+				<mac>/Applications/NetBeans/Apache NetBeans 13.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
@@ -229,7 +229,7 @@
 			<title>MultiMarkdown Composer</title>
 			<defaultLocation>
 				<windows/>
-				<macos>/Applications/MultiMarkdown Composer.app</macos>
+				<mac>/Applications/MultiMarkdown Composer.app</mac>
 				<linux/>
 			</defaultLocation>
 			<fileTypes></fileTypes>
