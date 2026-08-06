@@ -32,7 +32,7 @@
 
 package moonshine.factory;
 
-import actionScripts.interfaces.IFileBridge;
+import moonshine.interfaces.IFileBridge;
 import openfl.events.EventDispatcher;
 
 extern class FileLocation extends EventDispatcher {

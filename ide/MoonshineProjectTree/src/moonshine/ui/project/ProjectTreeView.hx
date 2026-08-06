@@ -277,6 +277,7 @@ class ProjectTreeView extends LayoutGroup {
 		_treeView.addEventListener(Event.CHANGE, onTreeViewChange);
 		_treeView.addEventListener(TreeViewEvent.ITEM_DOUBLE_CLICK, fileDoubleClickedInTreeView);
 		addChild(_treeView);
+		trace('INITIALIZED _treeView');
 	}
 
 	public function isItemVisible(item:FileLocation):Bool {
@@ -314,6 +315,10 @@ class ProjectTreeView extends LayoutGroup {
 	}
 
 	public function expandItem(item:FileLocation, open:Bool):Void {
+		if (_treeView == null) {
+			return;
+		}
+
 		var wrapper = findTreeViewItemForLocation(item);
 		return expandWrapper(wrapper, open);
 	}
@@ -393,6 +398,9 @@ class ProjectTreeView extends LayoutGroup {
 	}
 
 	public function refreshItem(item:FileLocation):Void {
+		if (_treeView == null) {
+			return;
+		}
 		var wrapper:ProjectTreeViewFileWrapper = findTreeViewItemForLocation(item);
 		if (wrapper == null) {
 			return;
@@ -574,14 +582,19 @@ class ProjectTreeView extends LayoutGroup {
 		if (itemToFind == null) {
 			return null;
 		}
+		trace('FileLocation: ${itemToFind}');
 		var wrapper = createFileWrapper(itemToFind);
+		trace('created FileWrapper: ${wrapper}');
 		// locationOf does not check for the exact object. it checks for
 		// an object that has the same native path. this allows us to
 		// convert into the object that's actually in the data provider.
+		trace('_treeView: ${_treeView}');
+		trace('_treeView.data: ${_treeView.dataProvider}');
 		var location:Array<Int> = _treeView.dataProvider.locationOf(wrapper);
 		if (location == null) {
 			return null;
 		}
+		trace('location: ${location}');
 		// this may return the item to find, or it might return a
 		// different object that has the same native path
 		return Std.downcast(_treeView.dataProvider.get(location), ProjectTreeViewFileWrapper);
@@ -727,6 +740,9 @@ class ProjectTreeView extends LayoutGroup {
 	}
 
 	private function updateTreeViewItem(item:FileLocation):Void {
+		if (_treeView == null) {
+			return;
+		}
 		var wrapper = findTreeViewItemForLocation(item);
 		if (wrapper == null) {
 			return;
