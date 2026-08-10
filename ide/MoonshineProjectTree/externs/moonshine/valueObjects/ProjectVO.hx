@@ -35,9 +35,9 @@ package moonshine.valueObjects;
 import moonshine.factory.FileLocation;
 
 extern class ProjectVO {
-	public var folderLocation:FileLocation;
-	public var folderPath:String;
-	public var sourceFolder:FileLocation;
+	@:flash.property public var folderLocation(get, set):FileLocation;
+	@:flash.property public var folderPath(get, set):String;
+	@:flash.property public var sourceFolder(get, set):FileLocation;
 	
 	public function new(folder:FileLocation, ?projectName:String=null, ?updateToTreeView:Bool=true);
 }

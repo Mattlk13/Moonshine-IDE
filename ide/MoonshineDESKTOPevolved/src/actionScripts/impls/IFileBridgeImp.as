@@ -109,7 +109,7 @@ package actionScripts.impls
 			return _file.getDirectoryListing();
 		}
 
-		public function getDirectoryListingAsync(successHandler:Function, errorHandler:Function = null):void
+		public function getDirectoryListingAsync(successHandler:Function, errorHandler:Function = null, processID:String=null):void
 		{
 			if (!checkFileExistenceAndReport())
 			{

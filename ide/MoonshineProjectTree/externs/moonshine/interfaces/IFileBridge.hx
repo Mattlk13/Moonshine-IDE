@@ -61,5 +61,6 @@ extern interface IFileBridge {
 
 	function getDirectoryListing():Array<Dynamic>;
 
-	function getDirectoryListingAsync(successHandler:(output:Array<FileLocation>) -> Void, ?errorHandler:(error:String) -> Void):Void;
+	function getDirectoryListingAsync(successHandler:(output:Array<FileLocation>) -> Void, ?errorHandler:(error:String) -> Void,
+			?processID:String):Void;
 }
