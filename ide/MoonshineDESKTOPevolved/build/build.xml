@@ -268,6 +268,8 @@
 	<!-- ANCHOR - Install Haxe Dependencies -->
 	<target name="install-haxe-dependencies">
 		
+		<haxelibInstall library="lime" />
+		
 		<exec executable="${haxelib.cmd}"
 			failonerror="true">
 			<arg value="git"/>
@@ -322,7 +324,6 @@
 			<arg value="--quiet"/>
 		</exec>
 		
-		<!--haxelibInstall library="lime" /-->
 		<!--haxelibInstall library="openfl" /-->
 		<haxelibInstall library="actuate" />
 		<haxelibInstall library="markdown-openfl-textfield" />
