@@ -39,21 +39,14 @@ jobs:
       - name: Install NSIS
         run: |
           # Install NSIS
-          choco install nsis -y --no-progress
-          if ($LASTEXITCODE -ne 0) { throw "NSIS installation failed with exit code $LASTEXITCODE" }
-
+          choco install nsis -y
           # Paths (v3 layout)
           $nsisRoot = "${env:ProgramFiles(x86)}\NSIS"
           $pluginDir = Join-Path $nsisRoot "Plugins\x86-unicode"
           $includeDir = Join-Path $nsisRoot "Include"
-
-          # Verify installation
-          $makensis = Join-Path $nsisRoot "makensis.exe"
-          if (-not (Test-Path $makensis)) { throw "makensis.exe not found at $makensis" }
-
-          # Ensure plugin dirs exist
+          # Ensure dirs exist (they will after install, but this is defensive)
           New-Item -ItemType Directory -Force -Path $pluginDir, $includeDir | Out-Null
-
+          
           # Add NSIS to Path
           Add-Content -Path $env:GITHUB_PATH -Value $nsisRoot
 
@@ -79,6 +72,10 @@ jobs:
           Invoke-RestMethod -Uri "https://nsis.sourceforge.io/mediawiki/images/2/2f/ExecCmd.zip" -OutFile ExecCmd.zip
           7z x ExecCmd.zip -o'ExecCmd' -y
           mv ExecCmd\ExecCmd.dll "C:\Program Files (x86)\NSIS\Plugins\x86-unicode\ExecCmd.dll"
+      
+      - name: Install NSIS plugin nsProcess
+        run: |
+          mv NsProcess\Plugin\nsProcessW.dll "C:\Program Files (x86)\NSIS\Plugins\x86-unicode\nsProcess.dll"
 
       - name: Setup signing certificate
         run: |
