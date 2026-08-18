@@ -25,6 +25,7 @@
 	<property name="JAVA_HOME" value="${env.JAVA_HOME}"/>
 	<property name="FLEX_HOME" value="${env.FLEX_HOME}"/>
     <property name="adt.cmd" value="${FLEX_HOME}/lib/adt.jar"/>
+	<property name="haxe.cmd" value="haxe"/>
 	<property name="haxelib.cmd" value="haxelib"/>
 	<property name="signtool.cmd" value="signtool"/>
 	<property name="nsis.cmd" value="makensis"/>
@@ -90,7 +91,7 @@
 					<target name="init"/>
 					<target name="modify-app-descriptor"/>
 					<target name="copy-files"/>
-					<target name="install-haxe-dependencies"/>
+					<target name="install-haxe-dependencies-from-source"/>
 					<target name="compile-gui-core"/>	
 					<target name="compile-swf-for-windows"/>
 					<target name="compile-app"/>
@@ -177,6 +178,7 @@
 		<echo message="Workflow JAVA_HOME: ${JAVA_HOME}"/>
 		<echo message="FLEX_HOME: ${FLEX_HOME}"/>
 		<echo message="adt command: ${adt.cmd}"/>
+		<echo message="haxe command: ${haxe.cmd}"/>
 		<echo message="haxelib command: ${haxelib.cmd}"/>
 		<echo message="signtool command: ${signtool.cmd}"/>
 		<echo message="nsis command: ${nsis.cmd}"/>
@@ -317,7 +319,7 @@
 			<arg value="git"/>
 			<arg value="openfl"/>
 			<arg value="https://github.com/openfl/openfl"/>
-			<arg value="9.6.0-dev"/>
+			<!--arg value="9.6.0-dev"/-->
 			<arg value="--always"/>
 			<arg value="--quiet"/>
 		</exec>
@@ -339,6 +341,46 @@
 			<arg value="list"/>
 		</exec>
 		
+	</target>
+
+	<!-- ANCHOR - Install Haxe Dependencies From Source -->
+	<target name="install-haxe-dependencies-from-source">
+
+		<!-- Resolve the active haxelib repository rather than hardcoding it,
+		     so this works on any runner / local machine. -->
+		<exec executable="${haxelib.cmd}"
+			outputproperty="haxelib.repo.path"
+			failonerror="true">
+			<arg value="config"/>
+		</exec>
+
+		<condition property="haxe.install.target" value="windows">
+			<isset property="is.windows"/>
+		</condition>
+		<condition property="haxe.install.target" value="macos">
+			<isset property="is.macos"/>
+		</condition>
+		<property name="haxe.install.target" value="linux"/>
+
+		<echo message="Running InstallDependencies.hx"/>
+		<echo message="  target:      ${haxe.install.target}"/>
+		<echo message="  haxelibpath: ${haxelib.repo.path}"/>
+
+		<!-- InstallDependencies.hx declares `package build;`, so it must be
+		     invoked as `build/InstallDependencies.hx` from the parent of this
+		     folder - hence dir="${basedir}/..".
+		     <exec> is synchronous (spawn defaults to false), so the build blocks
+		     here until the script exits; failonerror stops it on a non-zero exit. -->
+		<exec executable="${haxe.cmd}"
+			dir="${basedir}/.."
+			failonerror="true">
+			<arg value="--run"/>
+			<arg value="build/InstallDependencies.hx"/>
+			<arg value="--target=${haxe.install.target}"/>
+			<arg value="--haxelibpath=${haxelib.repo.path}"/>
+		</exec>
+
+		<echo message="Installed Haxe Dependencies (from source)"/>
 	</target>
 
 	<!-- ANCHOR - Compile GUI Core -->
