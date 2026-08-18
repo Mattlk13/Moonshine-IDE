@@ -91,7 +91,7 @@
 					<target name="init"/>
 					<target name="modify-app-descriptor"/>
 					<target name="copy-files"/>
-					<target name="install-haxe-dependencies-from-source"/>
+					<target name="install-haxe-dependencies"/>
 					<target name="compile-gui-core"/>	
 					<target name="compile-swf-for-windows"/>
 					<target name="compile-app"/>
@@ -271,7 +271,7 @@
 	<target name="install-haxe-dependencies">
 		
 		<haxelibInstall library="lime" />
-		<!--haxelibInstall library="openfl" /-->
+		<haxelibInstall library="openfl" />
 		<haxelibInstall library="actuate" />
 		<haxelibInstall library="markdown-openfl-textfield" />
 		<haxelibInstall library="format" />
@@ -311,25 +311,6 @@
 			<arg value="moonshine-feathersui-text-editor"/>
 			<arg value="https://github.com/Moonshine-IDE/moonshine-feathersui-text-editor.git"/>
 			<arg value="--always"/>
-			<arg value="--quiet"/>
-		</exec>
-		
-		<exec executable="${haxelib.cmd}"
-			failonerror="true">
-			<arg value="git"/>
-			<arg value="openfl"/>
-			<arg value="https://github.com/openfl/openfl"/>
-			<!--arg value="9.6.0-dev"/-->
-			<arg value="--always"/>
-			<arg value="--quiet"/>
-		</exec>
-		
-		<exec executable="${haxelib.cmd}"
-			failonerror="true">
-			<arg value="run"/>
-			<arg value="openfl"/>
-			<arg value="setup"/>
-			<arg value="-y"/>
 			<arg value="--quiet"/>
 		</exec>
 
